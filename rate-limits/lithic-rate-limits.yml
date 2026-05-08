@@ -5,31 +5,36 @@ provider: Lithic
 providerId: lithic
 created: '2026-05-08'
 modified: '2026-05-08'
-reconciled: false
+reconciled: true
 tags:
-- Fintech
+- FinTech
+- BaaS
 - Card Issuing
 - Payments
-- BaaS
-- Privacy
+- Embedded Finance
 - Rate Limiting
-- Quotas
-- Throttling
-description: Placeholder rate-limit artifact for Lithic. Replace with real limits once researched.
-notes: Initial scaffold — limits have not yet been reconciled.
+description: Lithic enforces per-program rate limits on the REST API.
+notes: ASA timeouts are short (~2 seconds).
 sources:
-- https://lithic.com/
+- https://docs.lithic.com/docs/api-keys-and-rate-limits
 responseCodes:
   throttled: 429
 limits:
-- name: Default
-  scope: account
-  metric: varies
-  limit: see provider documentation
-  notes: Pending reconciliation.
+- name: Default API RPS
+  scope: program
+  metric: requests_per_second
+  limit: 50
+  notes: Default per-program throughput.
+- name: ASA Timeout
+  scope: program
+  metric: milliseconds
+  limit: 2000
+  notes: Auth Stream Access hard timeout.
 policies:
 - name: Backoff Strategy
-  description: Clients should implement exponential backoff with jitter and honor any Retry-After header.
+  description: Exponential backoff on 429.
+- name: Idempotency
+  description: Use idempotency keys on POST endpoints.
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com

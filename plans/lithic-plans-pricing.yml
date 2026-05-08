@@ -5,37 +5,100 @@ provider: Lithic
 providerId: lithic
 created: '2026-05-08'
 modified: '2026-05-08'
-reconciled: false
+reconciled: true
 tags:
-- Fintech
+- FinTech
+- BaaS
 - Card Issuing
 - Payments
-- BaaS
-- Privacy
+- Embedded Finance
 - Plans
-description: Placeholder plans/pricing artifact for Lithic. Replace with real published pricing once
-  the pipeline researches the provider's plans page.
-notes: Initial scaffold — plans/pricing have not yet been reconciled against the provider's documentation.
+description: 'Lithic is sold under custom contracts. Self-serve sandbox is free; production
+  requires a signed agreement with Lithic and an underlying sponsor bank. Core fees:
+  monthly platform, per-transaction, per-card, ACH/wire, dispute handling, with interchange
+  share.'
+notes: Some Lithic-direct programs publish entry-level pricing publicly; most pricing
+  is negotiated.
 sources:
-- https://lithic.com/
+- https://lithic.com/pricing
+- https://docs.lithic.com/
 plans:
-- id: lithic-default
-  name: To Be Reconciled
-  type: enterprise
-  description: Initial scaffold; replace with provider plan tiers once pricing is reconciled.
+- id: lithic-sandbox
+  name: Sandbox
+  type: free
+  description: Self-serve free sandbox for development.
   entries:
-  - label: API Access
-    name: api_access
+  - label: Sandbox Access
+    name: sandbox
+    type: included
+    metric: api_calls
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: 0
+    userMultiplied: false
+  elements:
+  - name: All APIs
+  - name: Test Cards
+- id: lithic-startup
+  name: Startup
+  type: paid
+  description: Lower-volume production tier with published per-transaction pricing.
+  entries:
+  - label: Monthly Platform Fee
+    name: platform_fee
     type: flat
-    metric: varies
+    metric: subscription
+    limit: 1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: see lithic.com/pricing
+    userMultiplied: false
+  - label: Per Transaction
+    name: txn_fee
+    type: metered
+    metric: transaction
     limit: -1
     timeFrame: usage
     geo: global
     unit: 1
-    price: see https://lithic.com/
+    price: see lithic.com/pricing
+    userMultiplied: false
+  - label: Per Card
+    name: card_fee
+    type: metered
+    metric: card
+    limit: -1
+    timeFrame: usage
+    geo: global
+    unit: 1
+    price: see lithic.com/pricing
     userMultiplied: false
   elements:
-  - name: Pending Reconciliation
+  - name: Production APIs
+  - name: Email Support
+- id: lithic-enterprise
+  name: Enterprise
+  type: enterprise
+  description: Custom enterprise contracts with discounted unit pricing, ASA, dedicated
+    support.
+  entries:
+  - label: Custom
+    name: custom
+    type: flat
+    metric: contract
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: contact sales
+    userMultiplied: false
+  elements:
+  - name: ASA
+  - name: Volume Discounts
+  - name: SOC 2 Type II
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
