@@ -1,7 +1,7 @@
 aid: lithic
 url: https://raw.githubusercontent.com/api-evangelist/lithic/refs/heads/main/apis.yml
 name: Lithic
-x-type: company
+kind: company
 description: Lithic is a modern card-issuing and program-management platform offering
   REST APIs for cards, accounts, transactions, authorization control, ACH/wire payments,
   external bank accounts, account-holder KYC/KYB, 3-D Secure, tokenization, disputes,
