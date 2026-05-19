@@ -1,0 +1,221 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Hold
+  description: 'Lithic Developer API — Hold. 4 operations. Lead operation: List holds. Self-contained Naftiko capability covering
+    one Lithic business surface.'
+  tags:
+  - Lithic
+  - Hold
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-hold
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Hold business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-financial_accounts-financial_account_token-holds
+      path: /v1/financial_accounts/{financial_account_token}/holds
+      operations:
+      - name: getfinancialaccountholds
+        method: GET
+        description: List holds
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for the financial account.
+          required: true
+        - name: status
+          in: query
+          type: string
+          description: Hold status to filter by.
+      - name: createhold
+        method: POST
+        description: Create hold
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for the financial account.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-holds-hold_token
+      path: /v1/holds/{hold_token}
+      operations:
+      - name: gethold
+        method: GET
+        description: Get hold
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: hold_token
+          in: path
+          type: string
+          description: Globally unique identifier for the hold.
+          required: true
+    - name: v1-holds-hold_token-void
+      path: /v1/holds/{hold_token}/void
+      operations:
+      - name: voidhold
+        method: POST
+        description: Void hold
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: hold_token
+          in: path
+          type: string
+          description: Globally unique identifier for the hold.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-hold-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Hold. One Spectral-compliant resource per consumed operation, prefixed
+      with /v1.
+    resources:
+    - path: /v1/v1/financial-accounts/{financial-account-token}/holds
+      name: v1-financial-accounts-financial-account-token-holds
+      description: REST surface for v1-financial_accounts-financial_account_token-holds.
+      operations:
+      - method: GET
+        name: getfinancialaccountholds
+        description: List holds
+        call: lithic-hold.getfinancialaccountholds
+        with:
+          financial_account_token: rest.financial_account_token
+          status: rest.status
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createhold
+        description: Create hold
+        call: lithic-hold.createhold
+        with:
+          financial_account_token: rest.financial_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/holds/{hold-token}
+      name: v1-holds-hold-token
+      description: REST surface for v1-holds-hold_token.
+      operations:
+      - method: GET
+        name: gethold
+        description: Get hold
+        call: lithic-hold.gethold
+        with:
+          hold_token: rest.hold_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/holds/{hold-token}/void
+      name: v1-holds-hold-token-void
+      description: REST surface for v1-holds-hold_token-void.
+      operations:
+      - method: POST
+        name: voidhold
+        description: Void hold
+        call: lithic-hold.voidhold
+        with:
+          hold_token: rest.hold_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-hold-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Hold. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-holds
+      description: List holds
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-hold.getfinancialaccountholds
+      with:
+        financial_account_token: tools.financial_account_token
+        status: tools.status
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-hold
+      description: Create hold
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-hold.createhold
+      with:
+        financial_account_token: tools.financial_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-hold
+      description: Get hold
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-hold.gethold
+      with:
+        hold_token: tools.hold_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: void-hold
+      description: Void hold
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-hold.voidhold
+      with:
+        hold_token: tools.hold_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

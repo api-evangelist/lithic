@@ -1,0 +1,327 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Book Transfer
+  description: 'Lithic Developer API — Book Transfer. 6 operations. Lead operation: List book transfers. Self-contained Naftiko
+    capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Book Transfer
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-book-transfer
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Book Transfer business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-book_transfers
+      path: /v1/book_transfers
+      operations:
+      - name: getbooktransfers
+        method: GET
+        description: List book transfers
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: category
+          in: query
+          type: string
+          description: Book Transfer category to be returned.
+        - name: financial_account_token
+          in: query
+          type: string
+          description: Globally unique identifier for the financial account or card that will send the funds. Accepted type
+            dependent on the program's use case.
+        - name: business_account_token
+          in: query
+          type: string
+        - name: account_token
+          in: query
+          type: string
+        - name: result
+          in: query
+          type: string
+          description: Book transfer result to be returned.
+        - name: status
+          in: query
+          type: string
+          description: Book transfer status to be returned.
+      - name: postbooktransfers
+        method: POST
+        description: Create book transfer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-book_transfers-book_transfer_token
+      path: /v1/book_transfers/{book_transfer_token}
+      operations:
+      - name: getbooktransfer
+        method: GET
+        description: Get book transfer by token
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: book_transfer_token
+          in: path
+          type: string
+          description: Id of the book transfer to retrieve
+          required: true
+    - name: v1-book_transfers-book_transfer_token-retry
+      path: /v1/book_transfers/{book_transfer_token}/retry
+      operations:
+      - name: retrybooktransfer
+        method: POST
+        description: Retry book transfer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: book_transfer_token
+          in: path
+          type: string
+          description: Token of the book transfer to retry
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-book_transfers-book_transfer_token-reverse
+      path: /v1/book_transfers/{book_transfer_token}/reverse
+      operations:
+      - name: reversebooktransfer
+        method: POST
+        description: Reverse book transfer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: book_transfer_token
+          in: path
+          type: string
+          description: Id of the book transfer to retrieve
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-transfer
+      path: /v1/transfer
+      operations:
+      - name: posttransfer
+        method: POST
+        description: Transfer funds within Lithic
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-book-transfer-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Book Transfer. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/book-transfers
+      name: v1-book-transfers
+      description: REST surface for v1-book_transfers.
+      operations:
+      - method: GET
+        name: getbooktransfers
+        description: List book transfers
+        call: lithic-book-transfer.getbooktransfers
+        with:
+          category: rest.category
+          financial_account_token: rest.financial_account_token
+          business_account_token: rest.business_account_token
+          account_token: rest.account_token
+          result: rest.result
+          status: rest.status
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postbooktransfers
+        description: Create book transfer
+        call: lithic-book-transfer.postbooktransfers
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/book-transfers/{book-transfer-token}
+      name: v1-book-transfers-book-transfer-token
+      description: REST surface for v1-book_transfers-book_transfer_token.
+      operations:
+      - method: GET
+        name: getbooktransfer
+        description: Get book transfer by token
+        call: lithic-book-transfer.getbooktransfer
+        with:
+          book_transfer_token: rest.book_transfer_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/book-transfers/{book-transfer-token}/retry
+      name: v1-book-transfers-book-transfer-token-retry
+      description: REST surface for v1-book_transfers-book_transfer_token-retry.
+      operations:
+      - method: POST
+        name: retrybooktransfer
+        description: Retry book transfer
+        call: lithic-book-transfer.retrybooktransfer
+        with:
+          book_transfer_token: rest.book_transfer_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/book-transfers/{book-transfer-token}/reverse
+      name: v1-book-transfers-book-transfer-token-reverse
+      description: REST surface for v1-book_transfers-book_transfer_token-reverse.
+      operations:
+      - method: POST
+        name: reversebooktransfer
+        description: Reverse book transfer
+        call: lithic-book-transfer.reversebooktransfer
+        with:
+          book_transfer_token: rest.book_transfer_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transfer
+      name: v1-transfer
+      description: REST surface for v1-transfer.
+      operations:
+      - method: POST
+        name: posttransfer
+        description: Transfer funds within Lithic
+        call: lithic-book-transfer.posttransfer
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-book-transfer-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Book Transfer. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-book-transfers
+      description: List book transfers
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-book-transfer.getbooktransfers
+      with:
+        category: tools.category
+        financial_account_token: tools.financial_account_token
+        business_account_token: tools.business_account_token
+        account_token: tools.account_token
+        result: tools.result
+        status: tools.status
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-book-transfer
+      description: Create book transfer
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-book-transfer.postbooktransfers
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-book-transfer-token
+      description: Get book transfer by token
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-book-transfer.getbooktransfer
+      with:
+        book_transfer_token: tools.book_transfer_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: retry-book-transfer
+      description: Retry book transfer
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-book-transfer.retrybooktransfer
+      with:
+        book_transfer_token: tools.book_transfer_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: reverse-book-transfer
+      description: Reverse book transfer
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-book-transfer.reversebooktransfer
+      with:
+        book_transfer_token: tools.book_transfer_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: transfer-funds-within-lithic
+      description: Transfer funds within Lithic
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-book-transfer.posttransfer
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

@@ -1,0 +1,455 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — External Bank Account
+  description: 'Lithic Developer API — External Bank Account. 9 operations. Lead operation: List external bank accounts. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - External Bank Account
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-external-bank-account
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — External Bank Account business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-external_bank_accounts
+      path: /v1/external_bank_accounts
+      operations:
+      - name: searchexternalbankaccounts
+        method: GET
+        description: List external bank accounts
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: account_token
+          in: query
+          type: string
+        - name: account_types
+          in: query
+          type: array
+        - name: countries
+          in: query
+          type: array
+        - name: owner_types
+          in: query
+          type: array
+        - name: states
+          in: query
+          type: array
+        - name: verification_states
+          in: query
+          type: array
+      - name: createexternalbankaccount
+        method: POST
+        description: Create external bank account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v1-external_bank_accounts-external_bank_account_token
+      path: /v1/external_bank_accounts/{external_bank_account_token}
+      operations:
+      - name: getexternalbankaccountbytoken
+        method: GET
+        description: Get external bank account by token
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+      - name: patchexternalbankaccountbytoken
+        method: PATCH
+        description: Update external bank account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-external_bank_accounts-external_bank_account_token-micro_deposits
+      path: /v1/external_bank_accounts/{external_bank_account_token}/micro_deposits
+      operations:
+      - name: verifyexternalbankaccountbymicrodeposits
+        method: POST
+        description: Verify external bank account via micro deposit amounts
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-external_bank_accounts-external_bank_account_token-retry_micro_deposits
+      path: /v1/external_bank_accounts/{external_bank_account_token}/retry_micro_deposits
+      operations:
+      - name: retrymicrodeposit
+        method: POST
+        description: Retry external bank account via micro deposit
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v1-external_bank_accounts-external_bank_account_token-retry_prenote
+      path: /v1/external_bank_accounts/{external_bank_account_token}/retry_prenote
+      operations:
+      - name: retryprenote
+        method: POST
+        description: Retry external bank account via prenote
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v1-external_bank_accounts-external_bank_account_token-set_verification_method
+      path: /v1/external_bank_accounts/{external_bank_account_token}/set_verification_method
+      operations:
+      - name: setverificationmethod
+        method: POST
+        description: Set verification method
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-external_bank_accounts-external_bank_account_token-unpause
+      path: /v1/external_bank_accounts/{external_bank_account_token}/unpause
+      operations:
+      - name: unpauseexternalbankaccount
+        method: POST
+        description: Unpause external bank account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_bank_account_token
+          in: path
+          type: string
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-external-bank-account-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — External Bank Account. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v1/external-bank-accounts
+      name: v1-external-bank-accounts
+      description: REST surface for v1-external_bank_accounts.
+      operations:
+      - method: GET
+        name: searchexternalbankaccounts
+        description: List external bank accounts
+        call: lithic-external-bank-account.searchexternalbankaccounts
+        with:
+          account_token: rest.account_token
+          account_types: rest.account_types
+          countries: rest.countries
+          owner_types: rest.owner_types
+          states: rest.states
+          verification_states: rest.verification_states
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createexternalbankaccount
+        description: Create external bank account
+        call: lithic-external-bank-account.createexternalbankaccount
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}
+      name: v1-external-bank-accounts-external-bank-account-token
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token.
+      operations:
+      - method: GET
+        name: getexternalbankaccountbytoken
+        description: Get external bank account by token
+        call: lithic-external-bank-account.getexternalbankaccountbytoken
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: patchexternalbankaccountbytoken
+        description: Update external bank account
+        call: lithic-external-bank-account.patchexternalbankaccountbytoken
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}/micro-deposits
+      name: v1-external-bank-accounts-external-bank-account-token-micro-deposits
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token-micro_deposits.
+      operations:
+      - method: POST
+        name: verifyexternalbankaccountbymicrodeposits
+        description: Verify external bank account via micro deposit amounts
+        call: lithic-external-bank-account.verifyexternalbankaccountbymicrodeposits
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}/retry-micro-deposits
+      name: v1-external-bank-accounts-external-bank-account-token-retry-micro-deposits
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token-retry_micro_deposits.
+      operations:
+      - method: POST
+        name: retrymicrodeposit
+        description: Retry external bank account via micro deposit
+        call: lithic-external-bank-account.retrymicrodeposit
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}/retry-prenote
+      name: v1-external-bank-accounts-external-bank-account-token-retry-prenote
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token-retry_prenote.
+      operations:
+      - method: POST
+        name: retryprenote
+        description: Retry external bank account via prenote
+        call: lithic-external-bank-account.retryprenote
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}/set-verification-method
+      name: v1-external-bank-accounts-external-bank-account-token-set-verification-method
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token-set_verification_method.
+      operations:
+      - method: POST
+        name: setverificationmethod
+        description: Set verification method
+        call: lithic-external-bank-account.setverificationmethod
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/external-bank-accounts/{external-bank-account-token}/unpause
+      name: v1-external-bank-accounts-external-bank-account-token-unpause
+      description: REST surface for v1-external_bank_accounts-external_bank_account_token-unpause.
+      operations:
+      - method: POST
+        name: unpauseexternalbankaccount
+        description: Unpause external bank account
+        call: lithic-external-bank-account.unpauseexternalbankaccount
+        with:
+          external_bank_account_token: rest.external_bank_account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-external-bank-account-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — External Bank Account. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-external-bank-accounts
+      description: List external bank accounts
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-external-bank-account.searchexternalbankaccounts
+      with:
+        account_token: tools.account_token
+        account_types: tools.account_types
+        countries: tools.countries
+        owner_types: tools.owner_types
+        states: tools.states
+        verification_states: tools.verification_states
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-external-bank-account
+      description: Create external bank account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.createexternalbankaccount
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-external-bank-account-token
+      description: Get external bank account by token
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-external-bank-account.getexternalbankaccountbytoken
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-external-bank-account
+      description: Update external bank account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: lithic-external-bank-account.patchexternalbankaccountbytoken
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: verify-external-bank-account-micro
+      description: Verify external bank account via micro deposit amounts
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.verifyexternalbankaccountbymicrodeposits
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: retry-external-bank-account-micro
+      description: Retry external bank account via micro deposit
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.retrymicrodeposit
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: retry-external-bank-account-prenote
+      description: Retry external bank account via prenote
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.retryprenote
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: set-verification-method
+      description: Set verification method
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.setverificationmethod
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: unpause-external-bank-account
+      description: Unpause external bank account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-external-bank-account.unpauseexternalbankaccount
+      with:
+        external_bank_account_token: tools.external_bank_account_token
+      outputParameters:
+      - type: object
+        mapping: $.

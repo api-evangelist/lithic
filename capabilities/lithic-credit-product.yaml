@@ -1,0 +1,178 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Credit Product
+  description: 'Lithic Developer API — Credit Product. 3 operations. Lead operation: Get extended credit. Self-contained Naftiko
+    capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Credit Product
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-credit-product
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Credit Product business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-credit_products-credit_product_token-extended_credit
+      path: /v1/credit_products/{credit_product_token}/extended_credit
+      operations:
+      - name: getextendedcredit
+        method: GET
+        description: Get extended credit
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: credit_product_token
+          in: path
+          type: string
+          description: Credit Product Token
+          required: true
+    - name: v1-credit_products-credit_product_token-prime_rates
+      path: /v1/credit_products/{credit_product_token}/prime_rates
+      operations:
+      - name: getprimerates
+        method: GET
+        description: Get Credit Product Prime Rates
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: credit_product_token
+          in: path
+          type: string
+          description: Globally unique identifier for credit products.
+          required: true
+        - name: starting_after
+          in: query
+          type: string
+          description: The effective date that the prime rate starts after
+        - name: ending_before
+          in: query
+          type: string
+          description: The effective date that the prime rates ends before
+      - name: createprimerates
+        method: POST
+        description: Post Credit Product Prime Rate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: credit_product_token
+          in: path
+          type: string
+          description: Globally unique identifier for credit products.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-credit-product-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Credit Product. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/credit-products/{credit-product-token}/extended-credit
+      name: v1-credit-products-credit-product-token-extended-credit
+      description: REST surface for v1-credit_products-credit_product_token-extended_credit.
+      operations:
+      - method: GET
+        name: getextendedcredit
+        description: Get extended credit
+        call: lithic-credit-product.getextendedcredit
+        with:
+          credit_product_token: rest.credit_product_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/credit-products/{credit-product-token}/prime-rates
+      name: v1-credit-products-credit-product-token-prime-rates
+      description: REST surface for v1-credit_products-credit_product_token-prime_rates.
+      operations:
+      - method: GET
+        name: getprimerates
+        description: Get Credit Product Prime Rates
+        call: lithic-credit-product.getprimerates
+        with:
+          credit_product_token: rest.credit_product_token
+          starting_after: rest.starting_after
+          ending_before: rest.ending_before
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createprimerates
+        description: Post Credit Product Prime Rate
+        call: lithic-credit-product.createprimerates
+        with:
+          credit_product_token: rest.credit_product_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-credit-product-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Credit Product. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: get-extended-credit
+      description: Get extended credit
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-credit-product.getextendedcredit
+      with:
+        credit_product_token: tools.credit_product_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-credit-product-prime-rates
+      description: Get Credit Product Prime Rates
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-credit-product.getprimerates
+      with:
+        credit_product_token: tools.credit_product_token
+        starting_after: tools.starting_after
+        ending_before: tools.ending_before
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: post-credit-product-prime-rate
+      description: Post Credit Product Prime Rate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-credit-product.createprimerates
+      with:
+        credit_product_token: tools.credit_product_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

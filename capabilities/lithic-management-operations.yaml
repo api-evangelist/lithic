@@ -1,0 +1,225 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Management Operations
+  description: 'Lithic Developer API — Management Operations. 4 operations. Lead operation: List management operations. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Management Operations
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-management-operations
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Management Operations business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-management_operations
+      path: /v1/management_operations
+      operations:
+      - name: getmanagementoperations
+        method: GET
+        description: List management operations
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: category
+          in: query
+          type: string
+          description: Management operation category to be returned.
+        - name: financial_account_token
+          in: query
+          type: string
+          description: Globally unique identifier for the financial account. Accepted type dependent on the program's use
+            case.
+        - name: business_account_token
+          in: query
+          type: string
+        - name: status
+          in: query
+          type: string
+          description: Management operation status to be returned.
+      - name: postmanagementoperations
+        method: POST
+        description: Create management operation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-management_operations-management_operation_token
+      path: /v1/management_operations/{management_operation_token}
+      operations:
+      - name: getmanagementoperation
+        method: GET
+        description: Get management operation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: management_operation_token
+          in: path
+          type: string
+          description: Globally unique identifier for the management operation
+          required: true
+    - name: v1-management_operations-management_operation_token-reverse
+      path: /v1/management_operations/{management_operation_token}/reverse
+      operations:
+      - name: reversemanagementoperation
+        method: POST
+        description: Reverse management operation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: management_operation_token
+          in: path
+          type: string
+          description: Globally unique identifier for the management operation
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-management-operations-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Management Operations. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v1/management-operations
+      name: v1-management-operations
+      description: REST surface for v1-management_operations.
+      operations:
+      - method: GET
+        name: getmanagementoperations
+        description: List management operations
+        call: lithic-management-operations.getmanagementoperations
+        with:
+          category: rest.category
+          financial_account_token: rest.financial_account_token
+          business_account_token: rest.business_account_token
+          status: rest.status
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postmanagementoperations
+        description: Create management operation
+        call: lithic-management-operations.postmanagementoperations
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/management-operations/{management-operation-token}
+      name: v1-management-operations-management-operation-token
+      description: REST surface for v1-management_operations-management_operation_token.
+      operations:
+      - method: GET
+        name: getmanagementoperation
+        description: Get management operation
+        call: lithic-management-operations.getmanagementoperation
+        with:
+          management_operation_token: rest.management_operation_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/management-operations/{management-operation-token}/reverse
+      name: v1-management-operations-management-operation-token-reverse
+      description: REST surface for v1-management_operations-management_operation_token-reverse.
+      operations:
+      - method: POST
+        name: reversemanagementoperation
+        description: Reverse management operation
+        call: lithic-management-operations.reversemanagementoperation
+        with:
+          management_operation_token: rest.management_operation_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-management-operations-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Management Operations. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-management-operations
+      description: List management operations
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-management-operations.getmanagementoperations
+      with:
+        category: tools.category
+        financial_account_token: tools.financial_account_token
+        business_account_token: tools.business_account_token
+        status: tools.status
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-management-operation
+      description: Create management operation
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-management-operations.postmanagementoperations
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-management-operation
+      description: Get management operation
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-management-operations.getmanagementoperation
+      with:
+        management_operation_token: tools.management_operation_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: reverse-management-operation
+      description: Reverse management operation
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-management-operations.reversemanagementoperation
+      with:
+        management_operation_token: tools.management_operation_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

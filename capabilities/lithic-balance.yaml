@@ -1,0 +1,146 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Balance
+  description: 'Lithic Developer API — Balance. 2 operations. Lead operation: List balances. Self-contained Naftiko capability
+    covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Balance
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-balance
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Balance business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-balances
+      path: /v1/balances
+      operations:
+      - name: getbalances
+        method: GET
+        description: List balances
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: account_token
+          in: query
+          type: string
+          description: List balances for all financial accounts of a given account_token.
+        - name: business_account_token
+          in: query
+          type: string
+          description: List balances for all financial accounts of a given business_account_token.
+        - name: balance_date
+          in: query
+          type: string
+          description: UTC date and time of the balances to retrieve. Defaults to latest available balances
+        - name: financial_account_type
+          in: query
+          type: string
+          description: List balances for a given Financial Account type.
+    - name: v1-financial_accounts-financial_account_token-balances
+      path: /v1/financial_accounts/{financial_account_token}/balances
+      operations:
+      - name: getbalance
+        method: GET
+        description: Get balances
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: balance_date
+          in: query
+          type: string
+          description: UTC date of the balance to retrieve. Defaults to latest available balance
+        - name: last_transaction_event_token
+          in: query
+          type: string
+          description: Balance after a given financial event occured.
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-balance-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Balance. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/balances
+      name: v1-balances
+      description: REST surface for v1-balances.
+      operations:
+      - method: GET
+        name: getbalances
+        description: List balances
+        call: lithic-balance.getbalances
+        with:
+          account_token: rest.account_token
+          business_account_token: rest.business_account_token
+          balance_date: rest.balance_date
+          financial_account_type: rest.financial_account_type
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/balances
+      name: v1-financial-accounts-financial-account-token-balances
+      description: REST surface for v1-financial_accounts-financial_account_token-balances.
+      operations:
+      - method: GET
+        name: getbalance
+        description: Get balances
+        call: lithic-balance.getbalance
+        with:
+          balance_date: rest.balance_date
+          last_transaction_event_token: rest.last_transaction_event_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-balance-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Balance. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-balances
+      description: List balances
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-balance.getbalances
+      with:
+        account_token: tools.account_token
+        business_account_token: tools.business_account_token
+        balance_date: tools.balance_date
+        financial_account_type: tools.financial_account_type
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-balances
+      description: Get balances
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-balance.getbalance
+      with:
+        balance_date: tools.balance_date
+        last_transaction_event_token: tools.last_transaction_event_token
+      outputParameters:
+      - type: object
+        mapping: $.

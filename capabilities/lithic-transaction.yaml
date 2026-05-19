@@ -1,0 +1,551 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Transaction
+  description: 'Lithic Developer API — Transaction. 12 operations. Lead operation: Simulate authorization advice. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Transaction
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-transaction
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Transaction business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-simulate-authorization_advice
+      path: /v1/simulate/authorization_advice
+      operations:
+      - name: postsimulateauthorizationadvice
+        method: POST
+        description: Simulate authorization advice
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-authorize
+      path: /v1/simulate/authorize
+      operations:
+      - name: postsimulateauthorize
+        method: POST
+        description: Simulate authorization
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-clearing
+      path: /v1/simulate/clearing
+      operations:
+      - name: postsimulateclearing
+        method: POST
+        description: Simulate clearing
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-credit_authorization_advice
+      path: /v1/simulate/credit_authorization_advice
+      operations:
+      - name: postsimulatecreditauthorizationadvice
+        method: POST
+        description: Simulate credit authorization advice
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-return
+      path: /v1/simulate/return
+      operations:
+      - name: postsimulatereturn
+        method: POST
+        description: Simulate return
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-return_reversal
+      path: /v1/simulate/return_reversal
+      operations:
+      - name: postsimulatereturnreversal
+        method: POST
+        description: Simulate return reversal
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-void
+      path: /v1/simulate/void
+      operations:
+      - name: postsimulatevoid
+        method: POST
+        description: Simulate void
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-transactions
+      path: /v1/transactions
+      operations:
+      - name: gettransactions
+        method: GET
+        description: List card transactions
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: account_token
+          in: query
+          type: string
+          description: Filters for transactions associated with a specific account.
+        - name: card_token
+          in: query
+          type: string
+          description: Filters for transactions associated with a specific card.
+        - name: result
+          in: query
+          type: string
+          description: Filters for transactions using transaction result field. Can filter by `APPROVED`, and `DECLINED`.
+        - name: status
+          in: query
+          type: string
+          description: Filters for transactions using transaction status field.
+    - name: v1-transactions-events-event_token-enhanced_commercial_data
+      path: /v1/transactions/events/{event_token}/enhanced_commercial_data
+      operations:
+      - name: getenhancedtransactiondata
+        method: GET
+        description: Get enhanced commercial data
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: event_token
+          in: path
+          type: string
+          description: The token of the transaction event that the enhanced data is associated with.
+          required: true
+    - name: v1-transactions-transaction_token
+      path: /v1/transactions/{transaction_token}
+      operations:
+      - name: gettransactionbytoken
+        method: GET
+        description: Get card transaction
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v1-transactions-transaction_token-enhanced_commercial_data
+      path: /v1/transactions/{transaction_token}/enhanced_commercial_data
+      operations:
+      - name: listenhancedtransactiondata
+        method: GET
+        description: List enhanced commercial data
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: transaction_token
+          in: path
+          type: string
+          description: The token of the transaction that the enhanced data is associated with.
+          required: true
+    - name: v1-transactions-transaction_token-expire_authorization
+      path: /v1/transactions/{transaction_token}/expire_authorization
+      operations:
+      - name: expireauthorization
+        method: POST
+        description: Expire an authorization
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: transaction_token
+          in: path
+          type: string
+          description: The token of the transaction to expire.
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-transaction-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Transaction. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/simulate/authorization-advice
+      name: v1-simulate-authorization-advice
+      description: REST surface for v1-simulate-authorization_advice.
+      operations:
+      - method: POST
+        name: postsimulateauthorizationadvice
+        description: Simulate authorization advice
+        call: lithic-transaction.postsimulateauthorizationadvice
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/authorize
+      name: v1-simulate-authorize
+      description: REST surface for v1-simulate-authorize.
+      operations:
+      - method: POST
+        name: postsimulateauthorize
+        description: Simulate authorization
+        call: lithic-transaction.postsimulateauthorize
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/clearing
+      name: v1-simulate-clearing
+      description: REST surface for v1-simulate-clearing.
+      operations:
+      - method: POST
+        name: postsimulateclearing
+        description: Simulate clearing
+        call: lithic-transaction.postsimulateclearing
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/credit-authorization-advice
+      name: v1-simulate-credit-authorization-advice
+      description: REST surface for v1-simulate-credit_authorization_advice.
+      operations:
+      - method: POST
+        name: postsimulatecreditauthorizationadvice
+        description: Simulate credit authorization advice
+        call: lithic-transaction.postsimulatecreditauthorizationadvice
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/return
+      name: v1-simulate-return
+      description: REST surface for v1-simulate-return.
+      operations:
+      - method: POST
+        name: postsimulatereturn
+        description: Simulate return
+        call: lithic-transaction.postsimulatereturn
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/return-reversal
+      name: v1-simulate-return-reversal
+      description: REST surface for v1-simulate-return_reversal.
+      operations:
+      - method: POST
+        name: postsimulatereturnreversal
+        description: Simulate return reversal
+        call: lithic-transaction.postsimulatereturnreversal
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/void
+      name: v1-simulate-void
+      description: REST surface for v1-simulate-void.
+      operations:
+      - method: POST
+        name: postsimulatevoid
+        description: Simulate void
+        call: lithic-transaction.postsimulatevoid
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transactions
+      name: v1-transactions
+      description: REST surface for v1-transactions.
+      operations:
+      - method: GET
+        name: gettransactions
+        description: List card transactions
+        call: lithic-transaction.gettransactions
+        with:
+          account_token: rest.account_token
+          card_token: rest.card_token
+          result: rest.result
+          status: rest.status
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transactions/events/{event-token}/enhanced-commercial-data
+      name: v1-transactions-events-event-token-enhanced-commercial-data
+      description: REST surface for v1-transactions-events-event_token-enhanced_commercial_data.
+      operations:
+      - method: GET
+        name: getenhancedtransactiondata
+        description: Get enhanced commercial data
+        call: lithic-transaction.getenhancedtransactiondata
+        with:
+          event_token: rest.event_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transactions/{transaction-token}
+      name: v1-transactions-transaction-token
+      description: REST surface for v1-transactions-transaction_token.
+      operations:
+      - method: GET
+        name: gettransactionbytoken
+        description: Get card transaction
+        call: lithic-transaction.gettransactionbytoken
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transactions/{transaction-token}/enhanced-commercial-data
+      name: v1-transactions-transaction-token-enhanced-commercial-data
+      description: REST surface for v1-transactions-transaction_token-enhanced_commercial_data.
+      operations:
+      - method: GET
+        name: listenhancedtransactiondata
+        description: List enhanced commercial data
+        call: lithic-transaction.listenhancedtransactiondata
+        with:
+          transaction_token: rest.transaction_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/transactions/{transaction-token}/expire-authorization
+      name: v1-transactions-transaction-token-expire-authorization
+      description: REST surface for v1-transactions-transaction_token-expire_authorization.
+      operations:
+      - method: POST
+        name: expireauthorization
+        description: Expire an authorization
+        call: lithic-transaction.expireauthorization
+        with:
+          transaction_token: rest.transaction_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-transaction-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Transaction. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: simulate-authorization-advice
+      description: Simulate authorization advice
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulateauthorizationadvice
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-authorization
+      description: Simulate authorization
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulateauthorize
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-clearing
+      description: Simulate clearing
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulateclearing
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-credit-authorization-advice
+      description: Simulate credit authorization advice
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulatecreditauthorizationadvice
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-return
+      description: Simulate return
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulatereturn
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-return-reversal
+      description: Simulate return reversal
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulatereturnreversal
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-void
+      description: Simulate void
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.postsimulatevoid
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-card-transactions
+      description: List card transactions
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-transaction.gettransactions
+      with:
+        account_token: tools.account_token
+        card_token: tools.card_token
+        result: tools.result
+        status: tools.status
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-enhanced-commercial-data
+      description: Get enhanced commercial data
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-transaction.getenhancedtransactiondata
+      with:
+        event_token: tools.event_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-card-transaction
+      description: Get card transaction
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-transaction.gettransactionbytoken
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-enhanced-commercial-data
+      description: List enhanced commercial data
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-transaction.listenhancedtransactiondata
+      with:
+        transaction_token: tools.transaction_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: expire-authorization
+      description: Expire an authorization
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-transaction.expireauthorization
+      with:
+        transaction_token: tools.transaction_token
+      outputParameters:
+      - type: object
+        mapping: $.

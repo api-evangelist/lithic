@@ -1,0 +1,137 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Network Program
+  description: 'Lithic Developer API — Network Program. 2 operations. Lead operation: List network programs. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Network Program
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-network-program
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Network Program business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-network_programs
+      path: /v1/network_programs
+      operations:
+      - name: getnetworkprograms
+        method: GET
+        description: List network programs
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: page_size
+          in: query
+          type: integer
+          description: Page size (for pagination).
+        - name: begin
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC
+            time zone.
+        - name: end
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC
+            time zone.
+    - name: v1-network_programs-network_program_token
+      path: /v1/network_programs/{network_program_token}
+      operations:
+      - name: getnetworkprogram
+        method: GET
+        description: Get network program
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: network_program_token
+          in: path
+          type: string
+          description: Globally unique identifier for the network program.
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-network-program-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Network Program. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/network-programs
+      name: v1-network-programs
+      description: REST surface for v1-network_programs.
+      operations:
+      - method: GET
+        name: getnetworkprograms
+        description: List network programs
+        call: lithic-network-program.getnetworkprograms
+        with:
+          page_size: rest.page_size
+          begin: rest.begin
+          end: rest.end
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/network-programs/{network-program-token}
+      name: v1-network-programs-network-program-token
+      description: REST surface for v1-network_programs-network_program_token.
+      operations:
+      - method: GET
+        name: getnetworkprogram
+        description: Get network program
+        call: lithic-network-program.getnetworkprogram
+        with:
+          network_program_token: rest.network_program_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-network-program-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Network Program. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-network-programs
+      description: List network programs
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-network-program.getnetworkprograms
+      with:
+        page_size: tools.page_size
+        begin: tools.begin
+        end: tools.end
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-network-program
+      description: Get network program
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-network-program.getnetworkprogram
+      with:
+        network_program_token: tools.network_program_token
+      outputParameters:
+      - type: object
+        mapping: $.

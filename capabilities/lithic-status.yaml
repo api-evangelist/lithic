@@ -1,0 +1,72 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Status
+  description: 'Lithic Developer API — Status. 1 operations. Lead operation: API status check. Self-contained Naftiko capability
+    covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Status
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-status
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Status business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-status
+      path: /v1/status
+      operations:
+      - name: getstatus
+        method: GET
+        description: API status check
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-status-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Status. One Spectral-compliant resource per consumed operation, prefixed
+      with /v1.
+    resources:
+    - path: /v1/v1/status
+      name: v1-status
+      description: REST surface for v1-status.
+      operations:
+      - method: GET
+        name: getstatus
+        description: API status check
+        call: lithic-status.getstatus
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-status-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Status. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: api-status-check
+      description: API status check
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-status.getstatus
+      outputParameters:
+      - type: object
+        mapping: $.

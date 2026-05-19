@@ -1,0 +1,278 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Settlement Report
+  description: 'Lithic Developer API — Settlement Report. 4 operations. Lead operation: List settlement details. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Settlement Report
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-settlement-report
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Settlement Report business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-reports-settlement-details-report_date
+      path: /v1/reports/settlement/details/{report_date}
+      operations:
+      - name: getsettlementdetails
+        method: GET
+        description: List settlement details
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: report_date
+          in: path
+          type: string
+          description: Date of the settlement report to retrieve. Not available in sandbox.
+          required: true
+        - name: page_size
+          in: query
+          type: integer
+          description: Number of records per page.
+    - name: v1-reports-settlement-network_totals
+      path: /v1/reports/settlement/network_totals
+      operations:
+      - name: listnetworktotals
+        method: GET
+        description: List network totals
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: report_date
+          in: query
+          type: string
+          description: Singular report date to filter on (YYYY-MM-DD). Cannot be populated in conjunction with report_date_begin
+            or report_date_end.
+        - name: report_date_begin
+          in: query
+          type: string
+          description: Earliest report date to filter on, inclusive (YYYY-MM-DD).
+        - name: report_date_end
+          in: query
+          type: string
+          description: Latest report date to filter on, inclusive (YYYY-MM-DD).
+        - name: network
+          in: query
+          type: string
+          description: Network to filter on.
+        - name: institution_id
+          in: query
+          type: string
+          description: Institution ID to filter on.
+        - name: settlement_institution_id
+          in: query
+          type: string
+          description: Settlement institution ID to filter on.
+        - name: begin
+          in: query
+          type: string
+          description: Datetime in RFC 3339 format. Only entries created after the specified time will be included. UTC time
+            zone.
+        - name: end
+          in: query
+          type: string
+          description: Datetime in RFC 3339 format. Only entries created before the specified time will be included. UTC time
+            zone.
+        - name: page_size
+          in: query
+          type: integer
+          description: Number of records per page.
+        - name: starting_after
+          in: query
+          type: string
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve
+            the next page of results after this item.
+        - name: ending_before
+          in: query
+          type: string
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the
+            previous page of results before this item.
+    - name: v1-reports-settlement-network_totals-token
+      path: /v1/reports/settlement/network_totals/{token}
+      operations:
+      - name: getnetworktotal
+        method: GET
+        description: Get network total
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: token
+          in: path
+          type: string
+          description: Token of the network total record to retrieve
+          required: true
+    - name: v1-reports-settlement-summary-report_date
+      path: /v1/reports/settlement/summary/{report_date}
+      operations:
+      - name: getsummary
+        method: GET
+        description: Get settlement summary
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: report_date
+          in: path
+          type: string
+          description: Date of the settlement report to retrieve.
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-settlement-report-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Settlement Report. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/reports/settlement/details/{report-date}
+      name: v1-reports-settlement-details-report-date
+      description: REST surface for v1-reports-settlement-details-report_date.
+      operations:
+      - method: GET
+        name: getsettlementdetails
+        description: List settlement details
+        call: lithic-settlement-report.getsettlementdetails
+        with:
+          report_date: rest.report_date
+          page_size: rest.page_size
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/reports/settlement/network-totals
+      name: v1-reports-settlement-network-totals
+      description: REST surface for v1-reports-settlement-network_totals.
+      operations:
+      - method: GET
+        name: listnetworktotals
+        description: List network totals
+        call: lithic-settlement-report.listnetworktotals
+        with:
+          report_date: rest.report_date
+          report_date_begin: rest.report_date_begin
+          report_date_end: rest.report_date_end
+          network: rest.network
+          institution_id: rest.institution_id
+          settlement_institution_id: rest.settlement_institution_id
+          begin: rest.begin
+          end: rest.end
+          page_size: rest.page_size
+          starting_after: rest.starting_after
+          ending_before: rest.ending_before
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/reports/settlement/network-totals/{token}
+      name: v1-reports-settlement-network-totals-token
+      description: REST surface for v1-reports-settlement-network_totals-token.
+      operations:
+      - method: GET
+        name: getnetworktotal
+        description: Get network total
+        call: lithic-settlement-report.getnetworktotal
+        with:
+          token: rest.token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/reports/settlement/summary/{report-date}
+      name: v1-reports-settlement-summary-report-date
+      description: REST surface for v1-reports-settlement-summary-report_date.
+      operations:
+      - method: GET
+        name: getsummary
+        description: Get settlement summary
+        call: lithic-settlement-report.getsummary
+        with:
+          report_date: rest.report_date
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-settlement-report-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Settlement Report. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-settlement-details
+      description: List settlement details
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-settlement-report.getsettlementdetails
+      with:
+        report_date: tools.report_date
+        page_size: tools.page_size
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-network-totals
+      description: List network totals
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-settlement-report.listnetworktotals
+      with:
+        report_date: tools.report_date
+        report_date_begin: tools.report_date_begin
+        report_date_end: tools.report_date_end
+        network: tools.network
+        institution_id: tools.institution_id
+        settlement_institution_id: tools.settlement_institution_id
+        begin: tools.begin
+        end: tools.end
+        page_size: tools.page_size
+        starting_after: tools.starting_after
+        ending_before: tools.ending_before
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-network-total
+      description: Get network total
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-settlement-report.getnetworktotal
+      with:
+        token: tools.token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-settlement-summary
+      description: Get settlement summary
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-settlement-report.getsummary
+      with:
+        report_date: tools.report_date
+      outputParameters:
+      - type: object
+        mapping: $.

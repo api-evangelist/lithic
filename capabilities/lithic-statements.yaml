@@ -1,0 +1,645 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Statements
+  description: 'Lithic Developer API — Statements. 11 operations. Lead operation: List interest tier schedules. Self-contained
+    Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Statements
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-statements
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Statements business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-financial_accounts-financial_account_token-interest_tier_schedule
+      path: /v1/financial_accounts/{financial_account_token}/interest_tier_schedule
+      operations:
+      - name: listinteresttierschedules
+        method: GET
+        description: List interest tier schedules
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: after_date
+          in: query
+          type: string
+          description: Return schedules with effective_date >= after_date (ISO format YYYY-MM-DD)
+        - name: before_date
+          in: query
+          type: string
+          description: Return schedules with effective_date <= before_date (ISO format YYYY-MM-DD)
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account
+          required: true
+        - name: for_date
+          in: query
+          type: string
+          description: Return schedule with effective_date == for_date (ISO format YYYY-MM-DD)
+      - name: createinteresttierschedule
+        method: POST
+        description: Create interest tier schedule
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-financial_accounts-financial_account_token-interest_tier_schedule-effective_d
+      path: /v1/financial_accounts/{financial_account_token}/interest_tier_schedule/{effective_date}
+      operations:
+      - name: deleteinteresttierschedule
+        method: DELETE
+        description: Delete interest tier schedule
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: effective_date
+          in: path
+          type: string
+          description: Effective date in ISO format (YYYY-MM-DD)
+          required: true
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account
+          required: true
+      - name: getinteresttierschedule
+        method: GET
+        description: Get interest tier schedule
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: effective_date
+          in: path
+          type: string
+          description: Effective date in ISO format (YYYY-MM-DD)
+          required: true
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account
+          required: true
+      - name: updateinteresttierschedule
+        method: PUT
+        description: Update interest tier schedule
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: effective_date
+          in: path
+          type: string
+          description: Effective date in ISO format (YYYY-MM-DD)
+          required: true
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-financial_accounts-financial_account_token-loan_tape_configuration
+      path: /v1/financial_accounts/{financial_account_token}/loan_tape_configuration
+      operations:
+      - name: getloantapeconfiguration
+        method: GET
+        description: Get loan tape configuration
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+    - name: v1-financial_accounts-financial_account_token-loan_tapes
+      path: /v1/financial_accounts/{financial_account_token}/loan_tapes
+      operations:
+      - name: getloantapes
+        method: GET
+        description: List loan tapes
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: begin
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+        - name: end
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+        - name: ending_before
+          in: query
+          type: string
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the
+            previous page of results before this item.
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+        - name: page_size
+          in: query
+          type: integer
+          description: Page size (for pagination).
+        - name: starting_after
+          in: query
+          type: string
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve
+            the next page of results after this item.
+    - name: v1-financial_accounts-financial_account_token-loan_tapes-loan_tape_token
+      path: /v1/financial_accounts/{financial_account_token}/loan_tapes/{loan_tape_token}
+      operations:
+      - name: getloantape
+        method: GET
+        description: Get loan tape by token
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+        - name: loan_tape_token
+          in: path
+          type: string
+          description: Globally unique identifier for loan tape.
+          required: true
+    - name: v1-financial_accounts-financial_account_token-statements
+      path: /v1/financial_accounts/{financial_account_token}/statements
+      operations:
+      - name: getstatements
+        method: GET
+        description: List statements
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: begin
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+        - name: end
+          in: query
+          type: string
+          description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+        - name: ending_before
+          in: query
+          type: string
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the
+            previous page of results before this item.
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+        - name: page_size
+          in: query
+          type: integer
+          description: Page size (for pagination).
+        - name: starting_after
+          in: query
+          type: string
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve
+            the next page of results after this item.
+        - name: include_initial_statements
+          in: query
+          type: boolean
+          description: Whether to include the initial statement. It is not included by default.
+    - name: v1-financial_accounts-financial_account_token-statements-statement_token
+      path: /v1/financial_accounts/{financial_account_token}/statements/{statement_token}
+      operations:
+      - name: getstatement
+        method: GET
+        description: Get statement by token
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+        - name: statement_token
+          in: path
+          type: string
+          description: Globally unique identifier for statements.
+          required: true
+    - name: v1-financial_accounts-financial_account_token-statements-statement_token-line_it
+      path: /v1/financial_accounts/{financial_account_token}/statements/{statement_token}/line_items
+      operations:
+      - name: getstatementlineitems
+        method: GET
+        description: List line items for a statement
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: ending_before
+          in: query
+          type: string
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the
+            previous page of results before this item.
+        - name: financial_account_token
+          in: path
+          type: string
+          description: Globally unique identifier for financial account.
+          required: true
+        - name: page_size
+          in: query
+          type: integer
+          description: Page size (for pagination).
+        - name: starting_after
+          in: query
+          type: string
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve
+            the next page of results after this item.
+        - name: statement_token
+          in: path
+          type: string
+          description: Globally unique identifier for statements.
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-statements-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Statements. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/financial-accounts/{financial-account-token}/interest-tier-schedule
+      name: v1-financial-accounts-financial-account-token-interest-tier-schedule
+      description: REST surface for v1-financial_accounts-financial_account_token-interest_tier_schedule.
+      operations:
+      - method: GET
+        name: listinteresttierschedules
+        description: List interest tier schedules
+        call: lithic-statements.listinteresttierschedules
+        with:
+          after_date: rest.after_date
+          before_date: rest.before_date
+          financial_account_token: rest.financial_account_token
+          for_date: rest.for_date
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createinteresttierschedule
+        description: Create interest tier schedule
+        call: lithic-statements.createinteresttierschedule
+        with:
+          financial_account_token: rest.financial_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/interest-tier-schedule/{effective-date}
+      name: v1-financial-accounts-financial-account-token-interest-tier-schedule-effective-d
+      description: REST surface for v1-financial_accounts-financial_account_token-interest_tier_schedule-effective_d.
+      operations:
+      - method: DELETE
+        name: deleteinteresttierschedule
+        description: Delete interest tier schedule
+        call: lithic-statements.deleteinteresttierschedule
+        with:
+          effective_date: rest.effective_date
+          financial_account_token: rest.financial_account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getinteresttierschedule
+        description: Get interest tier schedule
+        call: lithic-statements.getinteresttierschedule
+        with:
+          effective_date: rest.effective_date
+          financial_account_token: rest.financial_account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: updateinteresttierschedule
+        description: Update interest tier schedule
+        call: lithic-statements.updateinteresttierschedule
+        with:
+          effective_date: rest.effective_date
+          financial_account_token: rest.financial_account_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/loan-tape-configuration
+      name: v1-financial-accounts-financial-account-token-loan-tape-configuration
+      description: REST surface for v1-financial_accounts-financial_account_token-loan_tape_configuration.
+      operations:
+      - method: GET
+        name: getloantapeconfiguration
+        description: Get loan tape configuration
+        call: lithic-statements.getloantapeconfiguration
+        with:
+          financial_account_token: rest.financial_account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/loan-tapes
+      name: v1-financial-accounts-financial-account-token-loan-tapes
+      description: REST surface for v1-financial_accounts-financial_account_token-loan_tapes.
+      operations:
+      - method: GET
+        name: getloantapes
+        description: List loan tapes
+        call: lithic-statements.getloantapes
+        with:
+          begin: rest.begin
+          end: rest.end
+          ending_before: rest.ending_before
+          financial_account_token: rest.financial_account_token
+          page_size: rest.page_size
+          starting_after: rest.starting_after
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/loan-tapes/{loan-tape-token}
+      name: v1-financial-accounts-financial-account-token-loan-tapes-loan-tape-token
+      description: REST surface for v1-financial_accounts-financial_account_token-loan_tapes-loan_tape_token.
+      operations:
+      - method: GET
+        name: getloantape
+        description: Get loan tape by token
+        call: lithic-statements.getloantape
+        with:
+          financial_account_token: rest.financial_account_token
+          loan_tape_token: rest.loan_tape_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/statements
+      name: v1-financial-accounts-financial-account-token-statements
+      description: REST surface for v1-financial_accounts-financial_account_token-statements.
+      operations:
+      - method: GET
+        name: getstatements
+        description: List statements
+        call: lithic-statements.getstatements
+        with:
+          begin: rest.begin
+          end: rest.end
+          ending_before: rest.ending_before
+          financial_account_token: rest.financial_account_token
+          page_size: rest.page_size
+          starting_after: rest.starting_after
+          include_initial_statements: rest.include_initial_statements
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/statements/{statement-token}
+      name: v1-financial-accounts-financial-account-token-statements-statement-token
+      description: REST surface for v1-financial_accounts-financial_account_token-statements-statement_token.
+      operations:
+      - method: GET
+        name: getstatement
+        description: Get statement by token
+        call: lithic-statements.getstatement
+        with:
+          financial_account_token: rest.financial_account_token
+          statement_token: rest.statement_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/financial-accounts/{financial-account-token}/statements/{statement-token}/line-items
+      name: v1-financial-accounts-financial-account-token-statements-statement-token-line-it
+      description: REST surface for v1-financial_accounts-financial_account_token-statements-statement_token-line_it.
+      operations:
+      - method: GET
+        name: getstatementlineitems
+        description: List line items for a statement
+        call: lithic-statements.getstatementlineitems
+        with:
+          ending_before: rest.ending_before
+          financial_account_token: rest.financial_account_token
+          page_size: rest.page_size
+          starting_after: rest.starting_after
+          statement_token: rest.statement_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-statements-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Statements. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-interest-tier-schedules
+      description: List interest tier schedules
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.listinteresttierschedules
+      with:
+        after_date: tools.after_date
+        before_date: tools.before_date
+        financial_account_token: tools.financial_account_token
+        for_date: tools.for_date
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-interest-tier-schedule
+      description: Create interest tier schedule
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-statements.createinteresttierschedule
+      with:
+        financial_account_token: tools.financial_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-interest-tier-schedule
+      description: Delete interest tier schedule
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: lithic-statements.deleteinteresttierschedule
+      with:
+        effective_date: tools.effective_date
+        financial_account_token: tools.financial_account_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-interest-tier-schedule
+      description: Get interest tier schedule
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getinteresttierschedule
+      with:
+        effective_date: tools.effective_date
+        financial_account_token: tools.financial_account_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-interest-tier-schedule
+      description: Update interest tier schedule
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: lithic-statements.updateinteresttierschedule
+      with:
+        effective_date: tools.effective_date
+        financial_account_token: tools.financial_account_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-loan-tape-configuration
+      description: Get loan tape configuration
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getloantapeconfiguration
+      with:
+        financial_account_token: tools.financial_account_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-loan-tapes
+      description: List loan tapes
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getloantapes
+      with:
+        begin: tools.begin
+        end: tools.end
+        ending_before: tools.ending_before
+        financial_account_token: tools.financial_account_token
+        page_size: tools.page_size
+        starting_after: tools.starting_after
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-loan-tape-token
+      description: Get loan tape by token
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getloantape
+      with:
+        financial_account_token: tools.financial_account_token
+        loan_tape_token: tools.loan_tape_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-statements
+      description: List statements
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getstatements
+      with:
+        begin: tools.begin
+        end: tools.end
+        ending_before: tools.ending_before
+        financial_account_token: tools.financial_account_token
+        page_size: tools.page_size
+        starting_after: tools.starting_after
+        include_initial_statements: tools.include_initial_statements
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-statement-token
+      description: Get statement by token
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getstatement
+      with:
+        financial_account_token: tools.financial_account_token
+        statement_token: tools.statement_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-line-items-statement
+      description: List line items for a statement
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-statements.getstatementlineitems
+      with:
+        ending_before: tools.ending_before
+        financial_account_token: tools.financial_account_token
+        page_size: tools.page_size
+        starting_after: tools.starting_after
+        statement_token: tools.statement_token
+      outputParameters:
+      - type: object
+        mapping: $.

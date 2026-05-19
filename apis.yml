@@ -60,6 +60,8 @@ apis:
   - type: Documentation
     url: https://docs.lithic.com/docs/event-webhooks
 common:
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/lithic
 - type: Website
   url: https://lithic.com/
 - type: Plans

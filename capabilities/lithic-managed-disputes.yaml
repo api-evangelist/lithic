@@ -1,0 +1,168 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Managed Disputes
+  description: 'Lithic Developer API — Managed Disputes. 2 operations. Lead operation: List disputes. Self-contained Naftiko
+    capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Managed Disputes
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-managed-disputes
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Managed Disputes business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-disputes
+      path: /v2/disputes
+      operations:
+      - name: getdisputesv2
+        method: GET
+        description: List disputes
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: begin
+          in: query
+          type: string
+          description: RFC 3339 timestamp for filtering by created date, inclusive.
+        - name: end
+          in: query
+          type: string
+          description: RFC 3339 timestamp for filtering by created date, inclusive.
+        - name: page_size
+          in: query
+          type: integer
+          description: Number of items to return.
+        - name: starting_after
+          in: query
+          type: string
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve
+            the next page of results after this item.
+        - name: ending_before
+          in: query
+          type: string
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the
+            previous page of results before this item.
+        - name: disputed_transaction_token
+          in: query
+          type: string
+          description: Filter by the token of the transaction being disputed. Corresponds with transaction_series.related_transaction_token
+            in the Dispute.
+        - name: card_token
+          in: query
+          type: string
+          description: Filter by card token.
+        - name: account_token
+          in: query
+          type: string
+          description: Filter by account token.
+    - name: v2-disputes-dispute_token
+      path: /v2/disputes/{dispute_token}
+      operations:
+      - name: getdisputebytokenv2
+        method: GET
+        description: Retrieve a dispute
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: dispute_token
+          in: path
+          type: string
+          description: Token of the dispute to retrieve.
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-managed-disputes-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Managed Disputes. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/disputes
+      name: v2-disputes
+      description: REST surface for v2-disputes.
+      operations:
+      - method: GET
+        name: getdisputesv2
+        description: List disputes
+        call: lithic-managed-disputes.getdisputesv2
+        with:
+          begin: rest.begin
+          end: rest.end
+          page_size: rest.page_size
+          starting_after: rest.starting_after
+          ending_before: rest.ending_before
+          disputed_transaction_token: rest.disputed_transaction_token
+          card_token: rest.card_token
+          account_token: rest.account_token
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/disputes/{dispute-token}
+      name: v2-disputes-dispute-token
+      description: REST surface for v2-disputes-dispute_token.
+      operations:
+      - method: GET
+        name: getdisputebytokenv2
+        description: Retrieve a dispute
+        call: lithic-managed-disputes.getdisputebytokenv2
+        with:
+          dispute_token: rest.dispute_token
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-managed-disputes-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Managed Disputes. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-disputes
+      description: List disputes
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-managed-disputes.getdisputesv2
+      with:
+        begin: tools.begin
+        end: tools.end
+        page_size: tools.page_size
+        starting_after: tools.starting_after
+        ending_before: tools.ending_before
+        disputed_transaction_token: tools.disputed_transaction_token
+        card_token: tools.card_token
+        account_token: tools.account_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: retrieve-dispute
+      description: Retrieve a dispute
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-managed-disputes.getdisputebytokenv2
+      with:
+        dispute_token: tools.dispute_token
+      outputParameters:
+      - type: object
+        mapping: $.

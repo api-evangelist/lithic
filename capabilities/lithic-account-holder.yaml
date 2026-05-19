@@ -1,0 +1,479 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Account Holder
+  description: 'Lithic Developer API — Account Holder. 11 operations. Lead operation: Get a list of individual or business
+    account holders. Self-contained Naftiko capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Account Holder
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-account-holder
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Account Holder business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-account_holders
+      path: /v1/account_holders
+      operations:
+      - name: getaccountholders
+        method: GET
+        description: Get a list of individual or business account holders
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: external_id
+          in: query
+          type: string
+          description: If applicable, represents the external_id associated with the account_holder.
+        - name: limit
+          in: query
+          type: integer
+          description: The number of account_holders to limit the response to.
+        - name: first_name
+          in: query
+          type: string
+          description: (Individual Account Holders only) The first name of the account holder. The query is case insensitive
+            and supports partial matches.
+        - name: last_name
+          in: query
+          type: string
+          description: (Individual Account Holders only) The last name of the account holder. The query is case insensitive
+            and supports partial matches.
+        - name: legal_business_name
+          in: query
+          type: string
+          description: (Business Account Holders only) The legal business name of the account holder. The query is case insensitive
+            and supports partial matches.
+        - name: phone_number
+          in: query
+          type: string
+          description: Phone number of the account holder. The query must be an exact match.
+        - name: email
+          in: query
+          type: string
+          description: Email address of the account holder. The query must be an exact match, case insensitive.
+      - name: postaccountholders
+        method: POST
+        description: Create an individual or business account holder
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-account_holders-account_holder_token
+      path: /v1/account_holders/{account_holder_token}
+      operations:
+      - name: getaccountholder
+        method: GET
+        description: Get an individual or business account holder
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: patchaccountholder
+        method: PATCH
+        description: Update account holder information and possibly resubmit for evaluation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-account_holders-account_holder_token-documents
+      path: /v1/account_holders/{account_holder_token}/documents
+      operations:
+      - name: getaccountholderdocuments
+        method: GET
+        description: Get account holder document uploads
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: postaccountholderdocuments
+        method: POST
+        description: Initiate account holder document upload
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-account_holders-account_holder_token-documents-document_token
+      path: /v1/account_holders/{account_holder_token}/documents/{document_token}
+      operations:
+      - name: getaccountholderdocumentbytoken
+        method: GET
+        description: Get account holder document upload status
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v1-account_holders-account_holder_token-entities
+      path: /v1/account_holders/{account_holder_token}/entities
+      operations:
+      - name: postaccountholderentities
+        method: POST
+        description: Create a new beneficial owner individual or replace the existing control person entity
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-account_holders-account_holder_token-entities-entity_token
+      path: /v1/account_holders/{account_holder_token}/entities/{entity_token}
+      operations:
+      - name: deleteaccountholderentity
+        method: DELETE
+        description: Deactivate a beneficial owner individual
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v1-simulate-account_holders-enrollment_document_review
+      path: /v1/simulate/account_holders/enrollment_document_review
+      operations:
+      - name: simulateaccountholderenrollmentdocumentreview
+        method: POST
+        description: Simulate an account holder document upload's review
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-simulate-account_holders-enrollment_review
+      path: /v1/simulate/account_holders/enrollment_review
+      operations:
+      - name: simulateaccountholderenrollmentreview
+        method: POST
+        description: Simulate an account holder's enrollment review
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-account-holder-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Account Holder. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/account-holders
+      name: v1-account-holders
+      description: REST surface for v1-account_holders.
+      operations:
+      - method: GET
+        name: getaccountholders
+        description: Get a list of individual or business account holders
+        call: lithic-account-holder.getaccountholders
+        with:
+          external_id: rest.external_id
+          limit: rest.limit
+          first_name: rest.first_name
+          last_name: rest.last_name
+          legal_business_name: rest.legal_business_name
+          phone_number: rest.phone_number
+          email: rest.email
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postaccountholders
+        description: Create an individual or business account holder
+        call: lithic-account-holder.postaccountholders
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/account-holders/{account-holder-token}
+      name: v1-account-holders-account-holder-token
+      description: REST surface for v1-account_holders-account_holder_token.
+      operations:
+      - method: GET
+        name: getaccountholder
+        description: Get an individual or business account holder
+        call: lithic-account-holder.getaccountholder
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: patchaccountholder
+        description: Update account holder information and possibly resubmit for evaluation
+        call: lithic-account-holder.patchaccountholder
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/account-holders/{account-holder-token}/documents
+      name: v1-account-holders-account-holder-token-documents
+      description: REST surface for v1-account_holders-account_holder_token-documents.
+      operations:
+      - method: GET
+        name: getaccountholderdocuments
+        description: Get account holder document uploads
+        call: lithic-account-holder.getaccountholderdocuments
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postaccountholderdocuments
+        description: Initiate account holder document upload
+        call: lithic-account-holder.postaccountholderdocuments
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/account-holders/{account-holder-token}/documents/{document-token}
+      name: v1-account-holders-account-holder-token-documents-document-token
+      description: REST surface for v1-account_holders-account_holder_token-documents-document_token.
+      operations:
+      - method: GET
+        name: getaccountholderdocumentbytoken
+        description: Get account holder document upload status
+        call: lithic-account-holder.getaccountholderdocumentbytoken
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/account-holders/{account-holder-token}/entities
+      name: v1-account-holders-account-holder-token-entities
+      description: REST surface for v1-account_holders-account_holder_token-entities.
+      operations:
+      - method: POST
+        name: postaccountholderentities
+        description: Create a new beneficial owner individual or replace the existing control person entity
+        call: lithic-account-holder.postaccountholderentities
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/account-holders/{account-holder-token}/entities/{entity-token}
+      name: v1-account-holders-account-holder-token-entities-entity-token
+      description: REST surface for v1-account_holders-account_holder_token-entities-entity_token.
+      operations:
+      - method: DELETE
+        name: deleteaccountholderentity
+        description: Deactivate a beneficial owner individual
+        call: lithic-account-holder.deleteaccountholderentity
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/account-holders/enrollment-document-review
+      name: v1-simulate-account-holders-enrollment-document-review
+      description: REST surface for v1-simulate-account_holders-enrollment_document_review.
+      operations:
+      - method: POST
+        name: simulateaccountholderenrollmentdocumentreview
+        description: Simulate an account holder document upload's review
+        call: lithic-account-holder.simulateaccountholderenrollmentdocumentreview
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/simulate/account-holders/enrollment-review
+      name: v1-simulate-account-holders-enrollment-review
+      description: REST surface for v1-simulate-account_holders-enrollment_review.
+      operations:
+      - method: POST
+        name: simulateaccountholderenrollmentreview
+        description: Simulate an account holder's enrollment review
+        call: lithic-account-holder.simulateaccountholderenrollmentreview
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-account-holder-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Account Holder. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: get-list-individual-business-account
+      description: Get a list of individual or business account holders
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-account-holder.getaccountholders
+      with:
+        external_id: tools.external_id
+        limit: tools.limit
+        first_name: tools.first_name
+        last_name: tools.last_name
+        legal_business_name: tools.legal_business_name
+        phone_number: tools.phone_number
+        email: tools.email
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-individual-business-account-holder
+      description: Create an individual or business account holder
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-account-holder.postaccountholders
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-individual-business-account-holder
+      description: Get an individual or business account holder
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-account-holder.getaccountholder
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-account-holder-information-and
+      description: Update account holder information and possibly resubmit for evaluation
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: lithic-account-holder.patchaccountholder
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-account-holder-document-uploads
+      description: Get account holder document uploads
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-account-holder.getaccountholderdocuments
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: initiate-account-holder-document-upload
+      description: Initiate account holder document upload
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-account-holder.postaccountholderdocuments
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-account-holder-document-upload
+      description: Get account holder document upload status
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-account-holder.getaccountholderdocumentbytoken
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-beneficial-owner-individual
+      description: Create a new beneficial owner individual or replace the existing control person entity
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-account-holder.postaccountholderentities
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: deactivate-beneficial-owner-individual
+      description: Deactivate a beneficial owner individual
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: lithic-account-holder.deleteaccountholderentity
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-account-holder-document-upload-s
+      description: Simulate an account holder document upload's review
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-account-holder.simulateaccountholderenrollmentdocumentreview
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: simulate-account-holder-s-enrollment-review
+      description: Simulate an account holder's enrollment review
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-account-holder.simulateaccountholderenrollmentreview
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

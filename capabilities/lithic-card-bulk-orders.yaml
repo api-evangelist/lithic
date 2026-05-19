@@ -1,0 +1,191 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Lithic Developer API — Card Bulk Orders
+  description: 'Lithic Developer API — Card Bulk Orders. 4 operations. Lead operation: List bulk orders. Self-contained Naftiko
+    capability covering one Lithic business surface.'
+  tags:
+  - Lithic
+  - Card Bulk Orders
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    LITHIC_API_KEY: LITHIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: lithic-card-bulk-orders
+    baseUri: https://sandbox.lithic.com
+    description: Lithic Developer API — Card Bulk Orders business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-card_bulk_orders
+      path: /v1/card_bulk_orders
+      operations:
+      - name: getcardbulkorders
+        method: GET
+        description: List bulk orders
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: postcardbulkorder
+        method: POST
+        description: Create bulk order
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-card_bulk_orders-bulk_order_token
+      path: /v1/card_bulk_orders/{bulk_order_token}
+      operations:
+      - name: getcardbulkorder
+        method: GET
+        description: Get bulk order
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: bulk_order_token
+          in: path
+          type: string
+          description: Globally unique identifier for the bulk order
+          required: true
+      - name: patchcardbulkorder
+        method: PATCH
+        description: Update bulk order
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: bulk_order_token
+          in: path
+          type: string
+          description: Globally unique identifier for the bulk order
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Authorization
+      value: '{{env.LITHIC_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: lithic-card-bulk-orders-rest
+    port: 8080
+    description: REST adapter for Lithic Developer API — Card Bulk Orders. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/card-bulk-orders
+      name: v1-card-bulk-orders
+      description: REST surface for v1-card_bulk_orders.
+      operations:
+      - method: GET
+        name: getcardbulkorders
+        description: List bulk orders
+        call: lithic-card-bulk-orders.getcardbulkorders
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postcardbulkorder
+        description: Create bulk order
+        call: lithic-card-bulk-orders.postcardbulkorder
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/card-bulk-orders/{bulk-order-token}
+      name: v1-card-bulk-orders-bulk-order-token
+      description: REST surface for v1-card_bulk_orders-bulk_order_token.
+      operations:
+      - method: GET
+        name: getcardbulkorder
+        description: Get bulk order
+        call: lithic-card-bulk-orders.getcardbulkorder
+        with:
+          bulk_order_token: rest.bulk_order_token
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: patchcardbulkorder
+        description: Update bulk order
+        call: lithic-card-bulk-orders.patchcardbulkorder
+        with:
+          bulk_order_token: rest.bulk_order_token
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: lithic-card-bulk-orders-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Lithic Developer API — Card Bulk Orders. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-bulk-orders
+      description: List bulk orders
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-card-bulk-orders.getcardbulkorders
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-bulk-order
+      description: Create bulk order
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: lithic-card-bulk-orders.postcardbulkorder
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-bulk-order
+      description: Get bulk order
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: lithic-card-bulk-orders.getcardbulkorder
+      with:
+        bulk_order_token: tools.bulk_order_token
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-bulk-order
+      description: Update bulk order
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: lithic-card-bulk-orders.patchcardbulkorder
+      with:
+        bulk_order_token: tools.bulk_order_token
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
