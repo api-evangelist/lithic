@@ -9,67 +9,69 @@ description: Lithic is a modern card-issuing and program-management platform off
   Node, Python, Go, Java, Kotlin.
 image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 tags:
-- FinTech
-- BaaS
-- Card Issuing
-- Payments
-- Embedded Finance
+  - FinTech
+  - BaaS
+  - Card Issuing
+  - Payments
+  - Embedded Finance
 created: '2026-05-08'
 modified: '2026-05-08'
 specificationVersion: '0.19'
 apis:
-- aid: lithic:rest-api
-  name: Lithic REST API
-  description: REST API covering cards, accounts, account holders (KYC/KYB), authorization
-    rules and 3DS, transactions, financial accounts, external bank accounts, ACH and
-    wire payments, book transfers, statements, payments, disputes, tokenization, and
-    webhooks across 191 endpoints.
-  humanURL: https://docs.lithic.com/reference
-  baseURL: https://api.lithic.com/v1
-  tags:
-  - REST
-  - Card Issuing
-  - Payments
-  - ACH
-  properties:
-  - type: Documentation
-    url: https://docs.lithic.com/reference
-  - type: OpenAPI
-    url: openapi/lithic-openapi.yml
-- aid: lithic:auth-stream
-  name: Lithic Auth Stream Access (ASA)
-  description: Real-time HTTP endpoint customers expose for Lithic to call synchronously
-    during authorization for custom approve/decline logic.
-  humanURL: https://docs.lithic.com/docs/auth-stream-access-asa
-  baseURL: customer-hosted
-  tags:
-  - Webhooks
-  - RTD
-  properties:
-  - type: Documentation
-    url: https://docs.lithic.com/docs/auth-stream-access-asa
-- aid: lithic:webhooks
-  name: Lithic Webhooks
-  description: Outbound HTTP webhook delivery for transaction, card, account-holder,
-    dispute, and payment events.
-  humanURL: https://docs.lithic.com/docs/event-webhooks
-  baseURL: https://api.lithic.com/v1/events
-  tags:
-  - Webhooks
-  properties:
-  - type: Documentation
-    url: https://docs.lithic.com/docs/event-webhooks
+  - aid: lithic:rest-api
+    name: Lithic REST API
+    description: REST API covering cards, accounts, account holders (KYC/KYB), authorization
+      rules and 3DS, transactions, financial accounts, external bank accounts, ACH and
+      wire payments, book transfers, statements, payments, disputes, tokenization, and
+      webhooks across 191 endpoints.
+    humanURL: https://docs.lithic.com/reference
+    baseURL: https://api.lithic.com/v1
+    tags:
+    - REST
+    - Card Issuing
+    - Payments
+    - ACH
+    properties:
+    - type: Documentation
+      url: https://docs.lithic.com/reference
+    - type: OpenAPI
+      url: openapi/lithic-openapi.yml
+  - aid: lithic:auth-stream
+    name: Lithic Auth Stream Access (ASA)
+    description: Real-time HTTP endpoint customers expose for Lithic to call synchronously
+      during authorization for custom approve/decline logic.
+    humanURL: https://docs.lithic.com/docs/auth-stream-access-asa
+    baseURL: customer-hosted
+    tags:
+    - Webhooks
+    - RTD
+    properties:
+    - type: Documentation
+      url: https://docs.lithic.com/docs/auth-stream-access-asa
+  - aid: lithic:webhooks
+    name: Lithic Webhooks
+    description: Outbound HTTP webhook delivery for transaction, card, account-holder,
+      dispute, and payment events.
+    humanURL: https://docs.lithic.com/docs/event-webhooks
+    baseURL: https://api.lithic.com/v1/events
+    tags:
+    - Webhooks
+    properties:
+    - type: Documentation
+      url: https://docs.lithic.com/docs/event-webhooks
 common:
+  - type: GitHubOrganization
+    url: https://github.com/lithic-com
   - type: LinkedIn
     url: https://www.linkedin.com/company/lithic
-- type: Website
-  url: https://lithic.com/
-- type: Plans
-  url: plans/lithic-plans-pricing.yml
-- type: RateLimits
-  url: rate-limits/lithic-rate-limits.yml
-- type: FinOps
-  url: finops/lithic-finops.yml
+  - type: Website
+    url: https://lithic.com/
+  - type: Plans
+    url: plans/lithic-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/lithic-rate-limits.yml
+  - type: FinOps
+    url: finops/lithic-finops.yml
 maintainers:
-- FN: Kin Lane
-  email: kin@apievangelist.com
+  - FN: Kin Lane
+    email: kin@apievangelist.com
