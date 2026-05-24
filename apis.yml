@@ -72,6 +72,8 @@ common:
     url: rate-limits/lithic-rate-limits.yml
   - type: FinOps
     url: finops/lithic-finops.yml
+  - type: LLMsTxt
+    url: https://docs.lithic.com/llms.txt
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
