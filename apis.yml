@@ -62,6 +62,8 @@ apis:
   - type: Documentation
     url: https://docs.lithic.com/docs/event-webhooks
 common:
+- type: AgenticAccess
+  url: agentic-access/lithic-agentic-access.yml
 - type: TrustCenter
   url: security/lithic-trust-center.yml
 - type: VulnerabilityDisclosure
