@@ -1,0 +1,493 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Hold API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Hold
+paths:
+  /v1/financial_accounts/{financial_account_token}/holds:
+    get:
+      description: List holds for a financial account.
+      operationId: getFinancialAccountHolds
+      parameters:
+      - description: Globally unique identifier for the financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: Hold status to filter by.
+        in: query
+        name: status
+        required: false
+        schema:
+          $ref: '#/components/schemas/hold_status'
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/holds_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List holds
+      tags:
+      - Hold
+    post:
+      description: 'Create a hold on a financial account. Holds reserve funds by moving them
+
+        from available to pending balance. They can be resolved via settlement
+
+        (linked to a payment or book transfer), voiding, or expiration.
+
+        '
+      operationId: createHold
+      parameters:
+      - description: Globally unique identifier for the financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create_hold_request'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hold_transaction'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create hold
+      tags:
+      - Hold
+  /v1/holds/{hold_token}:
+    get:
+      description: Get hold by token.
+      operationId: getHold
+      parameters:
+      - description: Globally unique identifier for the hold.
+        in: path
+        name: hold_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hold_transaction'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get hold
+      tags:
+      - Hold
+  /v1/holds/{hold_token}/void:
+    post:
+      description: 'Void an active hold. This returns the held funds from pending back to
+
+        available balance. Only holds in PENDING status can be voided.
+
+        '
+      operationId: voidHold
+      parameters:
+      - description: Globally unique identifier for the hold.
+        in: path
+        name: hold_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/void_hold_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hold_transaction'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Void hold
+      tags:
+      - Hold
+components:
+  schemas:
+    base_transaction:
+      title: base_transaction
+      description: Base class for all transaction types in the ledger service
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/transaction_status'
+          description: The status of the transaction
+        token:
+          type: string
+          description: Unique identifier for the transaction
+          format: uuid
+        created:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was created
+          format: date-time
+        updated:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was last updated
+          format: date-time
+      required:
+      - status
+      - token
+      - created
+      - updated
+    hold_event:
+      title: Hold Event
+      description: Event representing a lifecycle change to a hold
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/hold_event_type'
+        result:
+          $ref: '#/components/schemas/transaction_result'
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/detailed_results'
+        amount:
+          type: integer
+          description: Amount in cents
+        created:
+          type: string
+          format: date-time
+        memo:
+          type:
+          - string
+          - 'null'
+        settling_transaction_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Transaction token of the payment that settled this hold (only populated for HOLD_SETTLED events)
+      required:
+      - token
+      - type
+      - result
+      - detailed_results
+      - amount
+      - created
+      - memo
+      - settling_transaction_token
+    void_hold_request:
+      title: Void Hold Request
+      description: Request to void an active hold
+      type: object
+      properties:
+        memo:
+          type:
+          - string
+          - 'null'
+          description: Reason for voiding the hold
+    hold_event_type:
+      title: Hold Event Type
+      description: Type of hold lifecycle event
+      type: string
+      enum:
+      - HOLD_INITIATED
+      - HOLD_VOIDED
+      - HOLD_EXPIRED
+      - HOLD_SETTLED
+    transaction_status:
+      title: Transaction Status
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - DECLINED
+      - REVERSED
+      - CANCELED
+      - RETURNED
+    holds_response:
+      title: Holds Response
+      description: Paginated response containing hold transactions
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/hold_transaction'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    detailed_results:
+      title: Detailed Results
+      type: string
+      enum:
+      - APPROVED
+      - INSUFFICIENT_FUNDS
+    create_hold_request:
+      title: Create Hold Request
+      description: Request to create a new hold on a financial account
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          description: Amount to hold in cents
+        memo:
+          type:
+          - string
+          - 'null'
+          description: Reason for the hold
+        token:
+          type: string
+          format: uuid
+          description: Customer-provided token for idempotency. Becomes the hold token.
+        expiration_datetime:
+          type: string
+          format: date-time
+          description: When the hold should auto-expire
+        user_defined_id:
+          type: string
+          description: User-provided identifier for the hold
+      required:
+      - amount
+    transaction_result:
+      title: Transaction Result
+      type: string
+      enum:
+      - APPROVED
+      - DECLINED
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    hold_transaction:
+      title: Hold Transaction
+      description: A hold transaction representing reserved funds on a financial account. Holds move funds from available to pending balance in anticipation of future payments. They can be resolved via settlement (linked to payment), manual release, or expiration.
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: HOLD
+            description: HOLD - Hold Transaction
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          status:
+            $ref: '#/components/schemas/hold_status'
+          financial_account_token:
+            type: string
+            format: uuid
+          pending_amount:
+            type: integer
+            description: Current pending amount (0 when resolved)
+          currency:
+            type: string
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/hold_event'
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+          expiration_datetime:
+            type:
+            - string
+            - 'null'
+            format: date-time
+            description: When the hold will auto-expire if not resolved
+      required:
+      - family
+      - result
+      - status
+      - financial_account_token
+      - pending_amount
+      - currency
+      - events
+      - user_defined_id
+      - expiration_datetime
+    hold_status:
+      title: Hold Status
+      description: Status of a hold transaction
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - EXPIRED
+      - VOIDED
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

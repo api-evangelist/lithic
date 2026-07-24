@@ -1,0 +1,318 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Funding Events API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Funding Events
+paths:
+  /v1/funding_events:
+    get:
+      description: Get all funding events for program
+      operationId: getFundingEvents
+      parameters:
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - description: Page size (for pagination).
+        in: query
+        name: page_size
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          type: integer
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/funding_event_responses'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List funding events
+      tags:
+      - Funding Events
+  /v1/funding_events/{funding_event_token}:
+    get:
+      description: Get funding event for program by id
+      operationId: getFundingEventById
+      parameters:
+      - description: Globally unique identifier for funding event.
+        in: path
+        name: funding_event_token
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/funding_event_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get funding event by ID
+      tags:
+      - Funding Events
+  /v1/funding_events/{funding_event_token}/details:
+    get:
+      description: Get funding event details by id
+      operationId: getFundingEventDetailsById
+      parameters:
+      - description: Globally unique identifier for funding event.
+        in: path
+        name: funding_event_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/funding_event_details_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get funding event details
+      tags:
+      - Funding Events
+components:
+  schemas:
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    funding_event_response:
+      title: Funding Event Response
+      type: object
+      properties:
+        token:
+          description: Unique token ID
+          type: string
+          example: b68b7424-aa69-4cbc-a946-30d90181b621
+          format: uuid
+        collection_tokens:
+          description: IDs of collections, further information can be gathered from the appropriate collection API based on collection_resource_type
+          type: array
+          items:
+            type: string
+            example: b68b7424-aa69-4cbc-a946-30d90181b621
+            format: uuid
+        previous_high_watermark:
+          description: Time of the previous high watermark
+          type: string
+          example: '2024-01-01T00:00:00Z'
+          format: date-time
+        high_watermark:
+          description: Time of the high watermark
+          type: string
+          example: '2024-01-01T00:00:00Z'
+          format: date-time
+        collection_resource_type:
+          description: Collection resource type
+          type: string
+          example: PAYMENT
+          enum:
+          - BOOK_TRANSFER
+          - PAYMENT
+        network_settlement_summary:
+          description: Network settlement summary breakdown by network settlement date
+          type: array
+          items:
+            $ref: '#/components/schemas/funding_event_settlement'
+        created:
+          description: Time of the creation
+          type: string
+          example: '2024-01-01T00:00:00Z'
+          format: date-time
+        updated:
+          description: Time of the update
+          type: string
+          example: '2024-01-01T00:00:00Z'
+          format: date-time
+      required:
+      - token
+      - previous_high_watermark
+      - high_watermark
+      - collection_resource_type
+      - created
+      - updated
+      - network_settlement_summary
+      - collection_tokens
+    funding_event_settlement:
+      title: Funding Event Settlement
+      type: object
+      properties:
+        settled_gross_amount:
+          type: integer
+          format: int64
+        network_settlement_date:
+          type: string
+          example: '2024-01-01'
+          format: date
+      required:
+      - settled_gross_amount
+      - network_settlement_date
+    funding_event_responses:
+      title: Funding Event Responses
+      type: object
+      properties:
+        data:
+          type: array
+          description: Funding Event Response
+          items:
+            $ref: '#/components/schemas/funding_event_response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    funding_event_details_response:
+      title: Funding Event Details Response
+      type: object
+      properties:
+        token:
+          description: Unique token ID
+          type: string
+          example: b68b7424-aa69-4cbc-a946-30d90181b621
+          format: uuid
+        settlement_summary_url:
+          description: URL of the settlement summary
+          type: string
+          format: uri
+        settlement_details_url:
+          description: URL of the settlement details
+          type: string
+          format: uri
+      required:
+      - token
+      - settlement_details_url
+      - settlement_summary_url
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

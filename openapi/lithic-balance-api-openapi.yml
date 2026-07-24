@@ -1,0 +1,348 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Balance API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Balance
+paths:
+  /v1/balances:
+    get:
+      description: Get the balances for a program, business, or a given end-user account
+      operationId: getBalances
+      parameters:
+      - description: List balances for all financial accounts of a given account_token.
+        in: query
+        name: account_token
+        schema:
+          format: uuid
+          type: string
+      - description: List balances for all financial accounts of a given business_account_token.
+        in: query
+        name: business_account_token
+        schema:
+          format: uuid
+          type: string
+      - description: UTC date and time of the balances to retrieve. Defaults to latest available balances
+        in: query
+        name: balance_date
+        schema:
+          format: date-time
+          type: string
+      - description: List balances for a given Financial Account type.
+        in: query
+        name: financial_account_type
+        schema:
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/balance'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List balances
+      tags:
+      - Balance
+  /v1/financial_accounts/{financial_account_token}/balances:
+    get:
+      description: Get the balances for a given financial account.
+      operationId: getBalance
+      parameters:
+      - description: UTC date of the balance to retrieve. Defaults to latest available balance
+        in: query
+        name: balance_date
+        schema:
+          format: date-time
+          type: string
+      - description: 'Balance after a given financial event occured.
+
+          For example, passing the event_token of a $5 CARD_CLEARING financial event will return a balance decreased by $5
+
+          '
+        in: query
+        name: last_transaction_event_token
+        schema:
+          format: uuid
+          type: string
+      - $ref: '#/components/parameters/financialAccountToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/financial-account-balance'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get balances
+      tags:
+      - Balance
+components:
+  schemas:
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    financial-account-balance:
+      title: Financial Account Balance
+      description: Balance of a Financial Account
+      properties:
+        available_amount:
+          description: Funds available for spend in the currency's smallest unit (e.g., cents for USD)
+          type: integer
+        created:
+          description: Date and time for when the balance was first created.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the local currency of the balance.
+          type: string
+        token:
+          description: Globally unique identifier for the financial account that holds this balance.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          format: uuid
+          type: string
+        type:
+          description: Type of financial account.
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          type: string
+        last_transaction_event_token:
+          description: Globally unique identifier for the last financial transaction event that impacted this balance.
+          format: uuid
+          type: string
+        last_transaction_token:
+          description: Globally unique identifier for the last financial transaction that impacted this balance.
+          format: uuid
+          type: string
+        pending_amount:
+          description: Funds not available for spend due to card authorizations or pending ACH release. Shown in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        total_amount:
+          description: The sum of available and pending balance in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        updated:
+          description: Date and time for when the balance was last updated.
+          format: date-time
+          type: string
+      required:
+      - available_amount
+      - created
+      - currency
+      - token
+      - type
+      - last_transaction_event_token
+      - last_transaction_token
+      - pending_amount
+      - total_amount
+      - updated
+      type: object
+    balance:
+      description: Balance
+      properties:
+        available_amount:
+          description: Funds available for spend in the currency's smallest unit (e.g., cents for USD)
+          type: integer
+        created:
+          description: Date and time for when the balance was first created.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the local currency of the balance.
+          type: string
+        financial_account_token:
+          description: Globally unique identifier for the financial account that holds this balance.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          format: uuid
+          type: string
+        financial_account_type:
+          description: Type of financial account.
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          type: string
+        last_transaction_event_token:
+          description: Globally unique identifier for the last financial transaction event that impacted this balance.
+          format: uuid
+          type: string
+        last_transaction_token:
+          description: Globally unique identifier for the last financial transaction that impacted this balance.
+          format: uuid
+          type: string
+        pending_amount:
+          description: Funds not available for spend due to card authorizations or pending ACH release. Shown in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        total_amount:
+          description: The sum of available and pending balance in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        updated:
+          description: Date and time for when the balance was last updated.
+          format: date-time
+          type: string
+      required:
+      - available_amount
+      - created
+      - currency
+      - financial_account_token
+      - financial_account_type
+      - last_transaction_event_token
+      - last_transaction_token
+      - pending_amount
+      - total_amount
+      - updated
+      type: object
+  parameters:
+    financialAccountToken:
+      description: Globally unique identifier for financial account.
+      examples:
+        financialAccountTokenExample:
+          summary: A sample financial account token
+          value: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      in: path
+      name: financial_account_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

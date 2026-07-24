@@ -1,0 +1,1270 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS External Bank Account API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: External Bank Account
+paths:
+  /v1/external_bank_accounts:
+    get:
+      description: List all the external bank accounts for the provided search criteria.
+      operationId: searchExternalBankAccounts
+      parameters:
+      - in: query
+        name: account_token
+        required: false
+        schema:
+          format: uuid
+          title: Account Token
+          type: string
+      - in: query
+        name: account_types
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/account_type'
+            x-stainless-naming:
+              java:
+                type_name: AccountType
+          title: Account Types
+          type: array
+      - in: query
+        name: countries
+        required: false
+        schema:
+          items:
+            type: string
+          title: Countries
+          type: array
+      - in: query
+        name: owner_types
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/owner_type'
+          title: Owner Types
+          type: array
+      - in: query
+        name: states
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/account_state'
+            x-stainless-naming:
+              java:
+                type_name: AccountState
+          title: Account States
+          type: array
+      - in: query
+        name: verification_states
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/verification_state'
+          title: Verification States
+          type: array
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_accounts_api_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List external bank accounts
+      tags:
+      - External Bank Account
+    post:
+      description: Creates an external bank account within a program or Lithic account.
+      operationId: createExternalBankAccount
+      requestBody:
+        content:
+          application/json:
+            examples:
+              createBankAccountViaMicroDeposits:
+                summary: Add external bank account via Micro Deposit Verification
+                value:
+                  account_number: '13719713158835300'
+                  address:
+                    address1: 5 Broad Street
+                    city: New York
+                    country: USA
+                    postal_code: '10001'
+                    state: NY
+                  country: USA
+                  currency: USD
+                  name: John Does Checking
+                  financial_account_token: dabadb3b-700c-41e3-8801-d5dfc84ebea0
+                  owner: John Doe
+                  owner_type: BUSINESS
+                  routing_number: 011103093
+                  type: CHECKING
+                  verification_method: MICRO_DEPOSIT
+              createBankAccountViaPrenote:
+                summary: Add external bank account via Prenote Verification
+                value:
+                  account_number: '13719713158835300'
+                  address:
+                    address1: 5 Broad Street
+                    city: New York
+                    country: USA
+                    postal_code: '10001'
+                    state: NY
+                  country: USA
+                  currency: USD
+                  name: John Does Checking
+                  financial_account_token: dabadb3b-700c-41e3-8801-d5dfc84ebea0
+                  owner: John Doe
+                  owner_type: BUSINESS
+                  routing_number: 011103093
+                  type: CHECKING
+                  verification_method: PRENOTE
+            schema:
+              discriminator:
+                propertyName: verification_method
+                mapping:
+                  MICRO_DEPOSIT: '#/components/schemas/bank_verified_create_bank_account_api_request'
+                  PRENOTE: '#/components/schemas/bank_verified_create_bank_account_api_request'
+                  EXTERNALLY_VERIFIED: '#/components/schemas/externally_verified_create_bank_account_api_request'
+                  UNVERIFIED: '#/components/schemas/unverified_create_bank_account_api_request'
+              oneOf:
+              - $ref: '#/components/schemas/bank_verified_create_bank_account_api_request'
+              - $ref: '#/components/schemas/externally_verified_create_bank_account_api_request'
+              - $ref: '#/components/schemas/unverified_create_bank_account_api_request'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response_unlinked'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/create_external_bank_account_error_response'
+          description: Conflict
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create external bank account
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}:
+    get:
+      description: Get the external bank account by token.
+      operationId: getExternalBankAccountByToken
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response_unlinked'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get external bank account by token
+      tags:
+      - External Bank Account
+    patch:
+      description: Update the external bank account by token.
+      operationId: patchExternalBankAccountByToken
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update_bank_account_api_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response_unlinked'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update external bank account
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}/micro_deposits:
+    post:
+      description: Verify the external bank account by providing the micro deposit amounts.
+      operationId: verifyExternalBankAccountByMicroDeposits
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/micro_deposit_verification_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response_unlinked'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Verify external bank account via micro deposit amounts
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}/retry_micro_deposits:
+    post:
+      description: Retry external bank account micro deposit verification.
+      operationId: retryMicroDeposit
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/retry_micro_deposit_verification_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response_unlinked'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Retry external bank account via micro deposit
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}/retry_prenote:
+    post:
+      description: Retry external bank account prenote verification.
+      operationId: retryPrenote
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/retry_prenote_verification_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Retry external bank account via prenote
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}/set_verification_method:
+    post:
+      description: 'Update the verification method for an external bank account. Verification method can only be updated
+
+        if the `verification_state` is `PENDING`.
+
+        '
+      operationId: setVerificationMethod
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/set_verification_method_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Set verification method
+      tags:
+      - External Bank Account
+  /v1/external_bank_accounts/{external_bank_account_token}/unpause:
+    post:
+      description: 'Unpause an external bank account
+
+        '
+      operationId: unpauseExternalBankAccount
+      parameters:
+      - in: path
+        name: external_bank_account_token
+        required: true
+        schema:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_account_api_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Unpause external bank account
+      tags:
+      - External Bank Account
+components:
+  schemas:
+    account_state:
+      type: string
+      enum:
+      - ENABLED
+      - CLOSED
+      - PAUSED
+      title: Account State
+      x-stainless-naming:
+        java:
+          type_name: State
+    externally_verified_create_bank_account_api_request:
+      title: Externally Verified Create Bank Account Api Request
+      type: object
+      properties:
+        verification_method:
+          description: Verification Method
+          $ref: '#/components/schemas/externally_verified_verification_method'
+        owner_type:
+          description: Owner Type
+          $ref: '#/components/schemas/owner_type'
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[!-~ ]*$
+        account_token:
+          description: Indicates which Lithic account the external account is associated with. For external accounts that are associated with the program, account_token field returned will be null
+          type: string
+          format: uuid
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type: string
+          minLength: 1
+          maxLength: 10
+          pattern: ^[a-zA-Z0-9]*$
+        doing_business_as:
+          description: Doing Business As
+          type: string
+          minLength: 1
+          maxLength: 40
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type: string
+          format: date
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type: string
+          minLength: 1
+          maxLength: 256
+        type:
+          description: Account Type
+          $ref: '#/components/schemas/account_type'
+        routing_number:
+          description: Routing Number
+          type: string
+          minLength: 9
+          maxLength: 9
+          pattern: ^[0-9]{9}$
+          example: '123456789'
+        account_number:
+          description: Account Number
+          type: string
+          minLength: 1
+          maxLength: 17
+          pattern: ^[0-9-]{1,17}$
+          example: '12345678901234567'
+        name:
+          description: The nickname for this External Bank Account
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[!-~ ]*$
+        country:
+          description: The country that the bank account is located in using ISO 3166-1. We will only accept USA bank accounts e.g., USA
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        currency:
+          description: currency of the external account 3-character alphabetic ISO 4217 code
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        address:
+          description: Address
+          $ref: '#/components/schemas/external_bank_account_address'
+      required:
+      - type
+      - routing_number
+      - account_number
+      - country
+      - currency
+      - verification_method
+      - owner_type
+      - owner
+    create_external_bank_account_error_response_context:
+      title: Create External Bank Account Api Response Context
+      type: object
+      properties:
+        existing_token:
+          type: string
+          format: uuid
+          description: The existing external bank account token.
+      required:
+      - existing_token
+    update_bank_account_api_request:
+      title: Update Bank Account Api Request
+      type: object
+      properties:
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[!-~ ]*$
+        owner_type:
+          description: Owner Type
+          $ref: '#/components/schemas/owner_type'
+        name:
+          description: The nickname for this External Bank Account
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[!-~ ]*$
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type: string
+          minLength: 1
+          maxLength: 10
+          pattern: ^[a-zA-Z0-9]*$
+        address:
+          description: Address
+          $ref: '#/components/schemas/external_bank_account_address'
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type: string
+          format: date
+        doing_business_as:
+          description: Doing Business As
+          type: string
+          minLength: 1
+          maxLength: 40
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type: string
+          minLength: 1
+          maxLength: 256
+        type:
+          $ref: '#/components/schemas/account_type_external'
+    externally_verified_verification_method:
+      type: string
+      enum:
+      - EXTERNALLY_VERIFIED
+      title: Externally Verified Verification Methods
+    create_external_bank_account_error_response:
+      title: Create External Bank Account Api Response
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+        context:
+          description: context
+          $ref: '#/components/schemas/create_external_bank_account_error_response_context'
+      required:
+      - debugging_request_id
+      - message
+      - context
+    set_verification_method_request:
+      title: Set Verification Method Request
+      type: object
+      properties:
+        verification_method:
+          description: The verification method to set for the external bank account
+          type: string
+          $ref: '#/components/schemas/set_verification_method_allowed_verification_methods'
+        financial_account_token:
+          description: The financial account token of the operating account to fund the micro deposits. Required when verification_method is MICRO_DEPOSIT or PRENOTE.
+          type: string
+          format: uuid
+      required:
+      - verification_method
+    unverified_create_bank_account_api_request:
+      title: Unverified Create Bank Account Api Request
+      type: object
+      properties:
+        verification_method:
+          description: Verification Method
+          $ref: '#/components/schemas/unverified_verification_method'
+        owner_type:
+          description: Owner Type
+          $ref: '#/components/schemas/owner_type'
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[!-~ ]*$
+        account_token:
+          description: Indicates which Lithic account the external account is associated with. For external accounts that are associated with the program, account_token field returned will be null
+          type: string
+          format: uuid
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type: string
+          minLength: 1
+          maxLength: 10
+          pattern: ^[a-zA-Z0-9]*$
+        doing_business_as:
+          description: Doing Business As
+          type: string
+          minLength: 1
+          maxLength: 40
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type: string
+          format: date
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type: string
+          minLength: 1
+          maxLength: 256
+        type:
+          description: Account Type
+          $ref: '#/components/schemas/account_type'
+        routing_number:
+          description: Routing Number
+          type: string
+          minLength: 9
+          maxLength: 9
+          pattern: ^[0-9]{9}$
+          example: '123456789'
+        account_number:
+          description: Account Number
+          type: string
+          minLength: 1
+          maxLength: 17
+          pattern: ^[0-9-]{1,17}$
+          example: '12345678901234567'
+        name:
+          description: The nickname for this External Bank Account
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[!-~ ]*$
+        country:
+          description: The country that the bank account is located in using ISO 3166-1. We will only accept USA bank accounts e.g., USA
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        currency:
+          description: currency of the external account 3-character alphabetic ISO 4217 code
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        address:
+          description: Address
+          $ref: '#/components/schemas/external_bank_account_address'
+      required:
+      - type
+      - routing_number
+      - account_number
+      - country
+      - currency
+      - verification_method
+      - owner_type
+      - owner
+    verification_state:
+      type: string
+      enum:
+      - PENDING
+      - ENABLED
+      - FAILED_VERIFICATION
+      - INSUFFICIENT_FUNDS
+      title: Verification State
+    bank_verified_create_bank_account_api_request:
+      title: Bank Verified Create Bank Account Api Request
+      type: object
+      properties:
+        verification_method:
+          description: Verification Method
+          $ref: '#/components/schemas/verification_method'
+        owner_type:
+          description: Owner Type
+          $ref: '#/components/schemas/owner_type'
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[!-~ ]*$
+        account_token:
+          description: Indicates which Lithic account the external account is associated with. For external accounts that are associated with the program, account_token field returned will be null
+          type: string
+          format: uuid
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type: string
+          minLength: 1
+          maxLength: 10
+          pattern: ^[a-zA-Z0-9]*$
+        doing_business_as:
+          description: Doing Business As
+          type: string
+          minLength: 1
+          maxLength: 40
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type: string
+          format: date
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type: string
+          minLength: 1
+          maxLength: 256
+        type:
+          description: Account Type
+          $ref: '#/components/schemas/account_type'
+          x-stainless-naming:
+            java:
+              type_name: AccountType
+        routing_number:
+          description: Routing Number
+          type: string
+          minLength: 9
+          maxLength: 9
+          pattern: ^[0-9]{9}$
+          example: '123456789'
+        account_number:
+          description: Account Number
+          type: string
+          minLength: 1
+          maxLength: 17
+          pattern: ^[0-9-]{1,17}$
+          example: '12345678901234567'
+        name:
+          description: The nickname for this External Bank Account
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[!-~ ]*$
+        country:
+          description: The country that the bank account is located in using ISO 3166-1. We will only accept USA bank accounts e.g., USA
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        currency:
+          description: currency of the external account 3-character alphabetic ISO 4217 code
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+        verification_enforcement:
+          type: boolean
+          default: true
+        address:
+          description: Address
+          $ref: '#/components/schemas/external_bank_account_address'
+        financial_account_token:
+          description: The financial account token of the operating account to fund the micro deposits
+          type: string
+          format: uuid
+      required:
+      - type
+      - routing_number
+      - account_number
+      - country
+      - currency
+      - verification_method
+      - owner_type
+      - owner
+      - financial_account_token
+    owner_type:
+      type: string
+      enum:
+      - INDIVIDUAL
+      - BUSINESS
+      title: Owner Type
+    retry_prenote_verification_request:
+      title: Retry Prenote Verification Request
+      type: object
+      properties:
+        financial_account_token:
+          type: string
+          format: uuid
+    external_bank_account_address:
+      title: External Bank Account Address
+      type: object
+      properties:
+        address1:
+          type: string
+          minLength: 1
+          maxLength: 40
+        address2:
+          type:
+          - string
+          - 'null'
+          minLength: 1
+          maxLength: 40
+        city:
+          type: string
+          minLength: 1
+          maxLength: 40
+        state:
+          type: string
+          minLength: 2
+          maxLength: 2
+        postal_code:
+          type: string
+          minLength: 5
+          maxLength: 10
+          pattern: ^[0-9]{5}(-[0-9]{4})?$
+          example: '11201'
+        country:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: ^[A-Z]{3}$
+          example: USD
+      required:
+      - address1
+      - city
+      - state
+      - postal_code
+      - country
+    account_type_external:
+      type: string
+      enum:
+      - CHECKING
+      - SAVINGS
+      title: Account Type External
+    bank_accounts_api_response:
+      title: Bank Accounts Api Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/bank_account_api_response_unlinked'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    account_type:
+      type: string
+      enum:
+      - CHECKING
+      - SAVINGS
+      title: Searchable Account Type
+      x-stainless-naming:
+        java:
+          type_name: AccountType
+    set_verification_method_allowed_verification_methods:
+      type: string
+      enum:
+      - MICRO_DEPOSIT
+      - PRENOTE
+      - EXTERNALLY_VERIFIED
+      title: Set Verification Method Allowed Verification Methods
+    micro_deposit_verification_request:
+      title: Micro Deposit Verification Request
+      type: object
+      properties:
+        micro_deposits:
+          type: array
+          title: Micro Deposits
+          maxItems: 2
+          minItems: 2
+          items:
+            type: integer
+      required:
+      - micro_deposits
+    bank_account_api_response:
+      title: Bank Account Api Response
+      type: object
+      properties:
+        token:
+          description: A globally unique identifier for this record of an external bank account association. If a program links an external bank account to more than one end-user or to both the program and the end-user, then Lithic will return each record of the association
+          type: string
+          format: uuid
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+        routing_number:
+          description: Routing Number
+          type: string
+        last_four:
+          description: The last 4 digits of the bank account. Derived by Lithic from the account number passed
+          type: string
+        name:
+          description: The nickname for this External Bank Account
+          type:
+          - string
+          - 'null'
+        currency:
+          description: currency of the external account 3-character alphabetic ISO 4217 code
+          type: string
+        country:
+          description: The country that the bank account is located in using ISO 3166-1. We will only accept USA bank accounts e.g., USA
+          type: string
+        account_token:
+          description: Indicates which Lithic account the external account is associated with. For external accounts that are associated with the program, account_token field returned will be null
+          type:
+          - string
+          - 'null'
+          format: uuid
+        created:
+          description: An ISO 8601 string representing when this funding source was added to the Lithic account.
+          type: string
+          format: date-time
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type:
+          - string
+          - 'null'
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type:
+          - string
+          - 'null'
+          format: date
+        doing_business_as:
+          description: Doing Business As
+          type:
+          - string
+          - 'null'
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type:
+          - string
+          - 'null'
+        verification_failed_reason:
+          description: Optional free text description of the reason for the failed verification. For ACH micro-deposits returned, this field will display the reason return code sent by the ACH network
+          type:
+          - string
+          - 'null'
+        verification_attempts:
+          description: The number of attempts at verification
+          type: integer
+        financial_account_token:
+          description: The financial account token of the operating account to fund the micro deposits
+          type:
+          - string
+          - 'null'
+          format: uuid
+        type:
+          description: Account Type
+          $ref: '#/components/schemas/account_type'
+        verification_method:
+          description: Verification Method
+          $ref: '#/components/schemas/verification_method'
+        owner_type:
+          description: Owner Type
+          $ref: '#/components/schemas/owner_type'
+        state:
+          description: Account State
+          $ref: '#/components/schemas/account_state'
+        verification_state:
+          description: Verification State
+          $ref: '#/components/schemas/verification_state'
+        address:
+          description: Address
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/external_bank_account_address'
+      required:
+      - token
+      - type
+      - verification_method
+      - owner_type
+      - owner
+      - state
+      - verification_state
+      - routing_number
+      - last_four
+      - currency
+      - country
+      - created
+      - verification_attempts
+    bank_account_api_response_unlinked:
+      title: Bank Account Api Response
+      type: object
+      properties:
+        token:
+          description: A globally unique identifier for this record of an external bank account association. If a program links an external bank account to more than one end-user or to both the program and the end-user, then Lithic will return each record of the association
+          type: string
+          format: uuid
+        owner:
+          description: Legal Name of the business or individual who owns the external account. This will appear in statements
+          type: string
+        routing_number:
+          description: Routing Number
+          type: string
+        last_four:
+          description: The last 4 digits of the bank account. Derived by Lithic from the account number passed
+          type: string
+        name:
+          description: The nickname for this External Bank Account
+          type:
+          - string
+          - 'null'
+        currency:
+          description: currency of the external account 3-character alphabetic ISO 4217 code
+          type: string
+        country:
+          description: The country that the bank account is located in using ISO 3166-1. We will only accept USA bank accounts e.g., USA
+          type: string
+        account_token:
+          description: Indicates which Lithic account the external account is associated with. For external accounts that are associated with the program, account_token field returned will be null
+          type:
+          - string
+          - 'null'
+          format: uuid
+        created:
+          description: An ISO 8601 string representing when this funding source was added to the Lithic account.
+          type: string
+          format: date-time
+        company_id:
+          description: Optional field that helps identify bank accounts in receipts
+          type:
+          - string
+          - 'null'
+        dob:
+          description: Date of Birth of the Individual that owns the external bank account
+          title: Date of Birth
+          type:
+          - string
+          - 'null'
+          format: date
+        doing_business_as:
+          description: Doing Business As
+          type:
+          - string
+          - 'null'
+        user_defined_id:
+          description: User Defined ID
+          title: User Defined ID
+          type:
+          - string
+          - 'null'
+        verification_failed_reason:
+          description: Optional free text description of the reason for the failed verification. For ACH micro-deposits returned, this field will display the reason return code sent by the ACH network
+          type:
+          - string
+          - 'null'
+        verification_attempts:
+          description: The number of attempts at verification
+          type: integer
+        financial_account_token:
+          description: The financial account token of the operating account to fund the micro deposits
+          type:
+          - string
+          - 'null'
+          format: uuid
+        type:
+          description: Account Type
+          $ref: '#/components/schemas/account_type'
+        verification_method:
+          title: Verification Method
+          description: Verification Method
+          type: string
+          enum:
+          - MANUAL
+          - MICRO_DEPOSIT
+          - PLAID
+          - PRENOTE
+        owner_type:
+          title: Owner Type
+          description: Owner Type
+          type: string
+          enum:
+          - BUSINESS
+          - INDIVIDUAL
+        state:
+          description: Account State
+          $ref: '#/components/schemas/account_state'
+          x-stainless-naming:
+            java:
+              type_name: State
+        verification_state:
+          description: Verification State
+          $ref: '#/components/schemas/verification_state'
+        address:
+          description: Address
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/external_bank_account_address'
+      required:
+      - token
+      - type
+      - verification_method
+      - owner_type
+      - owner
+      - state
+      - verification_state
+      - routing_number
+      - last_four
+      - currency
+      - country
+      - created
+      - verification_attempts
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    retry_micro_deposit_verification_request:
+      title: Retry Micro Deposit Verification Request
+      type: object
+      properties:
+        financial_account_token:
+          type: string
+          format: uuid
+    unverified_verification_method:
+      type: string
+      enum:
+      - UNVERIFIED
+      title: Unverified Verification Methods
+    verification_method:
+      type: string
+      enum:
+      - MANUAL
+      - MICRO_DEPOSIT
+      - PRENOTE
+      - EXTERNALLY_VERIFIED
+      - UNVERIFIED
+      title: Verification Method
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

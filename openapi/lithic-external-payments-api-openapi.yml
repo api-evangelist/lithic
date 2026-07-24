@@ -1,0 +1,639 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS External Payments API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: External Payments
+paths:
+  /v1/external_payments:
+    get:
+      description: List external payments
+      parameters:
+      - description: External Payment category to be returned.
+        in: query
+        name: category
+        schema:
+          $ref: '#/components/schemas/external_payment_category'
+      - description: Globally unique identifier for the financial account or card that will send the funds. Accepted type dependent on the program's use case.
+        in: query
+        name: financial_account_token
+        schema:
+          format: uuid
+          type: string
+      - in: query
+        name: business_account_token
+        required: false
+        schema:
+          format: uuid
+          title: Business Account Token
+          type: string
+      - description: External Payment result to be returned.
+        in: query
+        name: result
+        schema:
+          $ref: '#/components/schemas/transaction_result'
+      - description: Book transfer status to be returned.
+        in: query
+        name: status
+        schema:
+          $ref: '#/components/schemas/transaction_status'
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      operationId: getExternalPayments
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payments_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List external payments
+      tags:
+      - External Payments
+    post:
+      description: Create external payment
+      operationId: postExternalPayments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create_external_payment_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create external payment
+      tags:
+      - External Payments
+  /v1/external_payments/{external_payment_token}:
+    get:
+      description: Get external payment
+      parameters:
+      - description: Globally unique identifier for the external payment
+        in: path
+        name: external_payment_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      operationId: getExternalPayment
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get external payment
+      tags:
+      - External Payments
+  /v1/external_payments/{external_payment_token}/settle:
+    post:
+      description: Settle external payment
+      parameters:
+      - description: Globally unique identifier for the external payment
+        in: path
+        name: external_payment_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      operationId: settleExternalPayment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/external_payment_action_with_progress_to_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Settle external payment
+      tags:
+      - External Payments
+  /v1/external_payments/{external_payment_token}/release:
+    post:
+      description: Release external payment
+      parameters:
+      - description: Globally unique identifier for the external payment
+        in: path
+        name: external_payment_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      operationId: releaseExternalPayment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/external_payment_action_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Release external payment
+      tags:
+      - External Payments
+  /v1/external_payments/{external_payment_token}/cancel:
+    post:
+      description: Cancel external payment
+      parameters:
+      - description: Globally unique identifier for the external payment
+        in: path
+        name: external_payment_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      operationId: cancelExternalPayment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/external_payment_action_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Cancel external payment
+      tags:
+      - External Payments
+  /v1/external_payments/{external_payment_token}/reverse:
+    post:
+      description: Reverse external payment
+      parameters:
+      - description: Globally unique identifier for the external payment
+        in: path
+        name: external_payment_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      operationId: reverseExternalPayment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/external_payment_action_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/external_payment_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Reverse external payment
+      tags:
+      - External Payments
+components:
+  schemas:
+    base_transaction:
+      title: base_transaction
+      description: Base class for all transaction types in the ledger service
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/transaction_status'
+          description: The status of the transaction
+        token:
+          type: string
+          description: Unique identifier for the transaction
+          format: uuid
+        created:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was created
+          format: date-time
+        updated:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was last updated
+          format: date-time
+      required:
+      - status
+      - token
+      - created
+      - updated
+    external_payments_response:
+      title: External Payments Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/external_payment_response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    external_payment_action_with_progress_to_request:
+      title: External Payment Action with Progress to Request
+      type: object
+      properties:
+        memo:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        progress_to:
+          $ref: '#/components/schemas/external_payment_progress_to'
+      required:
+      - effective_date
+    external_payment_event_type:
+      title: External Payment Event Type
+      type: string
+      enum:
+      - EXTERNAL_WIRE_INITIATED
+      - EXTERNAL_WIRE_CANCELED
+      - EXTERNAL_WIRE_SETTLED
+      - EXTERNAL_WIRE_REVERSED
+      - EXTERNAL_WIRE_RELEASED
+      - EXTERNAL_ACH_INITIATED
+      - EXTERNAL_ACH_CANCELED
+      - EXTERNAL_ACH_SETTLED
+      - EXTERNAL_ACH_REVERSED
+      - EXTERNAL_ACH_RELEASED
+      - EXTERNAL_TRANSFER_INITIATED
+      - EXTERNAL_TRANSFER_CANCELED
+      - EXTERNAL_TRANSFER_SETTLED
+      - EXTERNAL_TRANSFER_REVERSED
+      - EXTERNAL_TRANSFER_RELEASED
+      - EXTERNAL_CHECK_INITIATED
+      - EXTERNAL_CHECK_CANCELED
+      - EXTERNAL_CHECK_SETTLED
+      - EXTERNAL_CHECK_REVERSED
+      - EXTERNAL_CHECK_RELEASED
+      - EXTERNAL_FEDNOW_INITIATED
+      - EXTERNAL_FEDNOW_CANCELED
+      - EXTERNAL_FEDNOW_SETTLED
+      - EXTERNAL_FEDNOW_REVERSED
+      - EXTERNAL_FEDNOW_RELEASED
+      - EXTERNAL_RTP_INITIATED
+      - EXTERNAL_RTP_CANCELED
+      - EXTERNAL_RTP_SETTLED
+      - EXTERNAL_RTP_REVERSED
+      - EXTERNAL_RTP_RELEASED
+    external_payment_direction:
+      title: External Payment Direction
+      type: string
+      enum:
+      - DEPOSIT
+      - WITHDRAWAL
+    external_payment_event:
+      title: External Payment Event
+      type: object
+      properties:
+        amount:
+          type: integer
+        type:
+          $ref: '#/components/schemas/external_payment_event_type'
+        result:
+          $ref: '#/components/schemas/transaction_result'
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/detailed_results'
+        created:
+          type: string
+          format: date-time
+        token:
+          type: string
+          format: uuid
+        memo:
+          type: string
+        effective_date:
+          type: string
+          format: date
+      required:
+      - amount
+      - type
+      - result
+      - detailed_results
+      - created
+      - token
+      - memo
+      - effective_date
+    transaction_status:
+      title: Transaction Status
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - DECLINED
+      - REVERSED
+      - CANCELED
+      - RETURNED
+    create_external_payment_request:
+      title: Create External Payment Request
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/external_payment_category'
+        financial_account_token:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        memo:
+          type: string
+        user_defined_id:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        token:
+          description: Customer-provided token that will serve as an idempotency token. This token will become the transaction token.
+          type: string
+          format: uuid
+        payment_type:
+          $ref: '#/components/schemas/external_payment_direction'
+        progress_to:
+          $ref: '#/components/schemas/external_payment_progress_to'
+      required:
+      - category
+      - financial_account_token
+      - amount
+      - effective_date
+      - payment_type
+    detailed_results:
+      title: Detailed Results
+      type: string
+      enum:
+      - APPROVED
+      - INSUFFICIENT_FUNDS
+    transaction_result:
+      title: Transaction Result
+      type: string
+      enum:
+      - APPROVED
+      - DECLINED
+    external_payment_action_request:
+      title: External Payment Action Request
+      type: object
+      properties:
+        memo:
+          type: string
+        effective_date:
+          type: string
+          format: date
+      required:
+      - effective_date
+    external_payment_progress_to:
+      title: External Payment Progress To
+      type: string
+      enum:
+      - SETTLED
+      - RELEASED
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    external_payment_response:
+      title: External Payment Response
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: EXTERNAL_PAYMENT
+            description: EXTERNAL_PAYMENT - External Payment Response
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          category:
+            $ref: '#/components/schemas/external_payment_category'
+          settled_amount:
+            type: integer
+          pending_amount:
+            type: integer
+          currency:
+            type: string
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/external_payment_event'
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+          financial_account_token:
+            type: string
+            format: uuid
+          payment_type:
+            $ref: '#/components/schemas/external_payment_direction'
+      required:
+      - result
+      - category
+      - family
+      - settled_amount
+      - pending_amount
+      - currency
+      - events
+      - financial_account_token
+      - payment_type
+    external_payment_category:
+      title: External Payment Category
+      type: string
+      enum:
+      - EXTERNAL_WIRE
+      - EXTERNAL_ACH
+      - EXTERNAL_CHECK
+      - EXTERNAL_FEDNOW
+      - EXTERNAL_RTP
+      - EXTERNAL_TRANSFER
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

@@ -1,0 +1,2614 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Card API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Card
+paths:
+  /v1/cards/{card_token}/signals:
+    get:
+      operationId: getCardSignals
+      summary: Fetch card signals
+      description: 'Returns behavioral feature state derived from a card''s transaction history.
+
+
+        These signals expose the same data used by behavioral rule attributes (e.g. `AMOUNT_Z_SCORE` with `scope: CARD`, `IS_NEW_COUNTRY` with `scope: CARD`) and custom code `TRANSACTION_HISTORY_SIGNALS` features, allowing clients to inspect feature values before writing rules and debug rule behavior.
+
+        '
+      tags:
+      - Card
+      parameters:
+      - name: card_token
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The token of the card to fetch signals for.
+      responses:
+        '200':
+          description: Card Signals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/signals-response'
+        '400':
+          $ref: '#/components/responses/components-responses-BadRequest'
+        '403':
+          $ref: '#/components/responses/responses-Forbidden'
+        '404':
+          $ref: '#/components/responses/components-responses-NotFound'
+  /v1/card_programs:
+    get:
+      description: List card programs.
+      operationId: getCardPrograms
+      parameters:
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/CardProgram'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List card programs
+      tags:
+      - Card
+  /v1/card_programs/{card_program_token}:
+    get:
+      description: Get card program.
+      operationId: getCardProgram
+      parameters:
+      - $ref: '#/components/parameters/cardProgramTokenPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardProgram'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get card program
+      tags:
+      - Card
+  /v1/cards:
+    get:
+      description: List cards.
+      operationId: getCards
+      parameters:
+      - description: 'Returns cards associated with the specified account.
+
+          '
+        in: query
+        name: account_token
+        schema:
+          format: uuid
+          type: string
+      - description: 'Returns cards with the specified state.
+
+          '
+        in: query
+        name: state
+        schema:
+          enum:
+          - CLOSED
+          - OPEN
+          - PAUSED
+          - PENDING_ACTIVATION
+          - PENDING_FULFILLMENT
+          type: string
+      - description: 'Returns cards containing the specified partial or full memo text.
+
+          '
+        in: query
+        name: memo
+        schema:
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/non_pci_card_response'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List cards
+      tags:
+      - Card
+    post:
+      description: 'Create a new virtual or physical card. Parameters `shipping_address` and `product_id` only apply to physical cards.
+
+        '
+      operationId: postCards
+      parameters:
+      - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              createCard:
+                summary: Create card
+                value:
+                  memo: New Card
+                  spend_limit: 1000
+                  spend_limit_duration: TRANSACTION
+                  state: OPEN
+                  type: VIRTUAL
+              createPhysicalCard:
+                summary: Create a physical card
+                value:
+                  carrier:
+                    qr_code_url: https://lithic.com/activate-card/1
+                  memo: New physical card
+                  product_id: '783991122'
+                  shipping_address:
+                    address1: '123'
+                    city: NEW YORK
+                    country: USA
+                    first_name: Johnny
+                    last_name: Appleseed
+                    postal_code: '10001'
+                    state: NY
+                  state: OPEN
+                  type: PHYSICAL
+            schema:
+              properties:
+                account_token:
+                  description: 'Globally unique identifier for the account that the card will be associated with. Required for programs enrolling users using the [/account\_holders endpoint](https://docs.lithic.com/docs/account-holders-kyc). See [Managing Your Program](doc:managing-your-program) for more information.
+
+                    '
+                  format: uuid
+                  type: string
+                card_program_token:
+                  description: For card programs with more than one BIN range. This must be configured with Lithic before use. Identifies the card program/BIN range under which to create the card. If omitted, will utilize the program's default `card_program_token`. In Sandbox, use 00000000-0000-0000-1000-000000000000 and 00000000-0000-0000-2000-000000000000 to test creating cards on specific card programs.
+                  example: 5e9483eb-8103-4e16-9794-2106111b2eca
+                  format: uuid
+                  type: string
+                bulk_order_token:
+                  description: Globally unique identifier for an existing bulk order to associate this card with. When specified, the card will be added to the bulk order for batch shipment. Only applicable to cards of type PHYSICAL
+                  example: 5e9483eb-8103-4e16-9794-2106111b2eca
+                  format: uuid
+                  type: string
+                carrier:
+                  $ref: '#/components/schemas/Carrier'
+                digital_card_art_token:
+                  description: Specifies the digital card art to be displayed in the user’s digital wallet after tokenization. This artwork must be approved by Mastercard and configured by Lithic to use. See [Flexible Card Art Guide](https://docs.lithic.com/docs/about-digital-wallets#flexible-card-art).
+                  example: 5e9483eb-8103-4e16-9794-2106111b2eca
+                  format: uuid
+                  type: string
+                exp_month:
+                  description: Two digit (MM) expiry month. If neither `exp_month` nor `exp_year` is provided, an expiration date five years in the future will be generated. Five years is the maximum expiration date.
+                  example: '06'
+                  maxLength: 2
+                  minLength: 2
+                  type: string
+                exp_year:
+                  description: Four digit (yyyy) expiry year. If neither `exp_month` nor `exp_year` is provided, an expiration date five years in the future will be generated. Five years is the maximum expiration date.
+                  example: '2027'
+                  maxLength: 4
+                  minLength: 4
+                  type: string
+                memo:
+                  description: Friendly name to identify the card.
+                  example: New Card
+                  type: string
+                pin:
+                  description: Encrypted PIN block (in base64). Applies to cards of type `PHYSICAL` and `VIRTUAL`. See [Encrypted PIN Block](https://docs.lithic.com/docs/cards#encrypted-pin-block).
+                  type: string
+                product_id:
+                  description: Only applicable to cards of type `PHYSICAL`. This must be configured with Lithic before use. Specifies the configuration (i.e., physical card art) that the card should be manufactured with.
+                  example: '1'
+                  type: string
+                replacement_for:
+                  description: Globally unique identifier for the card that this card will replace. If the card type is `PHYSICAL` it will be replaced by a `PHYSICAL` card. If the card type is `VIRTUAL` it will be replaced by a `VIRTUAL` card.
+                  example: 5e9483eb-8103-4e16-9794-2106111b2eca
+                  format: uuid
+                  type: string
+                replacement_substatus:
+                  description: 'Card state substatus values for the card that this card will replace:
+
+                    * `LOST` - The physical card is no longer in the cardholder''s possession due to being lost or never received by the cardholder.
+
+                    * `COMPROMISED` - Card information has been exposed, potentially leading to unauthorized access. This may involve physical card theft, cloning, or online data breaches.
+
+                    * `DAMAGED` - The physical card is not functioning properly, such as having chip failures or a demagnetized magnetic stripe.
+
+                    * `END_USER_REQUEST` - The cardholder requested the closure of the card for reasons unrelated to fraud or damage, such as switching to a different product or closing the account.
+
+                    * `ISSUER_REQUEST` - The issuer closed the card for reasons unrelated to fraud or damage, such as account inactivity, product or policy changes, or technology upgrades.
+
+                    * `NOT_ACTIVE` - The card hasn’t had any transaction activity for a specified period, applicable to statuses like `PAUSED` or `CLOSED`.
+
+                    * `SUSPICIOUS_ACTIVITY` - The card has one or more suspicious transactions or activities that require review. This can involve prompting the cardholder to confirm legitimate use or report confirmed fraud.
+
+                    * `INTERNAL_REVIEW` - The card is temporarily paused pending further internal review.
+
+                    * `EXPIRED` - The card has expired and has been closed without being reissued.
+
+                    * `UNDELIVERABLE` - The card cannot be delivered to the cardholder and has been returned.
+
+                    * `OTHER` - The reason for the status does not fall into any of the above categories. A comment should be provided to specify the reason.
+
+                    '
+                  enum:
+                  - LOST
+                  - COMPROMISED
+                  - DAMAGED
+                  - END_USER_REQUEST
+                  - ISSUER_REQUEST
+                  - NOT_ACTIVE
+                  - SUSPICIOUS_ACTIVITY
+                  - INTERNAL_REVIEW
+                  - EXPIRED
+                  - UNDELIVERABLE
+                  - OTHER
+                  type: string
+                replacement_comment:
+                  description: Additional context or information related to the card that this card will replace.
+                  type: string
+                replacement_account_token:
+                  description: Restricted field limited to select use cases. Lithic will reach out directly if this field should be used. Globally unique identifier for the replacement card's account. If this field is specified, `replacement_for` must also be specified. If `replacement_for` is specified and this field is omitted, the replacement card's account will be inferred from the card being replaced.
+                  example: 5e9483eb-8103-4e16-9794-2106111b2eca
+                  format: uuid
+                  type: string
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                shipping_method:
+                  description: 'Shipping method for the card. Only applies to cards of type PHYSICAL.
+
+                    Use of options besides `STANDARD` require additional permissions.
+
+
+                    * `STANDARD` - USPS regular mail or similar international option, with no tracking
+
+                    * `STANDARD_WITH_TRACKING` - USPS regular mail or similar international option, with tracking
+
+                    * `PRIORITY` - USPS Priority, 1-3 day shipping, with tracking
+
+                    * `EXPRESS` - FedEx or UPS depending on card manufacturer, Express, 3-day shipping, with tracking
+
+                    * `2_DAY` - FedEx or UPS depending on card manufacturer, 2-day shipping, with tracking
+
+                    * `EXPEDITED` - FedEx or UPS depending on card manufacturer, Standard Overnight or similar international option, with tracking
+
+                    * `BULK` - Card will be shipped as part of a bulk fulfillment order. The shipping method and timeline are inherited from the parent bulk order.
+
+                    '
+                  enum:
+                  - 2_DAY
+                  - BULK
+                  - EXPEDITED
+                  - EXPRESS
+                  - PRIORITY
+                  - STANDARD
+                  - STANDARD_WITH_TRACKING
+                  type: string
+                spend_limit:
+                  description: Amount (in cents) to limit approved authorizations (e.g. 100000 would be a $1,000 limit). Transaction requests above the spend limit will be declined. Note that a spend limit of 0 is effectively no limit, and should only be used to reset or remove a prior limit. Only a limit of 1 or above will result in declined transactions due to checks against the card limit.
+                  example: 0
+                  minimum: 0
+                  type: integer
+                spend_limit_duration:
+                  $ref: '#/components/schemas/spend_limit_duration'
+                state:
+                  description: 'Card state values:
+
+                    * `OPEN` - Card will approve authorizations (if they match card and account parameters).
+
+                    * `PAUSED` - Card will decline authorizations, but can be resumed at a later time.
+
+                    '
+                  enum:
+                  - OPEN
+                  - PAUSED
+                  type: string
+                type:
+                  default: VIRTUAL
+                  description: 'Card types:
+
+                    * `VIRTUAL` - Card will authorize at any merchant and can be added to a digital wallet like Apple Pay or Google Pay (if the card program is digital wallet-enabled).
+
+                    * `PHYSICAL` - Manufactured and sent to the cardholder. We offer white label branding, credit, ATM, PIN debit, chip/EMV, NFC and magstripe functionality. Reach out at [lithic.com/contact](https://lithic.com/contact) for more information.
+
+                    * `SINGLE_USE` - Card is closed upon first successful authorization.
+
+                    * `MERCHANT_LOCKED` - Card is locked to the first merchant that successfully authorizes the card.
+
+                    * `UNLOCKED` - *[Deprecated]* Similar behavior to VIRTUAL cards, please use VIRTUAL instead.
+
+                    * `DIGITAL_WALLET` - *[Deprecated]* Similar behavior to VIRTUAL cards, please use VIRTUAL instead.
+
+                    '
+                  enum:
+                  - MERCHANT_LOCKED
+                  - PHYSICAL
+                  - SINGLE_USE
+                  - VIRTUAL
+                  - UNLOCKED
+                  - DIGITAL_WALLET
+                  type: string
+              required:
+              - type
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                account_token: f3f4918c-dee9-464d-a819-4aa42901d624
+                card_program_token: 5e9483eb-8103-4e16-9794-2106111b2eca
+                cardholder_currency: USD
+                created: '2021-06-28T22:53:15Z'
+                cvv: '776'
+                exp_month: '06'
+                exp_year: '2027'
+                funding:
+                  account_name: Sandbox
+                  created: '2020-07-08T17:57:36Z'
+                  last_four: '5263'
+                  nickname: checking account
+                  state: ENABLED
+                  token: b0f0d91a-3697-46d8-85f3-20f0a585cbea
+                  type: DEPOSITORY_CHECKING
+                hostname: ''
+                last_four: '4142'
+                memo: New Card
+                pan: '4111111289144142'
+                replacement_for: null
+                spend_limit: 1000
+                spend_limit_duration: TRANSACTION
+                state: OPEN
+                token: 7ef7d65c-9023-4da3-b113-3b8583fd7951
+                type: VIRTUAL
+                pin_status: NOT_SET
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create card
+      tags:
+      - Card
+  /v1/cards/search_by_pan:
+    post:
+      description: 'Get card configuration such as spend limit and state. Customers must be PCI compliant to use this endpoint. Please contact [support@lithic.com](mailto:support@lithic.com) for questions.
+
+        *Note: this is a `POST` endpoint because it is more secure to send sensitive data in a request body than in a URL.*'
+      operationId: searchCardByPan
+      requestBody:
+        content:
+          application/json:
+            examples:
+              searchCardByPan:
+                summary: Search for card for by PAN.
+                value:
+                  pan: '4111111289144142'
+            schema:
+              properties:
+                pan:
+                  description: The PAN for the card being retrieved.
+                  example: '4111111289144142'
+                  type: string
+              required:
+              - pan
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Search for card by PAN
+      tags:
+      - Card
+  /v1/cards/{card_token}:
+    get:
+      description: Get card configuration such as spend limit and state.
+      operationId: getCardByToken
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get card
+      tags:
+      - Card
+    patch:
+      description: 'Update the specified properties of the card. Unsupplied properties will remain unchanged.
+
+
+        *Note: setting a card to a `CLOSED` state is a final action that cannot be undone.*
+
+        '
+      operationId: patchCardByToken
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              updateCard:
+                summary: Update card
+                value:
+                  memo: Updated Name
+                  spend_limit: 100
+                  spend_limit_duration: FOREVER
+                  state: OPEN
+            schema:
+              properties:
+                digital_card_art_token:
+                  description: Specifies the digital card art to be displayed in the user’s digital wallet after tokenization. This artwork must be approved by Mastercard and configured by Lithic to use. See [Flexible Card Art Guide](https://docs.lithic.com/docs/about-digital-wallets#flexible-card-art).
+                  example: 00000000-0000-0000-1000-000000000000
+                  format: uuid
+                  type: string
+                memo:
+                  description: Friendly name to identify the card.
+                  example: New Card
+                  type: string
+                network_program_token:
+                  description: Globally unique identifier for the card's network program. Currently applicable to Visa cards participating in Account Level Management only.
+                  example: 00000000-0000-0000-1000-000000000000
+                  format: uuid
+                  type: string
+                pin:
+                  description: Encrypted PIN block (in base64). Only applies to cards of type `PHYSICAL` and `VIRTUAL`. Changing PIN also resets PIN status to `OK`. See [Encrypted PIN Block](https://docs.lithic.com/docs/cards#encrypted-pin-block).
+                  type: string
+                pin_status:
+                  description: Indicates if a card is blocked due a PIN status issue (e.g. excessive incorrect attempts). Can only be set to `OK` to unblock a card.
+                  enum:
+                  - OK
+                  type: string
+                spend_limit:
+                  description: Amount (in cents) to limit approved authorizations (e.g. 100000 would be a $1,000 limit). Transaction requests above the spend limit will be declined. Note that a spend limit of 0 is effectively no limit, and should only be used to reset or remove a prior limit. Only a limit of 1 or above will result in declined transactions due to checks against the card limit.
+                  example: 0
+                  type: integer
+                spend_limit_duration:
+                  $ref: '#/components/schemas/spend_limit_duration'
+                state:
+                  description: 'Card state values:
+
+                    * `CLOSED` - Card will no longer approve authorizations. Closing a card cannot be undone.
+
+                    * `OPEN` - Card will approve authorizations (if they match card and account parameters).
+
+                    * `PAUSED` - Card will decline authorizations, but can be resumed at a later time.
+
+                    '
+                  enum:
+                  - CLOSED
+                  - OPEN
+                  - PAUSED
+                  type: string
+                substatus:
+                  description: 'Card state substatus values:
+
+                    * `LOST` - The physical card is no longer in the cardholder''s possession due to being lost or never received by the cardholder.
+
+                    * `COMPROMISED` - Card information has been exposed, potentially leading to unauthorized access. This may involve physical card theft, cloning, or online data breaches.
+
+                    * `DAMAGED` - The physical card is not functioning properly, such as having chip failures or a demagnetized magnetic stripe.
+
+                    * `END_USER_REQUEST` - The cardholder requested the closure of the card for reasons unrelated to fraud or damage, such as switching to a different product or closing the account.
+
+                    * `ISSUER_REQUEST` - The issuer closed the card for reasons unrelated to fraud or damage, such as account inactivity, product or policy changes, or technology upgrades.
+
+                    * `NOT_ACTIVE` - The card hasn’t had any transaction activity for a specified period, applicable to statuses like `PAUSED` or `CLOSED`.
+
+                    * `SUSPICIOUS_ACTIVITY` - The card has one or more suspicious transactions or activities that require review. This can involve prompting the cardholder to confirm legitimate use or report confirmed fraud.
+
+                    * `INTERNAL_REVIEW` - The card is temporarily paused pending further internal review.
+
+                    * `EXPIRED` - The card has expired and has been closed without being reissued.
+
+                    * `UNDELIVERABLE` - The card cannot be delivered to the cardholder and has been returned.
+
+                    * `OTHER` - The reason for the status does not fall into any of the above categories. A comment should be provided to specify the reason.
+
+                    '
+                  enum:
+                  - LOST
+                  - COMPROMISED
+                  - DAMAGED
+                  - END_USER_REQUEST
+                  - ISSUER_REQUEST
+                  - NOT_ACTIVE
+                  - SUSPICIOUS_ACTIVITY
+                  - INTERNAL_REVIEW
+                  - EXPIRED
+                  - UNDELIVERABLE
+                  - OTHER
+                  type: string
+                comment:
+                  description: Additional context or information related to the card.
+                  type: string
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                account_token: f3f4918c-dee9-464d-a819-4aa42901d624
+                card_program_token: 5e9483eb-8103-4e16-9794-2106111b2eca
+                cardholder_currency: USD
+                created: '2021-06-28T22:53:15Z'
+                cvv: '742'
+                exp_month: '05'
+                exp_year: '2027'
+                funding:
+                  account_name: Sandbox
+                  created: '2022-03-08T08:00:00Z'
+                  last_four: '5263'
+                  nickname: checking account
+                  state: ENABLED
+                  token: b0f0d91a-3697-46d8-85f3-20f0a585cbea
+                  type: DEPOSITORY_CHECKING
+                hostname: ''
+                last_four: '4938'
+                memo: Updated Name
+                pan: '4111111289144142'
+                spend_limit: 100
+                spend_limit_duration: FOREVER
+                replacement_for: null
+                state: OPEN
+                token: f5f905f5-8a8e-49bf-a9b4-c0adaa401456
+                type: VIRTUAL
+                pin_status: NOT_SET
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update card
+      tags:
+      - Card
+  /v1/cards/{card_token}/balances:
+    get:
+      description: Get the balances for a given card.
+      operationId: getCardBalance
+      parameters:
+      - description: UTC date of the balance to retrieve. Defaults to latest available balance
+        in: query
+        name: balance_date
+        schema:
+          format: date-time
+          type: string
+      - description: 'Balance after a given financial event occured.
+
+          For example, passing the event_token of a $5 CARD_CLEARING financial event will return a balance decreased by $5
+
+          '
+        in: query
+        name: last_transaction_event_token
+        schema:
+          format: uuid
+          type: string
+      - $ref: '#/components/parameters/cardToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/financial-account-balance'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get card balances
+      tags:
+      - Card
+  /v1/cards/{card_token}/financial_transactions:
+    get:
+      description: List the financial transactions for a given card.
+      operationId: getCardFinancialTransactions
+      parameters:
+      - description: Financial Transaction category to be returned.
+        in: query
+        name: category
+        schema:
+          enum:
+          - CARD
+          - TRANSFER
+          type: string
+      - description: Financial Transaction result to be returned.
+        in: query
+        name: result
+        schema:
+          enum:
+          - APPROVED
+          - DECLINED
+          type: string
+      - description: Financial Transaction status to be returned.
+        in: query
+        name: status
+        schema:
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - RETURNED
+          - SETTLED
+          - VOIDED
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/cardToken'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/financial-account-transaction'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List card financial transactions
+      tags:
+      - Card
+  /v1/cards/{card_token}/financial_transactions/{financial_transaction_token}:
+    get:
+      description: Get the card financial transaction for the provided token.
+      operationId: getCardFinancialTransactionByToken
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      - $ref: '#/components/parameters/financialTransactionToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-transaction'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get card financial transaction
+      tags:
+      - Card
+  /v1/cards/{card_token}/provision:
+    post:
+      description: 'Allow your cardholders to directly add payment cards to the device''s digital wallet (e.g. Apple Pay) with one touch from your app.
+
+
+        This requires some additional setup and configuration. Please [Contact Us](https://lithic.com/contact) or your Customer Success representative for more information.
+
+        '
+      operationId: postCardProvision
+      parameters:
+      - $ref: '#/components/parameters/cardTokenDigitalWallet'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              provisionGoogleCard:
+                summary: Provision a card in Google Pay
+                value:
+                  digital_wallet: GOOGLE_PAY
+            schema:
+              properties:
+                certificate:
+                  description: Only applicable if `digital_wallet` is `APPLE_PAY`. Omit to receive only `activationData` in the response. Apple's public leaf certificate. Base64 encoded in PEM format with headers `(-----BEGIN CERTIFICATE-----)` and trailers omitted. Provided by the device's wallet.
+                  format: byte
+                  type: string
+                client_wallet_account_id:
+                  description: Only applicable if `digital_wallet` is `GOOGLE_PAY` or `SAMSUNG_PAY` and the card is on the Visa network. Consumer ID that identifies the wallet account holder entity.
+                  type: string
+                client_device_id:
+                  description: Only applicable if `digital_wallet` is `GOOGLE_PAY` or `SAMSUNG_PAY` and the card is on the Visa network. Stable device identification set by the wallet provider.
+                  type: string
+                digital_wallet:
+                  description: Name of digital wallet provider.
+                  enum:
+                  - APPLE_PAY
+                  - GOOGLE_PAY
+                  - SAMSUNG_PAY
+                  type: string
+                nonce:
+                  description: Only applicable if `digital_wallet` is `APPLE_PAY`. Omit to receive only `activationData` in the response. Base64 cryptographic nonce provided by the device's wallet.
+                  format: byte
+                  type: string
+                nonce_signature:
+                  description: Only applicable if `digital_wallet` is `APPLE_PAY`. Omit to receive only `activationData` in the response. Base64 cryptographic nonce provided by the device's wallet.
+                  format: byte
+                  type: string
+              type: object
+        description: Update request.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  provisioning_payload:
+                    oneOf:
+                    - type: string
+                      description: Base64 encoded JSON payload representing a payment card that can be passed to a device's digital wallet. Applies to Google and Samsung Pay wallets.
+                    - type: object
+                      properties:
+                        activationData:
+                          type: string
+                        ephemeralPublicKey:
+                          type: string
+                        encryptedData:
+                          type: string
+                      description: Object containing the fields required to add a card to Apple Pay. Applies only to Apple Pay wallet.
+                type: object
+          description: 'Returns `provisioning_payload`, a cryptographic payload representing a payment card that can be passed to a device''s digital wallet. Each digital wallet has a different API; consult the wallet''s documentation for more info.
+
+            '
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Provision card (Digital Wallet)
+      tags:
+      - Card
+  /v1/cards/{card_token}/web_provision:
+    post:
+      description: 'Allow your cardholders to directly add payment cards to the device''s digital wallet from a browser on the web.
+
+
+        This requires some additional setup and configuration. Please [Contact Us](https://lithic.com/contact) or your Customer Success representative for more information.
+
+        '
+      operationId: postCardWebProvision
+      parameters:
+      - $ref: '#/components/parameters/cardTokenDigitalWallet'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              webProvisionAppleCard:
+                summary: Web push provision a card for Apple Pay
+                value:
+                  digital_wallet: APPLE_PAY
+              webProvisionGoogleCard:
+                summary: Web push provision a card for Google Pay
+                value:
+                  digital_wallet: GOOGLE_PAY
+                  server_session_id: d3538acf-e5df-4446-8ce6-588fa4472ac1
+                  client_device_id: d3538acf-e5df-4446-8ce6-588fa4472ac1
+                  client_wallet_account_id: d3538acf-e5df-4446-8ce6-588fa4472ac1
+            schema:
+              properties:
+                digital_wallet:
+                  description: Name of digital wallet provider.
+                  enum:
+                  - APPLE_PAY
+                  - GOOGLE_PAY
+                  type: string
+                server_session_id:
+                  description: Only applicable if `digital_wallet` is GOOGLE_PAY. Google Pay Web Push Provisioning session identifier required for the FPAN flow.
+                  format: uuid
+                  type: string
+                client_device_id:
+                  description: Only applicable if `digital_wallet` is GOOGLE_PAY. Google Pay Web Push Provisioning device identifier required for the tokenization flow
+                  format: uuid
+                  type: string
+                client_wallet_account_id:
+                  description: Only applicable if `digital_wallet` is GOOGLE_PAY. Google Pay Web Push Provisioning wallet account identifier required for the tokenization flow
+                  format: uuid
+                  type: string
+              type: object
+        description: Update request.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                applePayResponse:
+                  summary: Web push provision response for Apple Pay
+                  value:
+                    jws:
+                      header:
+                        kid: 8dc7aed4-29e3-41e4-9cdb-673a05e6615c
+                      protected: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9
+                      payload: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9
+                      signature: SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                    state: 3cc4c292-727b-4ca8-b9a8-f96c15485f4e
+                googlePayResponse:
+                  summary: Web push provision response for Google Pay
+                  value:
+                    google_opc: WW91ciBTdHJpbmcgSGVyZQ==
+                    tsp_opc: WW91ciBTdHJpbmcgSGVyZQ==
+              schema:
+                $ref: '#/components/schemas/WebPushProvisioningResponse'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Web Push Provision card (Digital Wallet)
+      tags:
+      - Card
+  /v1/cards/{card_token}/reissue:
+    post:
+      description: 'Initiate print and shipment of a duplicate physical card (e.g. card is physically damaged).  The PAN, expiry, and CVC2 will remain the same and the original card can continue to be used until the new card is activated.
+
+        Only applies to cards of type `PHYSICAL`.  A card can be reissued or renewed a total of 8 times.'
+      operationId: postCardReissue
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              reissueCardNewAddress:
+                summary: Reissue card with a new address
+                value:
+                  carrier:
+                    qr_code_url: https://lithic.com/activate-card/1
+                  product_id: '100'
+                  shipping_address:
+                    address1: 5 Broad Street
+                    address2: Unit 5A
+                    city: NEW YORK
+                    country: USA
+                    first_name: Janet
+                    last_name: Yellen
+                    postal_code: '10001'
+                    state: NY
+                  shipping_method: STANDARD
+            schema:
+              properties:
+                carrier:
+                  $ref: '#/components/schemas/Carrier'
+                  description: If omitted, the previous carrier will be used.
+                product_id:
+                  description: 'Specifies the configuration (e.g. physical card art) that the card should be manufactured with, and only applies to cards of type `PHYSICAL`. This must be configured with Lithic before use.
+
+                    '
+                  type: string
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                  description: If omitted, the previous shipping address will be used.
+                shipping_method:
+                  description: 'Shipping method for the card. Only applies to cards of type PHYSICAL.
+
+                    Use of options besides `STANDARD` require additional permissions.
+
+
+                    * `STANDARD` - USPS regular mail or similar international option, with no tracking
+
+                    * `STANDARD_WITH_TRACKING` - USPS regular mail or similar international option, with tracking
+
+                    * `PRIORITY` - USPS Priority, 1-3 day shipping, with tracking
+
+                    * `EXPRESS` - FedEx or UPS depending on card manufacturer, Express, 3-day shipping, with tracking
+
+                    * `2_DAY` - FedEx or UPS depending on card manufacturer, 2-day shipping, with tracking
+
+                    * `EXPEDITED` - FedEx or UPS depending on card manufacturer, Standard Overnight or similar international option, with tracking
+
+                    * `BULK` - Card will be shipped as part of a bulk fulfillment order. The shipping method and timeline are inherited from the parent bulk order.
+
+                    '
+                  enum:
+                  - 2_DAY
+                  - BULK
+                  - EXPEDITED
+                  - EXPRESS
+                  - PRIORITY
+                  - STANDARD
+                  - STANDARD_WITH_TRACKING
+                  type: string
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                account_token: f3f4918c-dee9-464d-a819-4aa42901d624
+                card_program_token: 5e9483eb-8103-4e16-9794-2106111b2eca
+                cardholder_currency: USD
+                created: '2021-06-28T22:53:15Z'
+                cvv: '742'
+                exp_month: '05'
+                exp_year: '2027'
+                funding:
+                  account_name: Sandbox
+                  created: '2022-03-08T08:00:00Z'
+                  last_four: '5263'
+                  nickname: checking account
+                  state: ENABLED
+                  token: b0f0d91a-3697-46d8-85f3-20f0a585cbea
+                  type: DEPOSITORY_CHECKING
+                hostname: ''
+                last_four: '4938'
+                memo: Updated Name
+                pan: '4111111289144142'
+                spend_limit: 100
+                spend_limit_duration: FOREVER
+                state: OPEN
+                token: f5f905f5-8a8e-49bf-a9b4-c0adaa401456
+                type: PHYSICAL
+                pin_status: OK
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Reissue physical card
+      tags:
+      - Card
+  /v1/cards/{card_token}/renew:
+    post:
+      description: 'Applies to card types `PHYSICAL` and `VIRTUAL`.
+
+        For `PHYSICAL`, creates a new card with the same card token and PAN, but updated expiry and CVC2 code. The original card will keep working for card-present transactions until the new card is activated. For card-not-present transactions, the original card details (expiry, CVC2) will also keep working until the new card is activated.
+
+        A `PHYSICAL` card can be reissued or renewed a total of 8 times.
+
+        For `VIRTUAL`, the card will retain the same card token and PAN and receive an updated expiry and CVC2 code.
+
+        `product_id`, `shipping_method`, `shipping_address`, `carrier` are only relevant for renewing `PHYSICAL` cards.'
+      operationId: postCardRenew
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              renewCardNewAddress:
+                summary: Renew card with a new address
+                value:
+                  carrier:
+                    qr_code_url: https://lithic.com/activate-card/1
+                  product_id: '100'
+                  shipping_address:
+                    address1: 5 Broad Street
+                    address2: Unit 5A
+                    city: NEW YORK
+                    country: USA
+                    first_name: Janet
+                    last_name: Yellen
+                    postal_code: '10001'
+                    state: NY
+                  shipping_method: STANDARD
+            schema:
+              properties:
+                carrier:
+                  $ref: '#/components/schemas/Carrier'
+                  description: If omitted, the previous carrier will be used.
+                exp_month:
+                  description: Two digit (MM) expiry month. If neither `exp_month` nor `exp_year` is provided, an expiration date five years in the future will be generated. Five years is the maximum expiration date.
+                  example: '06'
+                  maxLength: 2
+                  minLength: 2
+                  type: string
+                exp_year:
+                  description: Four digit (yyyy) expiry year. If neither `exp_month` nor `exp_year` is provided, an expiration date five years in the future will be generated. Five years is the maximum expiration date.
+                  example: '2027'
+                  maxLength: 4
+                  minLength: 4
+                  type: string
+                product_id:
+                  description: 'Specifies the configuration (e.g. physical card art) that the card should be manufactured with, and only applies to cards of type `PHYSICAL`. This must be configured with Lithic before use.
+
+                    '
+                  type: string
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                  description: The shipping address this card will be sent to.
+                shipping_method:
+                  description: 'Shipping method for the card. Only applies to cards of type PHYSICAL.
+
+                    Use of options besides `STANDARD` require additional permissions.
+
+
+                    * `STANDARD` - USPS regular mail or similar international option, with no tracking
+
+                    * `STANDARD_WITH_TRACKING` - USPS regular mail or similar international option, with tracking
+
+                    * `PRIORITY` - USPS Priority, 1-3 day shipping, with tracking
+
+                    * `EXPRESS` - FedEx or UPS depending on card manufacturer, Express, 3-day shipping, with tracking
+
+                    * `2_DAY` - FedEx or UPS depending on card manufacturer, 2-day shipping, with tracking
+
+                    * `EXPEDITED` - FedEx or UPS depending on card manufacturer, Standard Overnight or similar international option, with tracking
+
+                    * `BULK` - Card will be shipped as part of a bulk fulfillment order. The shipping method and timeline are inherited from the parent bulk order.
+
+                    '
+                  enum:
+                  - 2_DAY
+                  - BULK
+                  - EXPEDITED
+                  - EXPRESS
+                  - PRIORITY
+                  - STANDARD
+                  - STANDARD_WITH_TRACKING
+                  type: string
+              required:
+              - shipping_address
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                account_token: f3f4918c-dee9-464d-a819-4aa42901d624
+                card_program_token: 5e9483eb-8103-4e16-9794-2106111b2eca
+                cardholder_currency: USD
+                created: '2021-06-28T22:53:15Z'
+                cvv: '742'
+                exp_month: '05'
+                exp_year: '2027'
+                funding:
+                  account_name: Sandbox
+                  created: '2020-07-08T17:57:36Z'
+                  last_four: '5263'
+                  nickname: checking account
+                  state: ENABLED
+                  token: b0f0d91a-3697-46d8-85f3-20f0a585cbea
+                  type: DEPOSITORY_CHECKING
+                hostname: ''
+                last_four: '4938'
+                memo: Updated Name
+                pan: '4111111289144142'
+                spend_limit: 100
+                spend_limit_duration: FOREVER
+                state: OPEN
+                token: f5f905f5-8a8e-49bf-a9b4-c0adaa401456
+                type: PHYSICAL
+                pin_status: OK
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Renew a card
+      tags:
+      - Card
+  /v1/cards/{card_token}/convert_physical:
+    post:
+      description: 'Convert a virtual card into a physical card and manufacture it.
+
+        Customer must supply relevant fields for physical card creation including `product_id`, `carrier`, `shipping_method`, and `shipping_address`.
+
+        The card token will be unchanged.  The card''s type will be altered to `PHYSICAL`.
+
+        The card will be set to state `PENDING_FULFILLMENT` and fulfilled at next fulfillment cycle.
+
+        Virtual cards created on card programs which do not support physical cards cannot be converted.  The card program cannot be changed as part of the conversion.  Cards must be in an `OPEN` state to be converted.
+
+        Only applies to cards of type `VIRTUAL` (or existing cards with deprecated types of `DIGITAL_WALLET` and `UNLOCKED`).'
+      operationId: postConvertPhysical
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              convertPhysicalAddress:
+                summary: Convert virtual card to physical card
+                value:
+                  carrier:
+                    qr_code_url: https://lithic.com/activate-card/1
+                  product_id: '100'
+                  shipping_address:
+                    address1: 5 Broad Street
+                    address2: Unit 5A
+                    city: NEW YORK
+                    country: USA
+                    first_name: Janet
+                    last_name: Yellen
+                    postal_code: '10001'
+                    state: NY
+                  shipping_method: STANDARD
+            schema:
+              properties:
+                carrier:
+                  $ref: '#/components/schemas/Carrier'
+                  description: If omitted, the previous carrier will be used.
+                product_id:
+                  description: 'Specifies the configuration (e.g. physical card art) that the card should be manufactured with, and only applies to cards of type `PHYSICAL`. This must be configured with Lithic before use.
+
+                    '
+                  type: string
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                  description: The shipping address this card will be sent to.
+                shipping_method:
+                  description: 'Shipping method for the card. Only applies to cards of type PHYSICAL.
+
+                    Use of options besides `STANDARD` require additional permissions.
+
+
+                    * `STANDARD` - USPS regular mail or similar international option, with no tracking
+
+                    * `STANDARD_WITH_TRACKING` - USPS regular mail or similar international option, with tracking
+
+                    * `PRIORITY` - USPS Priority, 1-3 day shipping, with tracking
+
+                    * `EXPRESS` - FedEx or UPS depending on card manufacturer, Express, 3-day shipping, with tracking
+
+                    * `2_DAY` - FedEx or UPS depending on card manufacturer, 2-day shipping, with tracking
+
+                    * `EXPEDITED` - FedEx or UPS depending on card manufacturer, Standard Overnight or similar international option, with tracking
+
+                    * `BULK` - Card will be shipped as part of a bulk fulfillment order. The shipping method and timeline are inherited from the parent bulk order.
+
+                    '
+                  enum:
+                  - 2_DAY
+                  - BULK
+                  - EXPEDITED
+                  - EXPRESS
+                  - PRIORITY
+                  - STANDARD
+                  - STANDARD_WITH_TRACKING
+                  type: string
+              required:
+              - shipping_address
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                account_token: f3f4918c-dee9-464d-a819-4aa42901d624
+                card_program_token: 5e9483eb-8103-4e16-9794-2106111b2eca
+                cardholder_currency: USD
+                created: '2021-06-28T22:53:15Z'
+                cvv: '742'
+                exp_month: '05'
+                exp_year: '2027'
+                funding:
+                  account_name: Sandbox
+                  created: '2020-07-08T17:57:36Z'
+                  last_four: '5263'
+                  nickname: checking account
+                  state: ENABLED
+                  token: b0f0d91a-3697-46d8-85f3-20f0a585cbea
+                  type: DEPOSITORY_CHECKING
+                hostname: ''
+                last_four: '4938'
+                memo: Updated Name
+                pan: '4111111289144142'
+                spend_limit: 100
+                spend_limit_duration: FOREVER
+                state: OPEN
+                token: f5f905f5-8a8e-49bf-a9b4-c0adaa401456
+                type: PHYSICAL
+                pin_status: OK
+              schema:
+                $ref: '#/components/schemas/pci_card_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Convert virtual to physical card
+      tags:
+      - Card
+  /v1/cards/{card_token}/spend_limits:
+    get:
+      description: Get a Card's available spend limit, which is based on the spend limit configured on the Card and the amount already spent over the spend limit's duration. For example, if the Card has a monthly spend limit of $1000 configured, and has spent $600 in the last month, the available spend limit returned would be $400.
+      operationId: getCardSpendLimits
+      parameters:
+      - $ref: '#/components/parameters/cardToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardSpendLimits'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get card's available spend limit
+      tags:
+      - Card
+  /v1/embed/card:
+    get:
+      description: "Handling full card PANs and CVV codes requires that you comply with the Payment Card Industry Data Security Standards (PCI DSS). Some clients choose to reduce their compliance obligations by leveraging our embedded card UI solution documented below.\n\nIn this setup, PANs and CVV codes are presented to the end-user via a card UI that we provide, optionally styled in the customer's branding using a specified css stylesheet. A user's browser makes the request directly to api.lithic.com, so card PANs and CVVs never touch the API customer's servers while full card data is displayed to their end-users. The response contains an HTML document (see Embedded Card UI or Changelog for upcoming changes in January). This means that the url for the request can be inserted straight into the `src` attribute of an iframe.\n\n```html\n<iframe id=\"card-iframe\"\n        src=\"https://sandbox.lithic.com/v1/embed/card?embed_request=eyJjc3MiO...;hmac=r8tx1...\"\n        allow=\"clipboard-write\" class=\"content\"></iframe>\n```\n\nYou should compute the request payload on the server side. You can render it (or the whole iframe) on the server or make an ajax call from your front end code, but **do not ever embed your API key into front end code, as doing so introduces a serious security vulnerability**.\n"
+      operationId: getEmbedCard
+      parameters:
+      - description: A base64 encoded JSON string of an EmbedRequest to specify which card to load.
+        in: query
+        name: embed_request
+        required: true
+        schema:
+          type: string
+      - description: SHA256 HMAC of the embed_request JSON string with base64 digest.
+        in: query
+        name: hmac
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            text/html:
+              examples:
+                html:
+                  summary: Card UI
+                  value: "<html>\n<head>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"https://demo.lithic.com/backend/embedded.css\">\n<style>\n    #alert { display: none; }\n</style>\n<script type=\"text/javascript\">\n    var timeout;\n\n    function clearAlertDelay() {\n        clearTimeout(timeout);\n        var messageDiv = document.getElementById('alert');\n        timeout = window.setTimeout(\n            function() {\n                messageDiv.className = \"empty\";\n                messageDiv.innerText = \"\";\n            },\n            1200\n        );\n    }\n\n    function copySuccess(divId) {\n        var messageDiv = document.getElementById('alert');\n        messageDiv.innerText = divId + \" copied to clipboard\";\n        messageDiv.className = \"success\";\n        console.log('Copying to clipboard was successful!');\n        clearAlertDelay();\n    }\n\n    function copyFailed(divId) {\n        var messageDiv = document.getElementById('alert');\n        messageDiv.innerText = \"error copying \" + divId;\n        messageDiv.className = \"error\";\n        console.error('Copying to clipboard failed');\n        clearAlertDelay();\n    }\n\n    function copyToClip(divId) {\n        var messageDiv = document.getElementById('alert');\n        var copyEl = document.getElementById(divId);\n        var copyText = copyEl.textContent;\n        navigator.clipboard.writeText(copyText)\n            .then(function () {\n                copySuccess(divId);\n                clearAlertDelay();\n            })\n            .catch(function(err) {\n                try {\n                    var copied = false;\n                    if (document.createRange) {\n                        range = document.createRange();\n                        range.selectNode(copyEl)\n                        select = window.getSelection();\n                        select.removeAllRanges();\n                        select.addRange(range);\n                        copied = document.execCommand('copy');\n                        select.removeAllRanges();\n                    }\n                    else {\n                        range = document.body.createTextRange();\n                        range.moveToElementText(copyEl);\n                        range.select();\n                        copied = document.execCommand('copy');\n                    }\n\n                    if (copied) {\n                        copySuccess(divId);\n                    }\n                    else {\n                        copyFailed(divId);\n                    }\n                }\n                catch (err) {\n                    copyFailed(divId);\n                }\n                clearAlertDelay();\n            })\n    }\n</script>\n</head>\n<body>\n    <div id=\"card\">\n        <div id=\"pan\" onclick=\"copyToClip('pan')\">9999<span class='pan-separator'></span>9999<span class='pan-separator'></span>9999<span class='pan-separator'></span>9999</div>\n        <div id=\"expiry\">\n            <span id=\"month\" onclick=\"copyToClip('month')\">08</span>\n            <span id=\"separator\">/</span>\n            <span id=\"year\" onclick=\"copyToClip('year')\">27</span>\n        </div>\n        <div id=\"cvv\" onclick=\"copyToClip('cvv')\">574</div>\n        <div id=\"alert\" class=\"empty\"></div>\n    </div>\n</body>\n</html>\n"
+              schema:
+                type: string
+          description: 'The endpoint returns an HTML document similar to the one below. It is up to the API client to provide css styles for these elements in the EmbedRequest. You can always rely on the `card`, `pan`, `expiry`, `cvv`, and `alert` ids, as well as the `pan-separator` class. You shouldn''t make any other assumptions about the structure of the document as it could change at any time.
+
+
+            Note that using the default style sheet there is no visual indication that copying is happening on-click, and you may need to add on-click styling yourself.
+
+            '
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Embedded card UI
+      tags:
+      - Card
+components:
+  parameters:
+    idempotencyKey:
+      description: Idempotency key for the request
+      in: header
+      name: Idempotency-Key
+      schema:
+        type: string
+        format: uuid
+      example: 65a9dad4-1b60-4686-83fd-65b25078a4b4
+    cardProgramTokenPath:
+      description: Globally unique identifier for the card program.
+      examples:
+        cardProgramTokenExample:
+          summary: A sample card program token
+          value: 65db64b2-ae89-491a-97d9-f64788f8b2ab
+      in: path
+      name: card_program_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    financialTransactionToken:
+      description: Globally unique identifier for financial transaction token.
+      examples:
+        financialTransactionTokenExample:
+          summary: A sample financial transaction token
+          value: 18394f8e-711b-4b3e-ae21-d35a9eafe7d1
+      in: path
+      name: financial_transaction_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    cardToken:
+      examples:
+        cardTokenExample:
+          summary: A sample card token
+          value: 73ca53a1-ae89-491a-97d9-f64788f8b2ab
+      in: path
+      name: card_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    cardTokenDigitalWallet:
+      description: The unique token of the card to add to the device's digital wallet.
+      examples:
+        cardTokenExample:
+          summary: A sample card token
+          value: 73ca53a1-ae89-491a-97d9-f64788f8b2ab
+      in: path
+      name: card_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+  schemas:
+    funding_account:
+      description: Funding account for a card
+      type: object
+      properties:
+        account_name:
+          description: Account name identifying the funding source. This may be `null`.
+          type: string
+        created:
+          description: An RFC 3339 string representing when this funding source was added to the Lithic account. This may be `null`. UTC time zone.
+          format: date-time
+          type: string
+        last_four:
+          description: The last 4 digits of the account (e.g. bank account, debit card) associated with this FundingAccount. This may be null.
+          maxLength: 4
+          minLength: 4
+          type: string
+        nickname:
+          description: The nickname given to the `FundingAccount` or `null` if it has no nickname.
+          maxLength: 255
+          minLength: 1
+          type:
+          - string
+          - 'null'
+        state:
+          description: 'State of funding source. Funding source states: * `ENABLED` - The funding account is available to use for card creation and transactions. * `PENDING` - The funding account is still being verified e.g. bank micro-deposits verification. * `DELETED` - The founding account has been deleted.'
+          enum:
+          - DELETED
+          - ENABLED
+          - PENDING
+          type: string
+        token:
+          description: A globally unique identifier for this FundingAccount.
+          format: uuid
+          type: string
+        type:
+          description: 'Types of funding source: * `DEPOSITORY_CHECKING` - Bank checking account. * `DEPOSITORY_SAVINGS` - Bank savings account.'
+          enum:
+          - DEPOSITORY_CHECKING
+          - DEPOSITORY_SAVINGS
+          type: string
+      required:
+      - created
+      - last_four
+      - state
+      - token
+      - type
+    CardProgram:
+      properties:
+        account_level_management_enabled:
+          description: Whether the card program is participating in Account Level Management. Currently applicable to Visa card programs only.
+          type: boolean
+        cardholder_currency:
+          description: 3-character alphabetic ISO 4217 code for the currency of the cardholder.
+          example: USD
+          type: string
+        created:
+          description: Timestamp of when the card program was created.
+          format: date-time
+          type: string
+        name:
+          description: The name of the card program.
+          example: My Prepaid Program
+          type: string
+        pan_range_end:
+          description: The first digits of the card number that this card program ends with.
+          example: '52304803'
+          type: string
+        pan_range_start:
+          description: The first digits of the card number that this card program starts with.
+          example: '52304803'
+          type: string
+        settlement_currencies:
+          description: List of 3-character alphabetic ISO 4217 codes for the currencies that the card program supports for settlement.
+          example:
+          - USD
+          - CAD
+          items:
+            type: string
+          type: array
+        token:
+          description: Globally unique identifier.
+          format: uuid
+          type: string
+      required:
+      - account_level_management_enabled
+      - created
+      - name
+      - pan_range_end
+      - pan_range_start
+      - token
+      type: object
+    signals-response:
+      title: Signals Response
+      description: 'Behavioral feature state for a card or account derived from its transaction history.
+
+
+        Derived statistical features (averages, standard deviations, z-scores) are computed using Welford''s online algorithm over approved transactions. Average fields are null when fewer than 5 approved transactions have been recorded. Standard deviation fields are null when fewer than 30 approved transactions have been recorded.
+
+
+        3DS fields (`three_ds_success_rate`, `three_ds_success_count`, `three_ds_total_count`) are card-scoped and will be null for account responses.
+
+
+        Raw fields (`seen_countries`, `seen_mccs`, `approved_txn_amount_m2`, etc.) are included so clients can compute their own transaction-specific derivations, such as checking whether a new transaction''s country is in `seen_countries` to determine `is_new_country`, or computing a z-score using the raw mean and M2 values.'
+      type: object
+      properties:
+        avg_transaction_amount:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the entity's lifetime, in cents. Null if fewer than 5 approved transactions have been recorded.
+        stdev_transaction_amount:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the entity's lifetime, in cents. Null if fewer than 30 approved transactions have been recorded.
+        approved_txn_count:
+          type:
+          - integer
+          - 'null'
+          description: The total number of approved transactions over the entity's lifetime.
+        avg_transaction_amount_7d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 7 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_7d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 7 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_7d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 7 days.
+        avg_transaction_amount_30d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 30 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_30d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 30 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_30d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 30 days.
+        avg_transaction_amount_90d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 90 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_90d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 90 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_90d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 90 days.
+        is_first_transaction:
+          type:
+          - boolean
+          - 'null'
+          description: Whether the entity has no prior transaction history. Returns true if no history is found. Null if transaction history exists but a first transaction timestamp is unavailable.
+        time_since_last_transaction_days:
+          type:
+          - number
+          - 'null'
+          description: The number of days since the last approved transaction on the entity.
+        three_ds_success_rate:
+          type:
+          - number
+          - 'null'
+          description: The 3DS authentication success rate for the card, as a percentage from 0.0 to 100.0. Null for account responses.
+        distinct_country_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of distinct merchant countries seen in the entity's transaction history.
+        distinct_mcc_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of distinct MCCs seen in the entity's transaction history.
+        seen_countries:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of merchant countries seen in the entity's transaction history. Clients can use this to determine whether a new transaction's country is novel (i.e. compute `is_new_country`).
+        seen_mccs:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of MCCs seen in the entity's transaction history. Clients can use this to determine whether a new transaction's MCC is novel (i.e. compute `is_new_mcc`).
+        seen_merchants:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of card acceptor IDs seen in the card's approved transaction history, capped at the 1000 most recently seen. Null for account responses. Clients can use this to determine whether a new transaction's merchant is novel (i.e. compute `is_new_merchant`).
+        first_txn_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the first approved transaction for the entity, in ISO 8601 format.
+        last_txn_approved_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the most recent approved transaction for the entity, in ISO 8601 format.
+        last_cp_country:
+          type:
+          - string
+          - 'null'
+          description: The merchant country of the last card-present transaction. Clients can use this together with `last_cp_timestamp` to detect impossible travel.
+        last_cp_postal_code:
+          type:
+          - string
+          - 'null'
+          description: The merchant postal code of the last card-present transaction.
+        last_cp_timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the last card-present transaction, in ISO 8601 format.
+        approved_txn_amount_m2:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for lifetime approved transaction amounts. Used together with `avg_transaction_amount` and `approved_txn_count` to compute the z-score of a new transaction amount (variance = M2 / (count - 1)).
+        approved_txn_amount_m2_7d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 7 days.
+        approved_txn_amount_m2_30d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 30 days.
+        approved_txn_amount_m2_90d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 90 days.
+        three_ds_success_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of successful 3DS authentications for the card. Null for account responses.
+        three_ds_total_count:
+          type:
+          - integer
+          - 'null'
+          description: The total number of 3DS authentication attempts for the card. Null for account responses.
+      required:
+      - avg_transaction_amount
+      - stdev_transaction_amount
+      - approved_txn_count
+      - avg_transaction_amount_7d
+      - stdev_transaction_amount_7d
+      - approved_txn_count_7d
+      - avg_transaction_amount_30d
+      - stdev_transaction_amount_30d
+      - approved_txn_count_30d
+      - avg_transaction_amount_90d
+      - stdev_transaction_amount_90d
+      - approved_txn_count_90d
+      - is_first_transaction
+      - time_since_last_transaction_days
+      - three_ds_success_rate
+      - distinct_country_count
+      - distinct_mcc_count
+      - seen_countries
+      - seen_mccs
+      - seen_merchants
+      - first_txn_at
+      - last_txn_approved_at
+      - last_cp_country
+      - last_cp_postal_code
+      - last_cp_timestamp
+      - approved_txn_amount_m2
+      - approved_txn_amount_m2_7d
+      - approved_txn_amount_m2_30d
+      - approved_txn_amount_m2_90d
+      - three_ds_success_count
+      - three_ds_total_count
+    GoogleWebPushProvisioningResponse:
+      properties:
+        google_opc:
+          description: A base64 encoded and encrypted payload representing card data for the Google Pay UWPP FPAN flow.
+          example: WW91ciBTdHJpbmcgSGVyZQ==
+          type: string
+        tsp_opc:
+          description: A base64 encoded and encrypted payload representing card data for the Google Pay UWPP tokenization flow.
+          example: WW91ciBTdHJpbmcgSGVyZQ==
+          type: string
+      type: object
+      not:
+        properties:
+          jws: {}
+        required:
+        - jws
+    WebPushProvisioningResponse:
+      oneOf:
+      - $ref: '#/components/schemas/AppleWebPushProvisioningResponse'
+      - $ref: '#/components/schemas/GoogleWebPushProvisioningResponse'
+    non_pci_card_response:
+      description: Card details without PCI information
+      type: object
+      properties:
+        account_token:
+          description: Globally unique identifier for the account to which the card belongs.
+          example: f3f4918c-dee9-464d-a819-4aa42901d624
+          type: string
+        auth_rule_tokens:
+          description: List of identifiers for the Auth Rule(s) that are applied on the card. This field is deprecated and will no longer be populated in the `Card` object. The key will be removed from the schema in a future release. Use the `/auth_rules` endpoints to fetch Auth Rule information instead.
+          items:
+            type: string
+          type: array
+          deprecated: true
+        card_program_token:
+          description: Globally unique identifier for the card program on which the card exists.
+          example: 5e9483eb-8103-4e16-9794-2106111b2eca
+          type: string
+        bulk_order_token:
+          description: Globally unique identifier for the bulk order associated with this card. Only applicable to physical cards that are part of a bulk shipment
+          example: 5e9483eb-8103-4e16-9794-2106111b2eca
+          format: uuid
+          type:
+          - string
+          - 'null'
+        replacement_for:
+          description: If the card is a replacement for another card, the globally unique identifier for the card that was replaced.
+          example: 5e9483eb-8103-4e16-9794-2106111b2eca
+          type:
+          - string
+          - 'null'
+        cardholder_currency:
+          description: 3-character alphabetic ISO 4217 code for the currency of the cardholder.
+          example: USD
+          type: string
+        created:
+          description: An RFC 3339 timestamp for when the card was created. UTC time zone.
+          example: '2021-06-28T22:53:15Z'
+          format: date-time
+          type: string
+        digital_card_art_token:
+          description: Specifies the digital card art to be displayed in the user's digital wallet after tokenization. This artwork must be approved by Mastercard and configured by Lithic to use.
+          example: 5e9483eb-8103-4e16-9794-2106111b2eca
+          type:
+          - string
+          - 'null'
+        exp_month:
+          description: Two digit (MM) expiry month.
+          example: '06'
+          maxLength: 2
+          minLength: 2
+          type: string
+        exp_year:
+          description: Four digit (yyyy) expiry year.
+          example: '2027'
+          maxLength: 4
+          minLength: 4
+          type: string
+        funding:
+          description: 'Deprecated: Funding account for the card.'
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/funding_account'
+        hostname:
+          description: Hostname of card's locked merchant (will be empty if not applicable).
+          type: string
+        last_four:
+          description: Last four digits of the card number.
+          maxLength: 4
+          minLength: 4
+          type: string
+        memo:
+          description: Friendly name to identify the card.
+          example: New Card
+          type: string
+        network_program_token:
+          description: Globally unique identifier for the card's network program. Null if the card is not associated with a network program. Currently applicable to Visa cards participating in Account Level Management only
+          example: 5e9483eb-8103-4e16-9794-2106111b2eca
+          type:
+          - string
+          - 'null'
+        pending_commands:
+          description: 'Indicates if there are offline PIN changes pending card interaction with an offline PIN terminal. Possible commands are: CHANGE_PIN, UNBLOCK_PIN. Applicable only to cards issued in markets supporting offline PINs.'
+          items:
+            type: string
+          type: array
+        pin_status:
+          description: Indicates if a card is blocked due a PIN status issue (e.g. excessive incorrect attempts).
+          enum:
+          - OK
+          - BLOCKED
+          - NOT_SET
+          type: string
+        product_id:
+          description: Only applicable to cards of type `PHYSICAL`. This must be configured with Lithic before use. Specifies the configuration (i.e., physical card art) that the card should be manufactured with.
+          example: '1'
+          type:
+          - string
+          - 'null'
+        spend_limit:
+          description: Amount (in cents) to limit approved authorizations (e.g. 100000 would be a $1,000 limit). Transaction requests above the spend limit will be declined.
+          example: 1000
+          type: integer
+        spend_limit_duration:
+          $ref: '#/components/schemas/spend_limit_duration'
+        state:
+          description: 'Card state values: * `CLOSED` - Card will no longer approve authorizations. Closing a card cannot be undone. * `OPEN` - Card will approve authorizations (if they match card and account parameters). * `PAUSED` - Card will decline authorizations, but can be resumed at a later time. * `PENDING_FULFILLMENT` - The initial state for cards of type `PHYSICAL`. The card is provisioned pending manufacturing and fulfillment. Cards in this state can accept authorizations for e-commerce purchases, but not for "Card Present" purchases where the physical card itself is present. * `PENDING_ACTIVATION` - At regular intervals, cards of type `PHYSICAL` in state `PENDING_FULFILLMENT` are sent to the card production warehouse and updated to state `PENDING_ACTIVATION`. Similar to `PENDING_FULFILLMENT`, cards in this state can be used for e-commerce transactions or can be added to mobile wallets. API clients should update the card''s state to `OPEN` only after the cardholder confirms receipt of the card. In sandbox, the same daily batch fulfillment occurs, but no cards are actually manufactured.'
+          enum:
+          - CLOSED
+          - OPEN
+          - PAUSED
+          - PENDING_ACTIVATION
+          - PENDING_FULFILLMENT
+          type: string
+        substatus:
+          description: 'Card state substatus values: * `LOST` - The physical card is no longer in the cardholder''s possession due to being lost or never received by the cardholder. * `COMPROMISED` - Card information has been exposed, potentially leading to unauthorized access. This may involve physical card theft, cloning, or online data breaches. * `DAMAGED` - The physical card is not functioning properly, such as having chip failures or a demagnetized magnetic stripe. * `END_USER_REQUEST` - The cardholder requested the closure of the card for reasons unrelated to fraud or damage, such as switching to a different product or closing the account. * `ISSUER_REQUEST` - The issuer closed the card for reasons unrelated to fraud or damage, such as account inactivity, product or policy changes, or technology upgrades. * `NOT_ACTIVE` - The card hasn’t had any transaction activity for a specified period, applicable to statuses like `PAUSED` or `CLOSED`. * `SUSPICIOUS_ACTIVITY` - The card has one or more suspicious transactions or activities that require review. This can involve prompting the cardholder to confirm legitimate use or report confirmed fraud. * `INTERNAL_REVIEW` - The card is temporarily paused pending further internal review. * `EXPIRED` - The card has expired and has been closed without being reissued. * `UNDELIVERABLE` - The card cannot be delivered to the cardholder and has been returned. * `OTHER` - The reason for the status does not fall into any of the above categories. A comment can be provided to specify the reason.'
+          enum:
+          - LOST
+          - COMPROMISED
+          - DAMAGED
+          - END_USER_REQUEST
+          - ISSUER_REQUEST
+          - NOT_ACTIVE
+          - SUSPICIOUS_ACTIVITY
+          - INTERNAL_REVIEW
+          - EXPIRED
+          - UNDELIVERABLE
+          - OTHER
+          type:
+          - string
+          - 'null'
+        comment:
+          description: Additional context or information related to the card.
+          type: string
+        token:
+          description: Globally unique identifier.
+          example: 7ef7d65c-9023-4da3-b113-3b8583fd7951
+          type: string
+        type:
+          description: 'Card types: * `VIRTUAL` - Card will authorize at any merchant and can be added to a digital wallet like Apple Pay or Google Pay (if the card program is digital wallet-enabled). * `PHYSICAL` - Manufactured and sent to the cardholder. We offer white label branding, credit, ATM, PIN debit, chip/EMV, NFC and magstripe functionality. * `SINGLE_USE` - Card is closed upon first successful authorization. * `MERCHANT_LOCKED` - Card is locked to the first merchant that successfully authorizes the card. * `UNLOCKED` - *[Deprecated]* Similar behavior to VIRTUAL cards, please use VIRTUAL instead. * `DIGITAL_WALLET` - *[Deprecated]* Similar behavior to VIRTUAL cards, please use VIRTUAL instead.'
+          enum:
+          - MERCHANT_LOCKED
+          - PHYSICAL
+          - SINGLE_USE
+          - VIRTUAL
+          - UNLOCKED
+          - DIGITAL_WALLET
+          type: string
+      required:
+      - account_token
+      - card_program_token
+      - created
+      - funding
+      - last_four
+      - pin_status
+      - spend_limit
+      - spend_limit_duration
+      - state
+      - token
+      - type
+    ShippingAddress:
+      properties:
+        address1:
+          description: Valid USPS routable address.
+          example: 5 Broad Street
+          maxLength: 40
+          minLength: 1
+          type: string
+        address2:
+          description: Unit number (if applicable).
+          example: Unit 25A
+          maxLength: 40
+          minLength: 1
+          type: string
+        city:
+          description: City
+          example: NEW YORK
+          maxLength: 30
+          minLength: 1
+          type: string
+        country:
+          description: Uppercase ISO 3166-1 alpha-3 three character abbreviation.
+          example: USA
+          maxLength: 3
+          minLength: 3
+          type: string
+        email:
+          description: Email address to be contacted for expedited shipping process purposes. Required if `shipping_method` is `EXPEDITED`.
+          example: johnny@appleseed.com
+          maxLength: 50
+          minLength: 5
+          type: string
+        first_name:
+          description: Customer's first name. This will be the first name printed on the physical card. The combined length of `first_name` and `last_name` may not exceed 25 characters.
+          example: Michael
+          maxLength: 24
+          minLength: 1
+          type: string
+        last_name:
+          description: Customer's surname (family name). This will be the last name printed on the physical card. The combined length of `first_name` and `last_name` may not exceed 25 characters.
+          example: Bluth
+          maxLength: 24
+          minLength: 1
+          type: string
+        line2_text:
+          description: Text to be printed on line two of the physical card. Use of this field requires additional permissions.
+          example: The Bluth Company
+          maxLength: 26
+          minLength: 0
+          type: string
+        phone_number:
+          description: Cardholder's phone number in E.164 format to be contacted for expedited shipping process purposes. Required if `shipping_method` is `EXPEDITED`.
+          example: '+15555555555'
+          maxLength: 16
+          minLength: 8
+          type: string
+        postal_code:
+          description: Postal code (formerly zipcode). For US addresses, either five-digit postal code or nine-digit postal code (ZIP+4) using the format 12345-1234.
+          example: 10001-1809
+          maxLength: 12
+          minLength: 1
+          type: string
+        state:
+          description: Uppercase ISO 3166-2 two character abbreviation for US and CA. Optional with a limit of 24 characters for other countries.
+          example: NY
+          maxLength: 24
+          minLength: 0
+          type: string
+      required:
+      - address1
+      - city
+      - country
+      - first_name
+      - last_name
+      - postal_code
+      - state
+      type: object
+    CardSpendLimits:
+      properties:
+        available_spend_limit:
+          properties:
+            annually:
+              description: The available spend limit (in cents) relative to the annual limit configured on the Card (e.g. 100000 would be a $1,000 limit).
+              example: 200000
+              type: integer
+            forever:
+              description: The available spend limit (in cents) relative to the forever limit configured on the Card.
+              example: 300000
+              type: integer
+            monthly:
+              description: The available spend limit (in cents) relative to the monthly limit configured on the Card.
+              example: 200000
+              type: integer
+          type: object
+        spend_limit:
+          properties:
+            annually:
+              description: The configured annual spend limit (in cents) on the Card.
+              example: 500000
+              type: integer
+            forever:
+              description: The configured forever spend limit (in cents) on the Card.
+              example: 500000
+              type: integer
+            monthly:
+              description: The configured monthly spend limit (in cents) on the Card.
+              example: 500000
+              type: integer
+          type: object
+        spend_velocity:
+          properties:
+            annually:
+              description: Current annual spend velocity (in cents) on the Card. Present if annual spend limit is set.
+              example: 300000
+              type: integer
+            forever:
+              description: Current forever spend velocity (in cents) on the Card. Present if forever spend limit is set.
+              example: 200000
+              type: integer
+            monthly:
+              description: Current monthly spend velocity (in cents) on the Card. Present if monthly spend limit is set.
+              example: 300000
+              type: integer
+          type: object
+      required:
+      - available_spend_limit
+      type: object
+    financial_event_type:
+      title: Financial Event Type
+      type: string
+      enum:
+      - ACH_ORIGINATION_CANCELLED
+      - ACH_ORIGINATION_INITIATED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_REJECTED
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_PROCESSED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_SETTLED
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_REJECTED
+      - ACH_RETURN_SETTLED
+      - AUTHORIZATION
+      - AUTHORIZATION_ADVICE
+      - AUTHORIZATION_EXPIRY
+      - AUTHORIZATION_REVERSAL
+      - BALANCE_INQUIRY
+      - BILLING_ERROR
+      - BILLING_ERROR_REVERSAL
+      - CARD_TO_CARD
+      - CASH_BACK
+      - CASH_BACK_REVERSAL
+      - CLEARING
+      - COLLECTION
+      - CORRECTION_CREDIT
+      - CORRECTION_DEBIT
+      - CREDIT_AUTHORIZATION
+      - CREDIT_AUTHORIZATION_ADVICE
+      - CURRENCY_CONVERSION
+      - CURRENCY_CONVERSION_REVERSAL
+      - DISPUTE_WON
+      - EXTERNAL_ACH_CANCELED
+      - EXTERNAL_ACH_INITIATED
+      - EXTERNAL_ACH_RELEASED
+      - EXTERNAL_ACH_REVERSED
+      - EXTERNAL_ACH_SETTLED
+      - EXTERNAL_CHECK_CANCELED
+      - EXTERNAL_CHECK_INITIATED
+      - EXTERNAL_CHECK_RELEASED
+      - EXTERNAL_CHECK_REVERSED
+      - EXTERNAL_CHECK_SETTLED
+      - EXTERNAL_FEDNOW_CANCELED
+      - EXTERNAL_FEDNOW_INITIATED
+      - EXTERNAL_FEDNOW_RELEASED
+      - EXTERNAL_FEDNOW_REVERSED
+      - EXTERNAL_FEDNOW_SETTLED
+      - EXTERNAL_RTP_CANCELED
+      - EXTERNAL_RTP_INITIATED
+      - EXTERNAL_RTP_RELEASED
+      - EXTERNAL_RTP_REVERSED
+      - EXTERNAL_RTP_SETTLED
+      - EXTERNAL_TRANSFER_CANCELED
+      - EXTERNAL_TRANSFER_INITIATED
+      - EXTERNAL_TRANSFER_RELEASED
+      - EXTERNAL_TRANSFER_REVERSED
+      - EXTERNAL_TRANSFER_SETTLED
+      - EXTERNAL_WIRE_CANCELED
+      - EXTERNAL_WIRE_INITIATED
+      - EXTERNAL_WIRE_RELEASED
+      - EXTERNAL_WIRE_REVERSED
+      - EXTERNAL_WIRE_SETTLED
+      - FINANCIAL_AUTHORIZATION
+      - FINANCIAL_CREDIT_AUTHORIZATION
+      - INTEREST
+      - INTEREST_REVERSAL
+      - INTERNAL_ADJUSTMENT
+      - LATE_PAYMENT
+      - LATE_PAYMENT_REVERSAL
+      - LOSS_WRITE_OFF
+      - PROVISIONAL_CREDIT
+      - PROVISIONAL_CREDIT_REVERSAL
+      - SERVICE
+      - RETURN
+      - RETURN_REVERSAL
+      - TRANSFER
+      - TRANSFER_INSUFFICIENT_FUNDS
+      - RETURNED_PAYMENT
+      - RETURNED_PAYMENT_REVERSAL
+      - LITHIC_NETWORK_PAYMENT
+      - ANNUAL
+      - ANNUAL_REVERSAL
+      - QUARTERLY
+      - QUARTERLY_REVERSAL
+      - MONTHLY
+      - MONTHLY_REVERSAL
+    Carrier:
+      properties:
+        qr_code_url:
+          description: QR code URL to display on the card carrier. The `qr_code_url` field requires your domain to be allowlisted by Lithic before use. Contact Support to configure your QR code domain
+          type: string
+      type: object
+    spend_limit_duration:
+      description: 'Spend limit duration values:
+
+
+        * `ANNUALLY` - Card will authorize transactions up to spend limit for the trailing year.
+
+        * `FOREVER` - Card will authorize only up to spend limit for the entire lifetime of the card.
+
+        * `MONTHLY` - Card will authorize transactions up to spend limit for the trailing month. To support recurring monthly payments, which can occur on different day every month, the time window we consider for monthly velocity starts 6 days after the current calendar date one month prior.
+
+        * `TRANSACTION` - Card will authorize multiple transactions if each individual transaction is under the spend limit.'
+      type: string
+      enum:
+      - ANNUALLY
+      - FOREVER
+      - MONTHLY
+      - TRANSACTION
+    financial_event:
+      title: Financial Event
+      description: Financial Event
+      type: object
+      properties:
+        amount:
+          description: Amount of the financial event that has been settled in the currency's smallest unit (e.g., cents).
+          type: integer
+        created:
+          description: Date and time when the financial event occurred. UTC time zone.
+          type: string
+          format: date-time
+        result:
+          description: APPROVED financial events were successful while DECLINED financial events were declined by user, Lithic, or the network.
+          type: string
+          enum:
+          - APPROVED
+          - DECLINED
+        token:
+          description: Globally unique identifier.
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/financial_event_type'
+    AppleWebPushProvisioningResponse:
+      properties:
+        jws:
+          $ref: '#/components/schemas/WebPushProvisioningResponseJws'
+          description: JWS object required for handoff to Apple's script.
+        state:
+          description: A unique identifier for the JWS object.
+          example: 3cc4c292-727b-4ca8-b9a8-f96c15485f4e
+          type: string
+      required:
+      - jws
+      - state
+      type: object
+    pci_card_response:
+      description: Card details with potentially PCI sensitive information for Enterprise customers
+      allOf:
+      - $ref: '#/components/schemas/non_pci_card_response'
+      - type: object
+        properties:
+          pan:
+            description: Primary Account Number (PAN) (i.e. the card number). Customers must be PCI compliant to have PAN returned as a field in production. Please contact support@lithic.com for questions.
+            example: '4111111289144142'
+            maxLength: 16
+            minLength: 16
+            type: string
+          cvv:
+            description: Three digit cvv printed on the back of the card.
+            example: '776'
+            maxLength: 3
+            minLength: 3
+            type: string
+        examples:
+        - pan: '4111111289144142'
+          cvv: '776'
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    WebPushProvisioningResponseHeader:
+      properties:
+        kid:
+          description: The ID for the JWS Public Key of the key pair used to generate the signature.
+          example: 8dc7aed4-29e3-41e4-9cdb-673a05e6615c
+          type: string
+    financial-account-balance:
+      title: Financial Account Balance
+      description: Balance of a Financial Account
+      properties:
+        available_amount:
+          description: Funds available for spend in the currency's smallest unit (e.g., cents for USD)
+          type: integer
+        created:
+          description: Date and time for when the balance was first created.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the local currency of the balance.
+          type: string
+        token:
+          description: Globally unique identifier for the financial account that holds this balance.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          format: uuid
+          type: string
+        type:
+          description: Type of financial account.
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          type: string
+        last_transaction_event_token:
+          description: Globally unique identifier for the last financial transaction event that impacted this balance.
+          format: uuid
+          type: string
+        last_transaction_token:
+          description: Globally unique identifier for the last financial transaction that impacted this balance.
+          format: uuid
+          type: string
+        pending_amount:
+          description: Funds not available for spend due to card authorizations or pending ACH release. Shown in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        total_amount:
+          description: The sum of available and pending balance in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        updated:
+          description: Date and time for when the balance was last updated.
+          format: date-time
+          type: string
+      required:
+      - available_amount
+      - created
+      - currency
+      - token
+      - type
+      - last_transaction_event_token
+      - last_transaction_token
+      - pending_amount
+      - total_amount
+      - updated
+      type: object
+    financial-account-transaction:
+      properties:
+        category:
+          description: 'Status types:
+
+
+            * `CARD` - Issuing card transaction.
+
+            * `ACH` - Transaction over ACH.
+
+            * `INTERNAL` - Transaction for internal adjustment.
+
+            * `TRANSFER` - Internal transfer of funds between financial accounts in your program.
+
+            '
+          enum:
+          - ACH
+          - CARD
+          - INTERNAL
+          - TRANSFER
+          type: string
+        created:
+          description: Date and time when the financial transaction first occurred. UTC time zone.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the settling currency of the transaction.
+          type: string
+        descriptor:
+          description: A string that provides a description of the financial transaction; may be useful to display to users.
+          type: string
+        events:
+          description: A list of all financial events that have modified this financial transaction.
+          items:
+            $ref: '#/components/schemas/financial_event'
+          type: array
+        pending_amount:
+          description: 'Pending amount of the transaction in the currency''s smallest unit (e.g., cents), including any acquirer fees.
+
+
+            The value of this field will go to zero over time once the financial transaction is settled.
+
+            '
+          type: integer
+        result:
+          description: APPROVED transactions were successful while DECLINED transactions were declined by user, Lithic, or the network.
+          enum:
+          - APPROVED
+          - DECLINED
+          type: string
+        settled_amount:
+          description: Amount of the transaction that has been settled in the currency's smallest unit (e.g., cents), including any acquirer fees. This may change over time.
+          type: integer
+        status:
+          description: 'Status types:
+
+
+            * `DECLINED` - The transaction was declined.
+
+            * `EXPIRED` - The authorization as it has passed its expiration time. Card transaction only.
+
+            * `PENDING` - The transaction is expected to settle.
+
+            * `RETURNED` - The transaction has been returned.
+
+            * `SETTLED` - The transaction is completed.
+
+            * `VOIDED` - The transaction was voided. Card transaction only.
+
+            '
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - RETURNED
+          - SETTLED
+          - VOIDED
+          type: string
+        token:
+          description: Globally unique identifier.
+          format: uuid
+          type: string
+        updated:
+          description: Date and time when the financial transaction was last updated. UTC time zone.
+          format: date-time
+          type: string
+      required:
+      - category
+      - created
+      - currency
+      - descriptor
+      - events
+      - pending_amount
+      - result
+      - settled_amount
+      - status
+      - token
+      - updated
+      type: object
+    WebPushProvisioningResponseJws:
+      properties:
+        header:
+          $ref: '#/components/schemas/WebPushProvisioningResponseHeader'
+          description: JWS unprotected headers containing header parameters that aren't integrity-protected by the JWS signature.
+        protected:
+          description: Base64url encoded JWS protected headers containing the header parameters that are integrity-protected by the JWS signature.
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9
+          type: string
+        payload:
+          description: Base64url encoded JSON object containing the provisioning payload.
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9
+          type: string
+        signature:
+          description: Base64url encoded signature of the JWS object.
+          example: SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+          type: string
+      type: object
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    components-responses-BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    responses-Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    components-responses-NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

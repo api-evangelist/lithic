@@ -1,0 +1,1050 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Event API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Event
+paths:
+  /v1/event_subscriptions:
+    get:
+      description: List all the event subscriptions.
+      operationId: getEventSubscriptions
+      parameters:
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                data:
+                - description: A subscription for all events
+                  disabled: false
+                  token: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+                  url: https://example.com/webhook
+                has_more: false
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/EventSubscription'
+                    type: array
+                  has_more:
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List event subscriptions
+      tags:
+      - Event
+    post:
+      description: Create a new event subscription.
+      operationId: createEventSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  description: Event subscription description.
+                  type: string
+                disabled:
+                  default: false
+                  description: Whether the event subscription is active (false) or inactive (true).
+                  type: boolean
+                event_types:
+                  description: Indicates types of events that will be sent to this subscription. If left blank, all types will be sent.
+                  items:
+                    $ref: '#/components/schemas/event_type'
+                  type: array
+                url:
+                  description: URL to which event webhooks will be sent. URL must be a valid HTTPS address.
+                  format: uri
+                  type: string
+              required:
+              - url
+              type: object
+      responses:
+        '201':
+          content:
+            application/json:
+              example:
+                description: A subscription for all events
+                disabled: false
+                token: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+                url: https://example.com/webhook
+                event_types:
+                - dispute.updated
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create event subscription
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}:
+    delete:
+      description: Delete an event subscription.
+      operationId: deleteEventSubscription
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json: {}
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Delete event subscription
+      tags:
+      - Event
+    get:
+      description: Get an event subscription.
+      operationId: getEventSubscription
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                description: A subscription for all events
+                disabled: false
+                token: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+                url: https://example.com/webhook
+                event_types:
+                - dispute.updated
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get event subscription
+      tags:
+      - Event
+    patch:
+      description: Update an event subscription.
+      operationId: updateEventSubscription
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  description: Event subscription description.
+                  type: string
+                disabled:
+                  default: false
+                  description: Whether the event subscription is active (false) or inactive (true).
+                  type: boolean
+                event_types:
+                  description: Indicates types of events that will be sent to this subscription. If left blank, all types will be sent.
+                  items:
+                    $ref: '#/components/schemas/event_type'
+                  type: array
+                url:
+                  description: URL to which event webhooks will be sent. URL must be a valid HTTPS address.
+                  format: uri
+                  type: string
+              required:
+              - url
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                description: A subscription for all events
+                disabled: false
+                token: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+                url: https://example.com/webhook
+                event_types:
+                - dispute.updated
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update event subscription
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}/attempts:
+    get:
+      description: List all the message attempts for a given event subscription.
+      operationId: getMessageAttemptsForEventSubscription
+      parameters:
+      - in: query
+        name: status
+        schema:
+          enum:
+          - FAILED
+          - PENDING
+          - SENDING
+          - SUCCESS
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/eventSubscriptionToken'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/MessageAttempt'
+                    type: array
+                  has_more:
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List message attempts for an event subscription
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}/recover:
+    post:
+      description: Resend all failed messages since a given time.
+      operationId: recoverEventSubscription
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      requestBody:
+        content:
+          application/json: {}
+      responses:
+        '202':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Resend failed messages
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}/replay_missing:
+    post:
+      description: 'Replays messages to the endpoint. Only messages that were created after `begin` will be sent. Messages that were previously sent to the endpoint are not resent.
+
+        Message will be retried if endpoint responds with a non-2xx status code. See [Retry Schedule](https://docs.lithic.com/docs/events-api#retry-schedule) for details.
+
+        '
+      operationId: replayMissingEventSubscription
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      responses:
+        '202':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Replay missing messages
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}/secret:
+    get:
+      description: Get the secret for an event subscription.
+      operationId: getEventSubscriptionSecret
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                secret: whsec_C2FVsBQIhrscChlQIMA
+              schema:
+                properties:
+                  secret:
+                    description: The secret for the event subscription.
+                    type: string
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get event subscription secret
+      tags:
+      - Event
+  /v1/event_subscriptions/{event_subscription_token}/secret/rotate:
+    post:
+      description: 'Rotate the secret for an event subscription. The previous secret will be valid for the next 24 hours.
+
+        '
+      operationId: rotateEventSubscriptionSecret
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Rotate event subscription secret
+      tags:
+      - Event
+  /v1/events:
+    get:
+      description: List all events.
+      operationId: getEvents
+      parameters:
+      - description: Event types to filter events by.
+        explode: false
+        in: query
+        name: event_types
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/event_type'
+          maxLength: 10
+          type: array
+        style: form
+      - description: Whether to include the event payload content in the response.
+        in: query
+        name: with_content
+        required: false
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                data:
+                - created: '2020-07-08T17:57:36Z'
+                  event_type: dispute.updated
+                  payload: {}
+                  token: msg_1srOrx2ZWZBpBUvZwXKQmoEYga1
+                has_more: false
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    type: array
+                  has_more:
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List events
+      tags:
+      - Event
+  /v1/events/{event_token}:
+    get:
+      description: Get an event.
+      operationId: getEvent
+      parameters:
+      - in: path
+        name: event_token
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get event
+      tags:
+      - Event
+  /v1/events/{event_token}/attempts:
+    get:
+      description: List all the message attempts for a given event.
+      operationId: getMessageAttemptsForEvent
+      parameters:
+      - in: query
+        name: status
+        schema:
+          enum:
+          - FAILED
+          - PENDING
+          - SENDING
+          - SUCCESS
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/eventToken'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/MessageAttempt'
+                    type: array
+                  has_more:
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List message attempts for an event
+      tags:
+      - Event
+  /v1/events/{event_token}/event_subscriptions/{event_subscription_token}/resend:
+    post:
+      description: Resend an event to an event subscription.
+      operationId: resendEvent
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: event_token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json: {}
+      responses:
+        '202':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Resend event
+      tags:
+      - Event
+  /v1/simulate/event_subscriptions/{event_subscription_token}/send_example:
+    post:
+      description: Send an example message for event.
+      operationId: sendEventSubscriptionExample
+      parameters:
+      - in: path
+        name: event_subscription_token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                event_type:
+                  description: Event type to send example message for.
+                  $ref: '#/components/schemas/event_type'
+              type: object
+      responses:
+        '202':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Send event type example message
+      tags:
+      - Event
+components:
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    eventSubscriptionToken:
+      in: path
+      name: event_subscription_token
+      required: true
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    eventToken:
+      in: path
+      name: event_token
+      required: true
+      schema:
+        type: string
+  schemas:
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    event_type:
+      type: string
+      enum:
+      - account_holder_document.updated
+      - account_holder.created
+      - account_holder.updated
+      - account_holder.verification
+      - auth_rules.backtest_report.created
+      - balance.updated
+      - book_transfer_transaction.created
+      - book_transfer_transaction.updated
+      - card_authorization.challenge_response
+      - card_transaction.enhanced_data.created
+      - card_transaction.enhanced_data.updated
+      - card_transaction.updated
+      - card.converted
+      - card.created
+      - card.reissued
+      - card.renewed
+      - card.shipped
+      - card.updated
+      - digital_wallet.tokenization_result
+      - digital_wallet.tokenization_two_factor_authentication_code
+      - digital_wallet.tokenization_two_factor_authentication_code_sent
+      - digital_wallet.tokenization_updated
+      - dispute_evidence.upload_failed
+      - dispute_transaction.created
+      - dispute_transaction.updated
+      - dispute.updated
+      - external_bank_account.created
+      - external_bank_account.updated
+      - external_payment.created
+      - external_payment.updated
+      - financial_account.created
+      - financial_account.updated
+      - funding_event.created
+      - internal_transaction.created
+      - internal_transaction.updated
+      - loan_tape.created
+      - loan_tape.updated
+      - management_operation.created
+      - management_operation.updated
+      - network_total.created
+      - network_total.updated
+      - payment_transaction.created
+      - payment_transaction.updated
+      - settlement_report.updated
+      - statements.created
+      - three_ds_authentication.challenge
+      - three_ds_authentication.created
+      - three_ds_authentication.updated
+      - tokenization.approval_request
+      - tokenization.result
+      - tokenization.two_factor_authentication_code
+      - tokenization.two_factor_authentication_code_sent
+      - tokenization.updated
+      description: 'The type of event that occurred. Possible values:
+
+
+        - account_holder_document.updated: Occurs when an account holder''s document upload status has been updated
+
+        - account_holder.created: Occurs when a new account_holder is created.
+
+        - account_holder.updated: Occurs when an account_holder is updated.
+
+        - account_holder.verification: Occurs when an asynchronous account_holder''s verification is completed.
+
+        - auth_rules.backtest_report.created: Auth Rules backtest report created.
+
+        - balance.updated: Financial Account Balance Update
+
+        - book_transfer_transaction.created: Occurs when a book transfer transaction is created.
+
+        - book_transfer_transaction.updated: Occurs when a book transfer transaction is updated.
+
+        - card_authorization.challenge_response: Occurs when a cardholder responds to an SMS challenge during card authorization.
+
+        - card_transaction.enhanced_data.created: Occurs when L2/L3 enhanced commercial data is processed for a transaction event.
+
+        - card_transaction.enhanced_data.updated: Occurs when L2/L3 enhanced commercial data is reprocessed for a transaction event.
+
+        - card_transaction.updated: Occurs when a card transaction happens.
+
+        - card.converted: Occurs when a card is converted from virtual to physical cards.
+
+        - card.created: Occurs when a new card is created.
+
+        - card.reissued: Occurs when a card is reissued.
+
+        - card.renewed: Occurs when a card is renewed.
+
+        - card.shipped: Occurs when a card is shipped.
+
+        - card.updated: Occurs when a card is updated.
+
+        - digital_wallet.tokenization_result: Occurs when a tokenization request succeeded or failed.
+
+
+        This event will be deprecated in the future. We recommend using `tokenization.result` instead.
+
+        - digital_wallet.tokenization_two_factor_authentication_code: Occurs when a tokenization request 2FA code is sent to the Lithic customer for self serve delivery.
+
+
+        This event will be deprecated in the future. We recommend using `tokenization.two_factor_authentication_code` instead.
+
+        - digital_wallet.tokenization_two_factor_authentication_code_sent: Occurs when a tokenization request 2FA code is sent to our downstream messaging providers for delivery.
+
+
+        This event will be deprecated in the future. We recommend using `tokenization.two_factor_authentication_code_sent` instead.
+
+        - digital_wallet.tokenization_updated: Occurs when a tokenization''s status has changed.
+
+
+        This event will be deprecated in the future. We recommend using `tokenization.updated` instead.
+
+        - dispute_evidence.upload_failed: Occurs when a dispute evidence upload fails.
+
+        - dispute_transaction.created: Occurs when a new dispute transaction is created
+
+        - dispute_transaction.updated: Occurs when a dispute transaction is updated
+
+        - dispute.updated: Occurs when a dispute is updated.
+
+        - external_bank_account.created: Occurs when an external bank account is created.
+
+        - external_bank_account.updated: Occurs when an external bank account is updated.
+
+        - external_payment.created: Occurs when an external payment is created.
+
+        - external_payment.updated: Occurs when an external payment is updated.
+
+        - financial_account.created: Occurs when a financial account is created.
+
+        - financial_account.updated: Occurs when a financial account is updated.
+
+        - funding_event.created: Occurs when a funding event is created.
+
+        - internal_transaction.created: Occurs when an internal adjustment is created.
+
+        - internal_transaction.updated: Occurs when an internal adjustment is updated.
+
+        - loan_tape.created: Occurs when a loan tape is created.
+
+        - loan_tape.updated: Occurs when a loan tape is updated.
+
+        - management_operation.created: Occurs when an management operation is created.
+
+        - management_operation.updated: Occurs when an management operation is updated.
+
+        - network_total.created: Occurs when a network total is created.
+
+        - network_total.updated: Occurs when a network total is updated.
+
+        - payment_transaction.created: Occurs when a payment transaction is created.
+
+        - payment_transaction.updated: Occurs when a payment transaction is updated.
+
+        - settlement_report.updated: Occurs when a settlement report is created or updated.
+
+        - statements.created: Occurs when a statement has been created
+
+        - three_ds_authentication.challenge: The `three_ds_authentication.challenge` event. Upon receiving this request, the Card Program should issue its own challenge to the cardholder. After a cardholder challenge is successfully completed, the Card Program needs to respond back to Lithic by call to [/v1/three_ds_decisioning/challenge_response](https://docs.lithic.com/reference/post_v1-three-ds-decisioning-challenge-response). Then the cardholder must navigate back to the merchant checkout flow to complete the transaction. Some merchants will include an `app_requestor_url` for app-based purchases; Lithic recommends triggering a redirect to that URL after the cardholder completes an app-based challenge.
+
+        - three_ds_authentication.created: Occurs when a 3DS authentication is created.
+
+        - three_ds_authentication.updated: Occurs when a 3DS authentication is updated (eg. challenge is completed).
+
+        - tokenization.approval_request: Occurs when a tokenization approval request is made.
+
+        - tokenization.result: Occurs when a tokenization request succeeded or failed.
+
+        - tokenization.two_factor_authentication_code: Occurs when a tokenization request 2FA code is sent to the Lithic customer for self serve delivery.
+
+        - tokenization.two_factor_authentication_code_sent: Occurs when a tokenization request 2FA code is sent to our downstream messaging providers for delivery.
+
+        - tokenization.updated: Occurs when a tokenization''s status has changed.
+
+        '
+    Event:
+      description: A single event that affects the transaction state and lifecycle.
+      properties:
+        created:
+          description: 'An RFC 3339 timestamp for when the event was created. UTC time zone.
+
+
+            If no timezone is specified, UTC will be used.
+
+            '
+          format: date-time
+          type: string
+        event_type:
+          $ref: '#/components/schemas/event_type'
+        payload:
+          type: object
+          additionalProperties: true
+          example: {}
+        token:
+          description: Globally unique identifier.
+          example: msg_1srOrx2ZWZBpBUvZwXKQmoEYga1
+          type: string
+      required:
+      - created
+      - event_type
+      - payload
+      - token
+      type: object
+    EventSubscription:
+      description: A subscription to specific event types.
+      properties:
+        description:
+          description: A description of the subscription.
+          type: string
+        disabled:
+          description: Whether the subscription is disabled.
+          type: boolean
+        event_types:
+          items:
+            $ref: '#/components/schemas/event_type'
+          type:
+          - 'null'
+          - array
+        token:
+          description: Globally unique identifier.
+          example: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+          type: string
+        url:
+          format: uri
+          type: string
+      required:
+      - description
+      - disabled
+      - token
+      - url
+      type: object
+    MessageAttempt:
+      description: A subscription to specific event types.
+      properties:
+        created:
+          description: 'An RFC 3339 timestamp for when the event was created. UTC time zone.
+
+
+            If no timezone is specified, UTC will be used.
+
+            '
+          format: date-time
+          type: string
+        event_subscription_token:
+          description: Globally unique identifier.
+          example: ep_1srOrx2ZWZBpBUvZwXKQmoEYga1
+          type: string
+        event_token:
+          description: Globally unique identifier.
+          example: msg_1srOrx2ZWZBpBUvZwXKQmoEYga1
+          type: string
+        response:
+          description: The response body from the event subscription's URL.
+          type: string
+        response_status_code:
+          description: The response status code from the event subscription's URL.
+          type: integer
+        status:
+          description: The status of the event attempt.
+          enum:
+          - FAILED
+          - PENDING
+          - SENDING
+          - SUCCESS
+          type: string
+        token:
+          description: Globally unique identifier.
+          example: atmpt_1srOrx2ZWZBpBUvZwXKQmoEYga2
+          type: string
+        url:
+          format: uri
+          type: string
+      required:
+      - created
+      - event_subscription_token
+      - event_token
+      - response
+      - response_status_code
+      - status
+      - token
+      - url
+      type: object
+  responses:
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    Conflict:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The request could not be completed due to a conflict with the current state of the target resource.
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

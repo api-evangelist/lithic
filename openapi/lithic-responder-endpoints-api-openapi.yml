@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Responder Endpoints API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Responder Endpoints
+paths:
+  /v1/responder_endpoints:
+    delete:
+      operationId: deleteResponderEndpoint
+      parameters:
+      - description: The type of the endpoint.
+        in: query
+        name: type
+        required: true
+        schema:
+          enum:
+          - AUTH_STREAM_ACCESS
+          - THREE_DS_DECISIONING
+          - TOKENIZATION_DECISIONING
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Endpoint disenrolled successfully
+      summary: Disenroll a responder endpoint
+      tags:
+      - Responder Endpoints
+    get:
+      operationId: getResponderEndpoints
+      parameters:
+      - description: The type of the endpoint.
+        in: query
+        name: type
+        required: true
+        schema:
+          enum:
+          - AUTH_STREAM_ACCESS
+          - THREE_DS_DECISIONING
+          - TOKENIZATION_DECISIONING
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  enrolled:
+                    description: True if the instance has an endpoint enrolled.
+                    type: boolean
+                  url:
+                    description: The URL of the currently enrolled endpoint or null.
+                    format: uri
+                    type:
+                    - string
+                    - 'null'
+                type: object
+          description: Responder endpoint status
+      summary: Check the status of a responder endpoint
+      tags:
+      - Responder Endpoints
+    post:
+      operationId: postResponderEndpoints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  description: The type of the endpoint.
+                  enum:
+                  - AUTH_STREAM_ACCESS
+                  - THREE_DS_DECISIONING
+                  - TOKENIZATION_DECISIONING
+                  type: string
+                url:
+                  description: The URL for the responder endpoint (must be http(s)).
+                  format: uri
+                  type: string
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  enrolled:
+                    description: True if the endpoint was enrolled successfully.
+                    type: boolean
+                type: object
+          description: Endpoint enrolled successfully
+      summary: Enroll a responder endpoint
+      tags:
+      - Responder Endpoints
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

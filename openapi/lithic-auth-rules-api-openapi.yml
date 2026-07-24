@@ -1,0 +1,2546 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Auth Rules API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Auth Rules
+paths:
+  /v2/auth_rules:
+    post:
+      summary: Create a new rule
+      description: Creates a new V2 Auth rule in draft mode
+      tags:
+      - Auth Rules
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create-auth-rule-request'
+      responses:
+        '201':
+          description: Auth Rule Created
+          $ref: '#/components/responses/AuthRule'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+    get:
+      summary: List rules
+      description: Lists V2 Auth rules
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/EndingBefore'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/StartingAfter'
+      - name: card_token
+        in: query
+        description: Only return Auth Rules that are bound to the provided card token.
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: account_token
+        in: query
+        description: Only return Auth Rules that are bound to the provided account token.
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: business_account_token
+        in: query
+        description: Only return Auth Rules that are bound to the provided business account token.
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: scope
+        in: query
+        description: Only return Auth Rules that are bound to the provided scope.
+        schema:
+          enum:
+          - PROGRAM
+          - ACCOUNT
+          - BUSINESS_ACCOUNT
+          - CARD
+          - ANY
+          type: string
+      - name: event_stream
+        in: query
+        description: 'Deprecated: Use event_streams instead. Only return Auth rules that are executed during the provided event stream.'
+        deprecated: true
+        schema:
+          $ref: '#/components/schemas/event-stream'
+        required: false
+      - name: event_streams
+        in: query
+        explode: false
+        description: Only return Auth rules that are executed during any of the provided event streams. If event_streams and event_stream are specified, the values will be combined.
+        style: form
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/event-stream'
+        required: false
+      responses:
+        '200':
+          description: Auth Rules
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/auth-rule'
+                    type: array
+                  has_more:
+                    description: Indicates whether there are more Auth Rules to be retrieved by paging through the results.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}:
+    get:
+      summary: Fetch a rule
+      description: Fetches a V2 Auth rule by its token
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthRule'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+    patch:
+      summary: Update a rule
+      description: 'Updates a V2 Auth rule''s properties
+
+
+        If `account_tokens`, `card_tokens`, `program_level`, `excluded_card_tokens`, `excluded_account_tokens`, or `excluded_business_account_tokens` is provided, this will replace existing associations with the provided list of entities.
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/patch-auth-rule-request'
+      responses:
+        '200':
+          description: Updated Auth Rule
+          $ref: '#/components/responses/AuthRule'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+    delete:
+      summary: Delete a rule
+      description: Deletes a V2 Auth rule
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      responses:
+        '204':
+          description: Auth Rule Deleted
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/draft:
+    post:
+      summary: Draft a new rule version
+      description: 'Creates a new draft version of a rule that will be ran in shadow mode.
+
+
+        This can also be utilized to reset the draft parameters, causing a draft version to no longer be ran in shadow mode.
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parameters:
+                  anyOf:
+                  - title: Null (delete draft)
+                    type: 'null'
+                    description: Resets the drafts parameters, causing a draft version to no longer be ran in shadow mode.
+                  - $ref: '#/components/schemas/auth-rule-parameters'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthRule'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/features:
+    get:
+      summary: Calculated Feature values
+      description: 'Fetches the current calculated Feature values for the given Auth Rule
+
+
+        This only calculates the features for the active version.
+
+        - VelocityLimit Rules calculates the current Velocity Feature data. This requires a `card_token` or `account_token` matching what the rule is Scoped to.
+
+        - ConditionalBlock Rules calculates the CARD_TRANSACTION_COUNT_* attributes on the rule. This requires a `card_token`
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      - in: query
+        name: account_token
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: card_token
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Calculated Feature values for the given Auth Rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth-rule-feature-state'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/promote:
+    post:
+      summary: Promote a rule version
+      description: Promotes the draft version of an Auth rule to the currently active version such that it is enforced in the respective stream.
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthRule'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/versions:
+    get:
+      summary: List rule versions
+      description: Returns all versions of an auth rule, sorted by version number descending (newest first).
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      responses:
+        '200':
+          description: Auth Rule Versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/auth-rule-version'
+                required:
+                - data
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/report:
+    get:
+      summary: Retrieve a performance report
+      description: 'Retrieves a performance report for an Auth rule containing daily statistics and evaluation outcomes.
+
+
+        **Time Range Limitations:**
+
+        - Reports are supported for the past 3 months only
+
+        - Maximum interval length is 1 month
+
+        - Report data is available only through the previous day in UTC (current day data is not available)
+
+
+        The report provides daily statistics for both current and draft versions of the Auth rule, including approval, decline, and challenge counts along with sample events.
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      - name: begin
+        in: query
+        required: true
+        description: Start date for the report
+        schema:
+          type: string
+          format: date
+      - name: end
+        in: query
+        required: true
+        description: End date for the report
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: Auth Rule Performance Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/performance-report-v2'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/backtests:
+    get:
+      summary: List backtests
+      description: Lists backtests for an Auth Rule
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      - $ref: '#/components/parameters/EndingBefore'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/StartingAfter'
+      responses:
+        '200':
+          description: Backtests
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/backtest-list-item'
+                    type: array
+                  has_more:
+                    description: Indicates whether there are more backtests to be retrieved by paging through the results.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+    post:
+      summary: Request a backtest
+      description: 'Initiates a request to asynchronously generate a backtest for an Auth rule. During backtesting, both the active version (if one exists) and the draft version of the Auth Rule are evaluated by replaying historical transaction data against the rule''s conditions. This process allows customers to simulate and understand the effects of proposed rule changes before deployment.
+
+        The generated backtest report provides detailed results showing whether the draft version of the Auth Rule would have approved or declined historical transactions which were processed during the backtest period. These reports help evaluate how changes to rule configurations might affect overall transaction approval rates.
+
+
+        The generated backtest report will be delivered asynchronously through a webhook with `event_type` = `auth_rules.backtest_report.created`. See the docs on setting up [webhook subscriptions](https://docs.lithic.com/docs/events-api).
+
+        It is also possible to request backtest reports on-demand through the `/v2/auth_rules/{auth_rule_token}/backtests/{auth_rule_backtest_token}` endpoint.
+
+
+        Lithic currently supports backtesting for `CONDITIONAL_BLOCK` / `CONDITIONAL_ACTION` rules. Backtesting for `VELOCITY_LIMIT` rules is generally not supported. In specific cases (i.e. where Lithic has pre-calculated the requested velocity metrics for historical transactions), a backtest may be feasible. However, such cases are uncommon and customers should not anticipate support for velocity backtests under most configurations.
+
+        If a historical transaction does not feature the required inputs to evaluate the rule, then it will not be included in the final backtest report.
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/backtest-request'
+      responses:
+        '200':
+          description: Backtest request received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backtest_token:
+                    $ref: '#/components/schemas/backtest-token'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/{auth_rule_token}/backtests/{auth_rule_backtest_token}:
+    get:
+      summary: Retrieve backtest results
+      description: 'Returns the backtest results of an Auth rule (if available).
+
+
+        Backtesting is an asynchronous process that requires time to complete. If a customer retrieves the backtest results using this endpoint before the report is fully generated, the response will return null for `results.current_version` and `results.draft_version`. Customers are advised to wait for the backtest creation process to complete (as indicated by the webhook event auth_rules.backtest_report.created) before retrieving results from this endpoint.
+
+
+        Backtesting is an asynchronous process, while the backtest is being processed, results will not be available which will cause `results.current_version` and `results.draft_version` objects to contain `null`.
+
+        The entries in `results` will also always represent the configuration of the rule at the time requests are made to this endpoint. For example, the results for `current_version` in the served backtest report will be consistent with which version of the rule is currently activated in the respective event stream, regardless of which version of the rule was active in the event stream at the time a backtest is requested.
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/AuthRuleToken'
+      - $ref: '#/components/parameters/AuthRuleBacktestToken'
+      responses:
+        '200':
+          description: Backtest results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/backtest-results'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+  /v2/auth_rules/results:
+    get:
+      summary: List rule evaluation results
+      description: 'Lists Auth Rule evaluation results.
+
+
+        **Limitations:**
+
+        - Results are available for the past 3 months only
+
+        - At least one filter (`event_token` or `auth_rule_token`) must be provided
+
+        - When filtering by `event_token`, pagination is not supported
+
+        '
+      tags:
+      - Auth Rules
+      parameters:
+      - $ref: '#/components/parameters/EndingBefore'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/StartingAfter'
+      - name: event_token
+        in: query
+        description: Filter by event token
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: auth_rule_token
+        in: query
+        description: Filter by Auth Rule token
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: begin
+        in: query
+        description: Date string in RFC 3339 format. Only events evaluated after the specified time will be included. UTC time zone.
+        schema:
+          type: string
+          format: date-time
+        required: false
+      - name: end
+        in: query
+        description: Date string in RFC 3339 format. Only events evaluated before the specified time will be included. UTC time zone.
+        schema:
+          type: string
+          format: date-time
+        required: false
+      - name: has_actions
+        in: query
+        description: Filter by whether the rule evaluation produced any actions. When not provided, all results are returned.
+        schema:
+          type: boolean
+        required: false
+      responses:
+        '200':
+          description: Auth Rule Results
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/auth-rule-result'
+                    type: array
+                  has_more:
+                    description: Indicates whether there are more results to be retrieved by paging through the results.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+              example:
+                data:
+                - token: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                  auth_rule_token: b2c3d4e5-f6a7-8901-bcde-f12345678901
+                  event_token: c3d4e5f6-a7b8-9012-cdef-123456789012
+                  transaction_token: d4e5f6a7-b8c9-0123-defa-234567890123
+                  evaluation_time: '2026-01-15T09:30:00Z'
+                  rule_version: 1
+                  mode: ACTIVE
+                  event_stream: AUTHORIZATION
+                  actions:
+                  - type: DECLINE
+                    code: CARD_SPEND_LIMIT_EXCEEDED
+                    explanation: Transaction declined due to velocity limit
+                has_more: false
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+components:
+  schemas:
+    auth-rule-name:
+      title: Auth Rule Name
+      description: Auth Rule Name
+      anyOf:
+      - type: 'null'
+      - type: string
+        maxLength: 1024
+    conditional-3ds-action-parameters:
+      title: Conditional Action (3DS) Parameters
+      type: object
+      properties:
+        action:
+          description: The action to take if the conditions are met.
+          $ref: '#/components/schemas/authentication-3ds-action'
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: 'The attribute to target.
+
+
+                  The following attributes may be targeted:
+
+                  * `MCC`: A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+
+                  * `COUNTRY`: Country of entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.
+
+                  * `CURRENCY`: 3-character alphabetic ISO 4217 code for the merchant currency of the transaction.
+
+                  * `MERCHANT_ID`: Unique alphanumeric identifier for the payment card acceptor (merchant).
+
+                  * `DESCRIPTOR`: Short description of card acceptor.
+
+                  * `TRANSACTION_AMOUNT`: The base transaction amount (in cents) plus the acquirer fee field in the settlement/cardholder billing currency. This is the amount the issuer should authorize against unless the issuer is paying the acquirer fee on behalf of the cardholder.
+
+                  * `RISK_SCORE`: Mastercard only: Assessment by the network of the authentication risk level, with a higher value indicating a higher amount of risk.
+
+                  * `MESSAGE_CATEGORY`: The category of the authentication being processed.
+
+                  * `ADDRESS_MATCH`: Lithic''s evaluation result comparing transaction''s address data with the cardholder KYC data if it exists. Valid values are `MATCH`, `MATCH_ADDRESS_ONLY`, `MATCH_ZIP_ONLY`,`MISMATCH`,`NOT_PRESENT`.'
+                enum:
+                - MCC
+                - COUNTRY
+                - CURRENCY
+                - MERCHANT_ID
+                - DESCRIPTOR
+                - TRANSACTION_AMOUNT
+                - RISK_SCORE
+                - MESSAGE_CATEGORY
+                - ADDRESS_MATCH
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - action
+      - conditions
+    card-transaction-update-action:
+      title: Card Transaction Update Action
+      oneOf:
+      - title: Tag Action
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - TAG
+            description: Tag the transaction with key-value metadata
+          key:
+            type: string
+            description: The key of the tag to apply to the transaction
+          value:
+            type: string
+            description: The value of the tag to apply to the transaction
+        required:
+        - type
+        - key
+        - value
+      - title: Create Case Action
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - CREATE_CASE
+            description: Create a case for the transaction
+          scope:
+            type: string
+            enum:
+            - CARD
+            - ACCOUNT
+            description: The scope of the case to create
+          queue_token:
+            type: string
+            format: uuid
+            description: The token of the queue to create the case in
+        required:
+        - type
+        - scope
+        - queue_token
+    conditional-ach-action-parameters:
+      title: Conditional Action (ACH) Parameters
+      type: object
+      properties:
+        action:
+          description: The action to take if the conditions are met.
+          $ref: '#/components/schemas/ach-action'
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: 'The attribute to target.
+
+
+                  The following attributes may be targeted:
+
+                  * `COMPANY_NAME`: The name of the company initiating the ACH transaction.
+
+                  * `COMPANY_ID`: The company ID (also known as Standard Entry Class (SEC) Company ID) of the entity initiating the ACH transaction.
+
+                  * `TIMESTAMP`: The timestamp of the ACH transaction in ISO 8601 format.
+
+                  * `TRANSACTION_AMOUNT`: The amount of the ACH transaction in minor units (cents).
+
+                  * `SEC_CODE`: Standard Entry Class code indicating the type of ACH transaction. Valid values include PPD (Prearranged Payment and Deposit Entry), CCD (Corporate Credit or Debit Entry), WEB (Internet-Initiated/Mobile Entry), TEL (Telephone-Initiated Entry), and others.
+
+                  * `MEMO`: Optional memo or description field included with the ACH transaction.'
+                enum:
+                - COMPANY_NAME
+                - COMPANY_ID
+                - TIMESTAMP
+                - TRANSACTION_AMOUNT
+                - SEC_CODE
+                - MEMO
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - action
+      - conditions
+    current-version:
+      title: Auth Rule Current Version
+      anyOf:
+      - type: 'null'
+        description: No current version.
+      - type: object
+        properties:
+          parameters:
+            $ref: '#/components/schemas/auth-rule-parameters'
+          version:
+            $ref: '#/components/schemas/auth-rule-version-id'
+        required:
+        - parameters
+        - version
+    auth-rule-version:
+      title: Auth Rule Version
+      type: object
+      properties:
+        version:
+          $ref: '#/components/schemas/auth-rule-version-id'
+        state:
+          $ref: '#/components/schemas/auth-rule-version-state'
+        parameters:
+          $ref: '#/components/schemas/auth-rule-parameters'
+        created:
+          description: Timestamp of when this version was created.
+          type: string
+          format: date-time
+      required:
+      - version
+      - state
+      - parameters
+      - created
+    excluded-account-tokens:
+      title: Auth Rule Excluded Account Tokens
+      description: Account tokens to which the Auth Rule does not apply.
+      type: array
+      items:
+        type: string
+        format: uuid
+    auth-rule-state:
+      title: Auth Rule State
+      type: string
+      description: The state of the Auth Rule
+      enum:
+      - ACTIVE
+      - INACTIVE
+    auth-rule-version-state:
+      title: Auth Rule Version State
+      description: The current state of this version.
+      type: string
+      enum:
+      - ACTIVE
+      - SHADOW
+      - INACTIVE
+    auth-rule-type:
+      title: Auth Rule Types
+      type: string
+      enum:
+      - CONDITIONAL_BLOCK
+      - VELOCITY_LIMIT
+      - MERCHANT_LOCK
+      - CONDITIONAL_ACTION
+      - TYPESCRIPT_CODE
+      description: 'The type of Auth Rule. For certain rule types, this determines the event stream during which it will be evaluated. For rules that can be applied to one of several event streams, the effective one is defined by the separate `event_stream` field.
+
+
+        - `CONDITIONAL_BLOCK`: Deprecated. Use `CONDITIONAL_ACTION` instead. AUTHORIZATION event stream.
+
+        - `VELOCITY_LIMIT`: AUTHORIZATION event stream.
+
+        - `MERCHANT_LOCK`: AUTHORIZATION event stream.
+
+        - `CONDITIONAL_ACTION`: AUTHORIZATION, THREE_DS_AUTHENTICATION, TOKENIZATION, ACH_CREDIT_RECEIPT, ACH_DEBIT_RECEIPT, or CARD_TRANSACTION_UPDATE event stream.
+
+        - `TYPESCRIPT_CODE`: AUTHORIZATION, THREE_DS_AUTHENTICATION, TOKENIZATION, ACH_CREDIT_RECEIPT, or ACH_DEBIT_RECEIPT event stream.'
+    backtest-simulation-parameters:
+      title: Backtest Simulation Parameters
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: The start time of the simulation
+        end:
+          type: string
+          format: date-time
+          description: The end time of the simulation
+      required:
+      - start
+      - end
+    authorization-action:
+      title: Authorization Action
+      type: string
+      enum:
+      - DECLINE
+      - CHALLENGE
+    report-stats-v2:
+      title: Auth Rule Version Report Statistics
+      type: object
+      properties:
+        version:
+          description: The rule version number.
+          type: integer
+        state:
+          description: The evaluation mode of this version during the reported period.
+          $ref: '#/components/schemas/auth-rule-version-state'
+        action_counts:
+          type: object
+          description: A mapping of action types to the number of times that action was returned by this version during the relevant period. Actions are the possible outcomes of a rule evaluation, such as DECLINE, CHALLENGE, REQUIRE_TFA, etc. In case rule didn't trigger any action, it's counted under NO_ACTION key.
+          additionalProperties:
+            type: integer
+        examples:
+          type: array
+          description: Example events and their outcomes for this version.
+          items:
+            type: object
+            properties:
+              event_token:
+                type: string
+                format: uuid
+                description: The event token.
+              transaction_token:
+                type:
+                - string
+                - 'null'
+                format: uuid
+                description: The token of the transaction associated with the event
+              timestamp:
+                type: string
+                format: date-time
+                description: The timestamp of the event.
+              actions:
+                type: array
+                description: The actions taken by this version for this event.
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/result-authorization-action'
+                  - $ref: '#/components/schemas/result-authentication-3ds-action'
+                  - $ref: '#/components/schemas/tokenization-action'
+                  - $ref: '#/components/schemas/ach-action'
+            required:
+            - event_token
+            - timestamp
+            - actions
+      required:
+      - version
+      - state
+      - action_counts
+      - examples
+    conditional-block-parameters:
+      title: Conditional Block Parameters
+      deprecated: true
+      description: 'Deprecated: Use CONDITIONAL_ACTION instead.'
+      type: object
+      properties:
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: 'The attribute to target.
+
+
+                  The following attributes may be targeted:
+
+                  * `MCC`: A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+
+                  * `COUNTRY`: Country of entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.
+
+                  * `CURRENCY`: 3-character alphabetic ISO 4217 code for the merchant currency of the transaction.
+
+                  * `MERCHANT_ID`: Unique alphanumeric identifier for the payment card acceptor (merchant).
+
+                  * `DESCRIPTOR`: Short description of card acceptor.
+
+                  * `LIABILITY_SHIFT`: Indicates whether chargeback liability shift to the issuer applies to the transaction. Valid values are `NONE`, `3DS_AUTHENTICATED`, or `TOKEN_AUTHENTICATED`.
+
+                  * `PAN_ENTRY_MODE`: The method by which the cardholder''s primary account number (PAN) was entered. Valid values are `AUTO_ENTRY`, `BAR_CODE`, `CONTACTLESS`, `ECOMMERCE`, `ERROR_KEYED`, `ERROR_MAGNETIC_STRIPE`, `ICC`, `KEY_ENTERED`, `MAGNETIC_STRIPE`, `MANUAL`, `OCR`, `SECURE_CARDLESS`, `UNSPECIFIED`, `UNKNOWN`, `CREDENTIAL_ON_FILE`, or `ECOMMERCE`.
+
+                  * `TRANSACTION_AMOUNT`: The base transaction amount (in cents) plus the acquirer fee field in the settlement/cardholder billing currency. This is the amount the issuer should authorize against unless the issuer is paying the acquirer fee on behalf of the cardholder.
+
+                  * `RISK_SCORE`: Network-provided score assessing risk level associated with a given authorization. Scores are on a range of 0-999, with 0 representing the lowest risk and 999 representing the highest risk. For Visa transactions, where the raw score has a range of 0-99, Lithic will normalize the score by multiplying the raw score by 10x.
+
+                  * `CARD_TRANSACTION_COUNT_15M`: The number of transactions on the card in the trailing 15 minutes before the authorization.
+
+                  * `CARD_TRANSACTION_COUNT_1H`: The number of transactions on the card in the trailing hour up and until the authorization.
+
+                  * `CARD_TRANSACTION_COUNT_24H`: The number of transactions on the card in the trailing 24 hours up and until the authorization.
+
+                  * `CARD_STATE`: The current state of the card associated with the transaction. Valid values are `CLOSED`, `OPEN`, `PAUSED`, `PENDING_ACTIVATION`, `PENDING_FULFILLMENT`.
+
+                  * `PIN_ENTERED`: Indicates whether a PIN was entered during the transaction. Valid values are `TRUE`, `FALSE`.
+
+                  * `PIN_STATUS`: The current state of card''s PIN. Valid values are `NOT_SET`, `OK`, `BLOCKED`.
+
+                  * `WALLET_TYPE`: For transactions using a digital wallet token, indicates the source of the token. Valid values are `APPLE_PAY`, `GOOGLE_PAY`, `SAMSUNG_PAY`, `MASTERPASS`, `MERCHANT`, `OTHER`, `NONE`.
+
+                  * `ADDRESS_MATCH`: Lithic''s evaluation result comparing transaction''s address data with the cardholder KYC data if it exists. Valid values are `MATCH`, `MATCH_ADDRESS_ONLY`, `MATCH_ZIP_ONLY`,`MISMATCH`,`NOT_PRESENT`.'
+                enum:
+                - MCC
+                - COUNTRY
+                - CURRENCY
+                - MERCHANT_ID
+                - DESCRIPTOR
+                - LIABILITY_SHIFT
+                - PAN_ENTRY_MODE
+                - TRANSACTION_AMOUNT
+                - RISK_SCORE
+                - CARD_TRANSACTION_COUNT_15M
+                - CARD_TRANSACTION_COUNT_1H
+                - CARD_TRANSACTION_COUNT_24H
+                - CARD_STATE
+                - PIN_ENTERED
+                - PIN_STATUS
+                - WALLET_TYPE
+                - ADDRESS_MATCH
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - conditions
+    result-authentication-3ds-action:
+      title: Authentication (3DS) Action (Result)
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/authentication-3ds-action'
+      required:
+      - type
+    authentication-3ds-action:
+      title: Authentication (3DS) Action
+      type: string
+      enum:
+      - DECLINE
+      - CHALLENGE
+    draft-version:
+      title: Auth Rule Draft Version
+      anyOf:
+      - type: 'null'
+        description: No draft version.
+      - type: object
+        properties:
+          parameters:
+            $ref: '#/components/schemas/auth-rule-parameters'
+          version:
+            $ref: '#/components/schemas/auth-rule-version-id'
+          state:
+            type: string
+            enum:
+            - PENDING
+            - SHADOWING
+            - ERROR
+            description: 'The state of the draft version. Most rules are created synchronously and the state is immediately `SHADOWING`. Rules backed by TypeScript code are compiled asynchronously — the state starts as `PENDING` and transitions to `SHADOWING` on success or `ERROR` on failure.
+
+
+              - `PENDING`: Compilation of the rule is in progress (TypeScript rules only).
+
+              - `SHADOWING`: The draft version is ready and evaluating in shadow mode alongside the current active version. It can be promoted to the active version.
+
+              - `ERROR`: Compilation of the rule failed. Check the `error` field for details.'
+          error:
+            type:
+            - string
+            - 'null'
+            description: An error message if the draft version failed compilation. Populated when `state` is `ERROR`, `null` otherwise.
+        required:
+        - parameters
+        - version
+        - state
+        - error
+    conditional-authorization-action-parameters:
+      title: Conditional Action (Authorization) Parameters
+      type: object
+      properties:
+        action:
+          description: The action to take if the conditions are met.
+          $ref: '#/components/schemas/authorization-action'
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: 'The attribute to target.
+
+
+                  The following attributes may be targeted:
+
+                  * `MCC`: A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+
+                  * `COUNTRY`: Country of entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.
+
+                  * `CURRENCY`: 3-character alphabetic ISO 4217 code for the merchant currency of the transaction.
+
+                  * `MERCHANT_ID`: Unique alphanumeric identifier for the payment card acceptor (merchant).
+
+                  * `DESCRIPTOR`: Short description of card acceptor.
+
+                  * `LIABILITY_SHIFT`: Indicates whether chargeback liability shift to the issuer applies to the transaction. Valid values are `NONE`, `3DS_AUTHENTICATED`, or `TOKEN_AUTHENTICATED`.
+
+                  * `PAN_ENTRY_MODE`: The method by which the cardholder''s primary account number (PAN) was entered. Valid values are `AUTO_ENTRY`, `BAR_CODE`, `CONTACTLESS`, `ECOMMERCE`, `ERROR_KEYED`, `ERROR_MAGNETIC_STRIPE`, `ICC`, `KEY_ENTERED`, `MAGNETIC_STRIPE`, `MANUAL`, `OCR`, `SECURE_CARDLESS`, `UNSPECIFIED`, `UNKNOWN`, `CREDENTIAL_ON_FILE`, or `ECOMMERCE`.
+
+                  * `TRANSACTION_AMOUNT`: The base transaction amount (in cents) plus the acquirer fee field in the settlement/cardholder billing currency. This is the amount the issuer should authorize against unless the issuer is paying the acquirer fee on behalf of the cardholder.
+
+                  * `CASH_AMOUNT`: The cash amount of the transaction in minor units (cents). This represents the amount of cash being withdrawn or advanced.
+
+                  * `RISK_SCORE`: Network-provided score assessing risk level associated with a given authorization. Scores are on a range of 0-999, with 0 representing the lowest risk and 999 representing the highest risk. For Visa transactions, where the raw score has a range of 0-99, Lithic will normalize the score by multiplying the raw score by 10x.
+
+                  * `CARD_TRANSACTION_COUNT_15M`: The number of transactions on the card in the trailing 15 minutes before the authorization.
+
+                  * `CARD_TRANSACTION_COUNT_1H`: The number of transactions on the card in the trailing hour up and until the authorization.
+
+                  * `CARD_TRANSACTION_COUNT_24H`: The number of transactions on the card in the trailing 24 hours up and until the authorization.
+
+                  * `CARD_DECLINE_COUNT_15M`: The number of declined transactions on the card in the trailing 15 minutes before the authorization.
+
+                  * `CARD_DECLINE_COUNT_1H`: The number of declined transactions on the card in the trailing hour up and until the authorization.
+
+                  * `CARD_DECLINE_COUNT_24H`: The number of declined transactions on the card in the trailing 24 hours up and until the authorization.
+
+                  * `CARD_STATE`: The current state of the card associated with the transaction. Valid values are `CLOSED`, `OPEN`, `PAUSED`, `PENDING_ACTIVATION`, `PENDING_FULFILLMENT`.
+
+                  * `PIN_ENTERED`: Indicates whether a PIN was entered during the transaction. Valid values are `TRUE`, `FALSE`.
+
+                  * `PIN_STATUS`: The current state of card''s PIN. Valid values are `NOT_SET`, `OK`, `BLOCKED`.
+
+                  * `WALLET_TYPE`: For transactions using a digital wallet token, indicates the source of the token. Valid values are `APPLE_PAY`, `GOOGLE_PAY`, `SAMSUNG_PAY`, `MASTERPASS`, `MERCHANT`, `OTHER`, `NONE`.
+
+                  * `TRANSACTION_INITIATOR`: The entity that initiated the transaction indicates the source of the token. Valid values are `CARDHOLDER`, `MERCHANT`, `UNKNOWN`.
+
+                  * `ADDRESS_MATCH`: Lithic''s evaluation result comparing transaction''s address data with the cardholder KYC data if it exists. Valid values are `MATCH`, `MATCH_ADDRESS_ONLY`, `MATCH_ZIP_ONLY`,`MISMATCH`,`NOT_PRESENT`.
+
+                  * `SERVICE_LOCATION_STATE`: The state/province code (ISO 3166-2) where the cardholder received the service, e.g. "NY". When a service location is present in the network data, the service location state is used. Otherwise, falls back to the card acceptor state.
+
+                  * `SERVICE_LOCATION_POSTAL_CODE`: The postal code where the cardholder received the service, e.g. "10001". When a service location is present in the network data, the service location postal code is used. Otherwise, falls back to the card acceptor postal code.
+
+                  * `CARD_AGE`: The age of the card in seconds at the time of the authorization.
+
+                  * `ACCOUNT_AGE`: The age of the account holder''s account in seconds at the time of the authorization.
+
+                  * `AMOUNT_Z_SCORE`: The z-score of the transaction amount relative to the entity''s transaction history. Null if fewer than 30 approved transactions in the specified window. Requires `parameters.scope` and `parameters.interval`.
+
+                  * `AVG_TRANSACTION_AMOUNT`: The average approved transaction amount for the entity over the specified window, in cents. Requires `parameters.scope` and `parameters.interval`.
+
+                  * `STDEV_TRANSACTION_AMOUNT`: The standard deviation of approved transaction amounts for the entity over the specified window, in cents. Null if fewer than 30 approved transactions in the specified window. Requires `parameters.scope` and `parameters.interval`.
+
+                  * `IS_NEW_COUNTRY`: Whether the transaction''s merchant country has not been seen in the entity''s transaction history. Valid values are `TRUE`, `FALSE`. Requires `parameters.scope`.
+
+                  * `IS_NEW_MCC`: Whether the transaction''s MCC has not been seen in the entity''s transaction history. Valid values are `TRUE`, `FALSE`. Requires `parameters.scope`.
+
+                  * `IS_FIRST_TRANSACTION`: Whether this is the first transaction for the entity. Valid values are `TRUE`, `FALSE`. Requires `parameters.scope`.
+
+                  * `CONSECUTIVE_DECLINES`: The number of consecutive declined transactions for the entity over the last 30 days (rolling). Requires `parameters.scope`. Not supported for `BUSINESS_ACCOUNT` scope.
+
+                  * `TIME_SINCE_LAST_TRANSACTION`: The number of days since the last approved transaction for the entity. Requires `parameters.scope`.
+
+                  * `DISTINCT_COUNTRY_COUNT`: The number of distinct merchant countries seen in the entity''s transaction history. Requires `parameters.scope`.
+
+                  * `IS_NEW_MERCHANT`: Whether the card acceptor ID has not been seen in the card''s approved transaction history (capped at the 1000 most recently seen merchants). Valid values are `TRUE`, `FALSE`. Card-scoped only; no `parameters` required.
+
+                  * `THREE_DS_SUCCESS_RATE`: The 3DS authentication success rate for the card, as a percentage from 0.0 to 100.0. Card-scoped only; no `parameters` required.'
+                enum:
+                - MCC
+                - COUNTRY
+                - CURRENCY
+                - MERCHANT_ID
+                - DESCRIPTOR
+                - LIABILITY_SHIFT
+                - PAN_ENTRY_MODE
+                - TRANSACTION_AMOUNT
+                - CASH_AMOUNT
+                - RISK_SCORE
+                - CARD_TRANSACTION_COUNT_15M
+                - CARD_TRANSACTION_COUNT_1H
+                - CARD_TRANSACTION_COUNT_24H
+                - CARD_DECLINE_COUNT_15M
+                - CARD_DECLINE_COUNT_1H
+                - CARD_DECLINE_COUNT_24H
+                - CARD_STATE
+                - PIN_ENTERED
+                - PIN_STATUS
+                - WALLET_TYPE
+                - TRANSACTION_INITIATOR
+                - ADDRESS_MATCH
+                - SERVICE_LOCATION_STATE
+                - SERVICE_LOCATION_POSTAL_CODE
+                - CARD_AGE
+                - ACCOUNT_AGE
+                - AMOUNT_Z_SCORE
+                - AVG_TRANSACTION_AMOUNT
+                - STDEV_TRANSACTION_AMOUNT
+                - IS_NEW_COUNTRY
+                - IS_NEW_MCC
+                - IS_FIRST_TRANSACTION
+                - CONSECUTIVE_DECLINES
+                - TIME_SINCE_LAST_TRANSACTION
+                - DISTINCT_COUNTRY_COUNT
+                - IS_NEW_MERCHANT
+                - THREE_DS_SUCCESS_RATE
+              parameters:
+                type: object
+                description: 'Additional parameters required for transaction history signal attributes. Required when
+
+                  `attribute` is one of `AMOUNT_Z_SCORE`, `AVG_TRANSACTION_AMOUNT`,
+
+                  `STDEV_TRANSACTION_AMOUNT`, `IS_NEW_COUNTRY`, `IS_NEW_MCC`, `IS_FIRST_TRANSACTION`,
+
+                  `CONSECUTIVE_DECLINES`, `TIME_SINCE_LAST_TRANSACTION`, or `DISTINCT_COUNTRY_COUNT`.
+
+                  Not used for other attributes.'
+                properties:
+                  scope:
+                    type: string
+                    description: The entity scope to evaluate the attribute against.
+                    enum:
+                    - CARD
+                    - ACCOUNT
+                    - BUSINESS_ACCOUNT
+                  interval:
+                    type: string
+                    description: The time window for statistical attributes (`AMOUNT_Z_SCORE`, `AVG_TRANSACTION_AMOUNT`, `STDEV_TRANSACTION_AMOUNT`). Use `LIFETIME` for all-time history or a specific window (`7D`, `30D`, `90D`).
+                    enum:
+                    - LIFETIME
+                    - 7D
+                    - 30D
+                    - 90D
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - action
+      - conditions
+    merchant-lock-parameters:
+      title: Merchant Lock Inputs
+      type: object
+      properties:
+        merchants:
+          type: array
+          items:
+            type: object
+            properties:
+              merchant_id:
+                type: string
+                description: Unique alphanumeric identifier for the payment card acceptor (merchant). This attribute specifies the merchant entity that will be locked or referenced for authorization rules.
+              descriptor:
+                type: string
+                description: Short description of the merchant, often used to provide more human-readable context about the transaction merchant. This is typically the name or label shown on transaction summaries.
+              comment:
+                type: string
+                description: A comment or explanation about the merchant, used internally for rule management purposes.
+            oneOf:
+            - required:
+              - merchant_id
+            - required:
+              - descriptor
+            description: Represents a specific merchant lock based on their ID or descriptor. Each merchant object allows transaction rules to work at a granular level and requires at least one of merchant_id or descriptor.
+          description: A list of merchant locks defining specific merchants or groups of merchants (based on descriptors or IDs) that the lock applies to.
+      required:
+      - merchants
+    ach-action:
+      title: ACH Action
+      oneOf:
+      - title: Approve Action (ACH)
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - APPROVE
+            description: Approve the ACH transaction
+        required:
+        - type
+      - title: Return Action
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - RETURN
+            description: Return the ACH transaction
+          code:
+            type: string
+            description: NACHA return code to use when returning the transaction. Note that the list of available return codes is subject to an allowlist configured at the program level
+            enum:
+            - R01
+            - R02
+            - R03
+            - R04
+            - R05
+            - R06
+            - R07
+            - R08
+            - R09
+            - R10
+            - R11
+            - R12
+            - R13
+            - R14
+            - R15
+            - R16
+            - R17
+            - R18
+            - R19
+            - R20
+            - R21
+            - R22
+            - R23
+            - R24
+            - R25
+            - R26
+            - R27
+            - R28
+            - R29
+            - R30
+            - R31
+            - R32
+            - R33
+            - R34
+            - R35
+            - R36
+            - R37
+            - R38
+            - R39
+            - R40
+            - R41
+            - R42
+            - R43
+            - R44
+            - R45
+            - R46
+            - R47
+            - R50
+            - R51
+            - R52
+            - R53
+            - R61
+            - R62
+            - R67
+            - R68
+            - R69
+            - R70
+            - R71
+            - R72
+            - R73
+            - R74
+            - R75
+            - R76
+            - R77
+            - R80
+            - R81
+            - R82
+            - R83
+            - R84
+            - R85
+        required:
+        - type
+        - code
+    backtest-request:
+      title: Backtest Request Parameters
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: The start time of the backtest.
+        end:
+          type: string
+          format: date-time
+          description: The end time of the backtest.
+    rule-feature:
+      title: Rule Feature
+      description: 'A feature made available to the rule. The `name` field is the variable name used in the rule function signature. The `type` field determines which data the feature provides to the rule at evaluation time.
+
+
+        - `AUTHORIZATION`: The authorization request being evaluated. Only available for AUTHORIZATION event stream rules.
+
+        - `AUTHENTICATION`: The 3DS authentication request being evaluated. Only available for THREE_DS_AUTHENTICATION event stream rules.
+
+        - `TOKENIZATION`: The tokenization request being evaluated. Only available for TOKENIZATION event stream rules.
+
+        - `ACH_RECEIPT`: The ACH receipt being evaluated. Only available for ACH_CREDIT_RECEIPT and ACH_DEBIT_RECEIPT event stream rules.
+
+        - `CARD`: The card associated with the event. Available for AUTHORIZATION and THREE_DS_AUTHENTICATION event stream rules.
+
+        - `ACCOUNT_HOLDER`: The account holder associated with the card. Available for AUTHORIZATION and THREE_DS_AUTHENTICATION event stream rules.
+
+        - `IP_METADATA`: IP address metadata for the request. Available for THREE_DS_AUTHENTICATION event stream rules.
+
+        - `SPEND_VELOCITY`: Spend velocity data for the card or account. Requires `scope`, `period`, and optionally `filters` to configure the velocity calculation. Available for AUTHORIZATION event stream rules.
+
+        - `TRANSACTION_HISTORY_SIGNALS`: Behavioral feature state derived from the entity''s transaction history. Requires `scope` to specify whether to load card, account, or business account history. Available for AUTHORIZATION event stream rules.'
+      allOf:
+      - type: object
+        properties:
+          name:
+            type: string
+            description: The variable name for this feature in the rule function signature
+        required:
+        - name
+      - oneOf:
+        - title: Authorization Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: AUTHORIZATION
+          required:
+          - type
+        - title: Authentication Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: AUTHENTICATION
+          required:
+          - type
+        - title: Tokenization Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: TOKENIZATION
+          required:
+          - type
+        - title: ACH Receipt Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: ACH_RECEIPT
+          required:
+          - type
+        - title: Card Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: CARD
+          required:
+          - type
+        - title: Account Holder Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: ACCOUNT_HOLDER
+          required:
+          - type
+        - title: IP Metadata Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: IP_METADATA
+          required:
+          - type
+        - title: Spend Velocity Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: SPEND_VELOCITY
+            scope:
+              $ref: '#/components/schemas/velocity-scope'
+            period:
+              $ref: '#/components/schemas/velocity-limit-period'
+            filters:
+              $ref: '#/components/schemas/velocity-limit-filters'
+          required:
+          - type
+          - scope
+          - period
+        - title: Transaction History Signals Feature
+          type: object
+          properties:
+            type:
+              type: string
+              const: TRANSACTION_HISTORY_SIGNALS
+            scope:
+              type: string
+              description: The entity scope to load transaction history signals for.
+              enum:
+              - CARD
+              - ACCOUNT
+              - BUSINESS_ACCOUNT
+          required:
+          - type
+          - scope
+        discriminator:
+          propertyName: type
+    event-stream:
+      title: Event Stream Types
+      type: string
+      enum:
+      - AUTHORIZATION
+      - THREE_DS_AUTHENTICATION
+      - TOKENIZATION
+      - ACH_CREDIT_RECEIPT
+      - ACH_DEBIT_RECEIPT
+      - CARD_TRANSACTION_UPDATE
+      description: The event stream during which the rule will be evaluated.
+    velocity-limit-period:
+      title: Velocity Limit Period
+      oneOf:
+      - title: Trailing Window Object
+        type: object
+        properties:
+          duration:
+            type: integer
+            description: The size of the trailing window to calculate Spend Velocity over in seconds. The minimum value is 10 seconds, and the maximum value is 2678400 seconds (31 days).
+            minimum: 10
+            maximum: 2678400
+          type:
+            type: string
+            const: CUSTOM
+        required:
+        - duration
+        - type
+      - title: Fixed Window Day
+        type: object
+        description: Velocity over the current day since 00:00 / 12 AM in Eastern Time
+        properties:
+          type:
+            type: string
+            const: DAY
+        required:
+        - type
+      - title: Fixed Window Week
+        type: object
+        description: Velocity over the current week since 00:00 / 12 AM in Eastern Time on specified `day_of_week`
+        properties:
+          type:
+            type: string
+            const: WEEK
+          day_of_week:
+            type: integer
+            description: The day of the week to start the week from. Following ISO-8601, 1 is Monday and 7 is Sunday. Defaults to Monday if not specified.
+            minimum: 1
+            maximum: 7
+            default: 1
+        required:
+        - type
+      - title: Fixed Window Month
+        type: object
+        description: Velocity over the current month since 00:00 / 12 AM in Eastern Time on specified `day_of_month`.
+        properties:
+          type:
+            type: string
+            const: MONTH
+          day_of_month:
+            type: integer
+            description: The day of the month to start from. Accepts values from 1 to 31, and will reset at the end of the month if the day exceeds the number of days in the month. Defaults to the 1st of the month if not specified.
+            minimum: 1
+            maximum: 31
+            default: 1
+        required:
+        - type
+      - title: Fixed Window Year
+        type: object
+        description: Velocity over the current year since 00:00 / 12 AM in Eastern Time on specified `month` and `day_of_month`. This validates the month and day of the year to start from is a real date. In the event that February 29th is selected, in non-leap years, the window will start from February 28th.
+        properties:
+          type:
+            type: string
+            const: YEAR
+          day_of_month:
+            type: integer
+            description: The day of the month to start from. Defaults to the 1st of the month if not specified.
+            minimum: 1
+            maximum: 31
+            default: 1
+          month:
+            type: integer
+            description: The month to start from. 1 is January and 12 is December. Defaults to January if not specified.
+            minimum: 1
+            maximum: 12
+            default: 1
+        required:
+        - type
+    spend-feature-state:
+      title: Spend Feature State
+      type: object
+      properties:
+        scope:
+          $ref: '#/components/schemas/velocity-scope'
+        period:
+          $ref: '#/components/schemas/velocity-limit-period'
+        filters:
+          $ref: '#/components/schemas/velocity-limit-filters'
+        value:
+          type: object
+          properties:
+            amount:
+              type: integer
+              minimum: 0
+              description: "Amount (in cents) for the given Auth Rule that is used as input for calculating the rule. \nFor Velocity Limit rules this would be the calculated Velocity. \nFor Conditional Rules using CARD_TRANSACTION_COUNT_* this will be 0"
+            count:
+              type: integer
+              minimum: 0
+              description: Number of velocity impacting transactions matching the given scope, period and filters
+          required:
+          - amount
+          - count
+      required:
+      - scope
+      - period
+      - filters
+      - value
+    backtest-stats:
+      title: Auth Rule Backtest Statistics
+      type: object
+      properties:
+        version:
+          $ref: '#/components/schemas/auth-rule-version-id'
+        approved:
+          type: integer
+          description: The total number of historical transactions approved by this rule during the backtest period, or the number of transactions that would have been approved if the rule was evaluated in shadow mode.
+        declined:
+          type: integer
+          description: The total number of historical transactions declined by this rule during the backtest period, or the number of transactions that would have been declined if the rule was evaluated in shadow mode.
+        challenged:
+          type: integer
+          description: The total number of historical transactions challenged by this rule during the backtest period, or the number of transactions that would have been challenged if the rule was evaluated in shadow mode. Currently applicable only for 3DS Auth Rules.
+        examples:
+          type: array
+          description: Example events and their outcomes.
+          items:
+            type: object
+            properties:
+              event_token:
+                type: string
+                format: uuid
+                description: The event token.
+              transaction_token:
+                type:
+                - string
+                - 'null'
+                format: uuid
+                description: The token of the transaction associated with the event
+              timestamp:
+                type: string
+                format: date-time
+                description: The timestamp of the event.
+              decision:
+                type: string
+                enum:
+                - APPROVED
+                - DECLINED
+                - CHALLENGED
+                description: The decision made by the rule for this event.
+    conditional-operation:
+      title: Conditional Operation
+      type: string
+      description: The operation to apply to the attribute
+      enum:
+      - IS_ONE_OF
+      - IS_NOT_ONE_OF
+      - MATCHES
+      - DOES_NOT_MATCH
+      - IS_EQUAL_TO
+      - IS_NOT_EQUAL_TO
+      - IS_GREATER_THAN
+      - IS_GREATER_THAN_OR_EQUAL_TO
+      - IS_LESS_THAN
+      - IS_LESS_THAN_OR_EQUAL_TO
+      - IS_AFTER
+      - IS_BEFORE
+      - CONTAINS_ANY
+      - CONTAINS_ALL
+      - CONTAINS_NONE
+    conditional-card-transaction-update-action-parameters:
+      title: Conditional Action (Card Transaction Update) Parameters
+      type: object
+      properties:
+        action:
+          description: The action to take if the conditions are met.
+          $ref: '#/components/schemas/card-transaction-update-action'
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: 'The attribute to target.
+
+
+                  The following attributes may be targeted:
+
+                  * `MCC`: A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+
+                  * `COUNTRY`: Country of entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.
+
+                  * `CURRENCY`: 3-character alphabetic ISO 4217 code for the merchant currency of the transaction.
+
+                  * `MERCHANT_ID`: Unique alphanumeric identifier for the payment card acceptor (merchant).
+
+                  * `DESCRIPTOR`: Short description of card acceptor.
+
+                  * `TRANSACTION_AMOUNT`: The base transaction amount (in cents) plus the acquirer fee field in the settlement/cardholder billing currency. This is the amount the issuer should authorize against unless the issuer is paying the acquirer fee on behalf of the cardholder.
+
+                  * `RISK_SCORE`: Network-provided score assessing risk level associated with a given authorization. Scores are on a range of 0-999, with 0 representing the lowest risk and 999 representing the highest risk. For Visa transactions, where the raw score has a range of 0-99, Lithic will normalize the score by multiplying the raw score by 10x.
+
+                  * `TRANSACTION_STATUS`: The status of the transaction. Valid values are `PENDING`, `VOIDED`, `SETTLING`, `SETTLED`, `BOUNCED`, `RETURNED`, `DECLINED`, `EXPIRED`.
+
+                  * `LAST_EVENT_TYPE`: The type of the most recent event on the transaction. Valid values are `AUTHORIZATION`, `AUTHORIZATION_ADVICE`, `AUTHORIZATION_EXPIRY`, `AUTHORIZATION_REVERSAL`, `BALANCE_INQUIRY`, `CLEARING`, `CORRECTION_CREDIT`, `CORRECTION_DEBIT`, `CREDIT_AUTHORIZATION`, `CREDIT_AUTHORIZATION_ADVICE`, `FINANCIAL_AUTHORIZATION`, `FINANCIAL_CREDIT_AUTHORIZATION`, `RETURN`, `RETURN_REVERSAL`.
+
+                  * `LIABILITY_SHIFT`: Indicates whether chargeback liability shift to the issuer applies to the transaction. Valid values are `NONE`, `3DS_AUTHENTICATED`, or `TOKEN_AUTHENTICATED`.
+
+                  * `PAN_ENTRY_MODE`: The method by which the cardholder''s primary account number (PAN) was entered. Valid values are `AUTO_ENTRY`, `BAR_CODE`, `CONTACTLESS`, `ECOMMERCE`, `ERROR_KEYED`, `ERROR_MAGNETIC_STRIPE`, `ICC`, `KEY_ENTERED`, `MAGNETIC_STRIPE`, `MANUAL`, `OCR`, `SECURE_CARDLESS`, `UNSPECIFIED`, `UNKNOWN`, or `CREDENTIAL_ON_FILE`.
+
+                  * `WALLET_TYPE`: For transactions using a digital wallet token, indicates the source of the token. Valid values are `APPLE_PAY`, `GOOGLE_PAY`, `SAMSUNG_PAY`, `MASTERPASS`, `MERCHANT`, `OTHER`, `NONE`.
+
+                  * `CARD_AGE`: The age of the card in seconds at the time of the transaction.
+
+                  * `ACCOUNT_AGE`: The age of the account in seconds at the time of the transaction.
+
+                  * `SPEND_VELOCITY_COUNT`: The number of transactions matching the specified filters within the given period. Requires `parameters` with `scope`, `period`, and optional `filters`.
+
+                  * `SPEND_VELOCITY_AMOUNT`: The total spend amount (in cents) of transactions matching the specified filters within the given period. Requires `parameters` with `scope`, `period`, and optional `filters`.'
+                enum:
+                - MCC
+                - COUNTRY
+                - CURRENCY
+                - MERCHANT_ID
+                - DESCRIPTOR
+                - TRANSACTION_AMOUNT
+                - RISK_SCORE
+                - TRANSACTION_STATUS
+                - LAST_EVENT_TYPE
+                - LIABILITY_SHIFT
+                - PAN_ENTRY_MODE
+                - WALLET_TYPE
+                - CARD_AGE
+                - ACCOUNT_AGE
+                - SPEND_VELOCITY_COUNT
+                - SPEND_VELOCITY_AMOUNT
+              parameters:
+                type: object
+                description: 'Additional parameters for spend velocity attributes. Required when `attribute` is
+
+                  `SPEND_VELOCITY_COUNT` or `SPEND_VELOCITY_AMOUNT`. Not used for other attributes.'
+                properties:
+                  scope:
+                    type: string
+                    description: The entity scope to evaluate the attribute against.
+                    enum:
+                    - CARD
+                    - ACCOUNT
+                    - GLOBAL
+                  period:
+                    description: The time period over which to calculate the spend velocity.
+                    $ref: '#/components/schemas/velocity-limit-period'
+                  filters:
+                    $ref: '#/components/schemas/spend-velocity-filters'
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - action
+      - conditions
+    backtest-results:
+      title: Auth Rules Backtest Results
+      type: object
+      properties:
+        backtest_token:
+          $ref: '#/components/schemas/backtest-token'
+        simulation_parameters:
+          $ref: '#/components/schemas/backtest-simulation-parameters'
+        results:
+          type: object
+          properties:
+            current_version:
+              anyOf:
+              - type: 'null'
+                description: No results available for the current version.
+              - $ref: '#/components/schemas/backtest-stats'
+            draft_version:
+              anyOf:
+              - type: 'null'
+                description: No results available for the draft version.
+              - $ref: '#/components/schemas/backtest-stats'
+      required:
+      - backtest_token
+      - simulation_parameters
+      - results
+    auth-rule-feature-state:
+      title: Auth Rule Feature State
+      type: object
+      properties:
+        evaluated:
+          type: string
+          format: date-time
+          description: Timestamp at which the Features were evaluated
+        features:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/spend-feature-state'
+          description: Calculated Features used for evaluation of the provided Auth Rule
+      required:
+      - evaluated
+      - features
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid input
+    card-tokens:
+      title: Auth Rule Card Tokens
+      description: Card tokens to which the Auth Rule applies.
+      type: array
+      items:
+        type: string
+        format: uuid
+    auth-rule-parameters:
+      title: Auth Rule Parameters
+      description: Parameters for the Auth Rule
+      anyOf:
+      - $ref: '#/components/schemas/conditional-block-parameters'
+      - $ref: '#/components/schemas/velocity-limit-parameters'
+      - $ref: '#/components/schemas/merchant-lock-parameters'
+      - $ref: '#/components/schemas/conditional-3ds-action-parameters'
+      - $ref: '#/components/schemas/conditional-authorization-action-parameters'
+      - $ref: '#/components/schemas/conditional-ach-action-parameters'
+      - $ref: '#/components/schemas/conditional-tokenization-action-parameters'
+      - $ref: '#/components/schemas/conditional-card-transaction-update-action-parameters'
+      - $ref: '#/components/schemas/typescript-code-parameters'
+    backtest-list-item:
+      title: Backtest List Item
+      type: object
+      properties:
+        backtest_token:
+          $ref: '#/components/schemas/backtest-token'
+        simulation_parameters:
+          $ref: '#/components/schemas/backtest-simulation-parameters'
+        status:
+          $ref: '#/components/schemas/backtest-status'
+        created:
+          type: string
+          format: date-time
+          description: Timestamp of when the backtest was created
+      required:
+      - backtest_token
+      - simulation_parameters
+      - status
+      - created
+    conditional-value:
+      title: Conditional Value
+      anyOf:
+      - title: Regex
+        type: string
+        description: A regex string, to be used with `MATCHES` or `DOES_NOT_MATCH`
+      - title: Number
+        type: integer
+        format: int64
+        description: A number, to be used with `IS_GREATER_THAN`, `IS_GREATER_THAN_OR_EQUAL_TO`, `IS_LESS_THAN`, `IS_LESS_THAN_OR_EQUAL_TO`, `IS_EQUAL_TO`, or `IS_NOT_EQUAL_TO`
+      - title: List of Strings
+        type: array
+        minItems: 1
+        items:
+          type: string
+        description: An array of strings, to be used with `IS_ONE_OF` or `IS_NOT_ONE_OF`
+      - title: Timestamp
+        type: string
+        format: date-time
+        description: A timestamp, to be used with `IS_AFTER` or `IS_BEFORE`
+    velocity-scope:
+      title: Velocity Limits Scope
+      type: string
+      enum:
+      - CARD
+      - ACCOUNT
+      description: The scope the velocity is calculated for
+    tokenization-action:
+      title: Tokenization Action
+      oneOf:
+      - title: Decline Action (Tokenization)
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - DECLINE
+            description: Decline the tokenization request
+          reason:
+            type: string
+            description: Reason code for declining the tokenization request
+            enum:
+            - ACCOUNT_SCORE_1
+            - DEVICE_SCORE_1
+            - ALL_WALLET_DECLINE_REASONS_PRESENT
+            - WALLET_RECOMMENDED_DECISION_RED
+            - CVC_MISMATCH
+            - CARD_EXPIRY_MONTH_MISMATCH
+            - CARD_EXPIRY_YEAR_MISMATCH
+            - CARD_INVALID_STATE
+            - CUSTOMER_RED_PATH
+            - INVALID_CUSTOMER_RESPONSE
+            - NETWORK_FAILURE
+            - GENERIC_DECLINE
+            - DIGITAL_CARD_ART_REQUIRED
+        required:
+        - type
+      - title: Require TFA Action
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - REQUIRE_TFA
+            description: Require two-factor authentication for the tokenization request
+          reason:
+            type: string
+            description: Reason code for requiring two-factor authentication
+            enum:
+            - WALLET_RECOMMENDED_TFA
+            - SUSPICIOUS_ACTIVITY
+            - DEVICE_RECENTLY_LOST
+            - TOO_MANY_RECENT_ATTEMPTS
+            - TOO_MANY_RECENT_TOKENS
+            - TOO_MANY_DIFFERENT_CARDHOLDERS
+            - OUTSIDE_HOME_TERRITORY
+            - HAS_SUSPENDED_TOKENS
+            - HIGH_RISK
+            - ACCOUNT_SCORE_LOW
+            - DEVICE_SCORE_LOW
+            - CARD_STATE_TFA
+            - HARDCODED_TFA
+            - CUSTOMER_RULE_TFA
+            - DEVICE_HOST_CARD_EMULATION
+        required:
+        - type
+    result-authorization-action:
+      title: Authorization Action (Result)
+      oneOf:
+      - title: Decline Action (Authorization)
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - DECLINE
+          code:
+            $ref: '#/components/schemas/detailed_result'
+            description: The detailed result code explaining the specific reason for the decline
+        required:
+        - type
+        - code
+      - title: Challenge Action (Authorization)
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - CHALLENGE
+        required:
+        - type
+    patch-auth-rule-request:
+      title: Auth Rule Patch Request
+      type: object
+      properties:
+        state:
+          description: 'The desired state of the Auth Rule.
+
+
+            Note that only deactivating an Auth Rule through this endpoint is supported at this time. If you need to (re-)activate an Auth Rule the /promote endpoint should be used to promote a draft to the currently active version.'
+          type: string
+          const: INACTIVE
+        name:
+          $ref: '#/components/schemas/auth-rule-name'
+      anyOf:
+      - title: Account Level Rule
+        type: object
+        properties:
+          account_tokens:
+            $ref: '#/components/schemas/account-tokens'
+          business_account_tokens:
+            $ref: '#/components/schemas/business-account-tokens'
+      - title: Card Level Rule
+        type: object
+        properties:
+          card_tokens:
+            $ref: '#/components/schemas/card-tokens'
+      - title: Program Level Rule
+        type: object
+        properties:
+          program_level:
+            $ref: '#/components/schemas/program-level'
+          excluded_card_tokens:
+            $ref: '#/components/schemas/excluded-card-tokens'
+          excluded_account_tokens:
+            $ref: '#/components/schemas/excluded-account-tokens'
+          excluded_business_account_tokens:
+            $ref: '#/components/schemas/excluded-business-account-tokens'
+    backtest-token:
+      title: Auth Rule Backtest Token
+      description: Auth Rule Backtest Token
+      type: string
+      format: uuid
+    velocity-limit-filters:
+      title: Velocity Limits Filters
+      type: object
+      properties:
+        include_mccs:
+          type:
+          - 'null'
+          - array
+          minItems: 1
+          items:
+            type: string
+            pattern: ^[0-9]{4}$
+            example: '5542'
+          description: Merchant Category Codes to include in the velocity calculation. Transactions not matching this MCC will not be included in the calculated velocity.
+        exclude_mccs:
+          type:
+          - 'null'
+          - array
+          minItems: 1
+          items:
+            type: string
+            pattern: ^[0-9]{4}$
+            example: '5542'
+          description: Merchant Category Codes to exclude from the velocity calculation. Transactions matching this MCC will be excluded from the calculated velocity.
+        include_countries:
+          type:
+          - 'null'
+          - array
+          minItems: 1
+          items:
+            type: string
+            pattern: ^[A-Z]{3}$
+            example: USD
+          description: ISO-3166-1 alpha-3 Country Codes to include in the velocity calculation. Transactions not matching any of the provided will not be included in the calculated velocity.
+        exclude_countries:
+          type:
+          - 'null'
+          - array
+          minItems: 1
+          items:
+            type: string
+            pattern: ^[A-Z]{3}$
+            example: USD
+          description: ISO-3166-1 alpha-3 Country Codes to exclude from the velocity calculation. Transactions matching any of the provided will be excluded from the calculated velocity.
+        include_pan_entry_modes:
+          type:
+          - 'null'
+          - array
+          minItems: 1
+          items:
+            type: string
+            enum:
+            - AUTO_ENTRY
+            - BAR_CODE
+            - CONTACTLESS
+            - CREDENTIAL_ON_FILE
+            - ECOMMERCE
+            - ERROR_KEYED
+            - ERROR_MAGNETIC_STRIPE
+            - ICC
+            - KEY_ENTERED
+            - MAGNETIC_STRIPE
+            - MANUAL
+            - OCR
+            - SECURE_CARDLESS
+            - UNSPECIFIED
+            - UNKNOWN
+          description: PAN entry modes to include in the velocity calculation. Transactions not matching any of the provided will not be included in the calculated velocity.
+    excluded-card-tokens:
+      title: Auth Rule Excluded Card Tokens
+      description: Card tokens to which the Auth Rule does not apply.
+      type: array
+      items:
+        type: string
+        format: uuid
+    auth-rule:
+      title: Auth Rule
+      type: object
+      properties:
+        token:
+          $ref: '#/components/schemas/auth-rule-token'
+        state:
+          $ref: '#/components/schemas/auth-rule-state'
+        program_level:
+          $ref: '#/components/schemas/program-level'
+        card_tokens:
+          $ref: '#/components/schemas/card-tokens'
+        excluded_card_tokens:
+          $ref: '#/components/schemas/excluded-card-tokens'
+        excluded_account_tokens:
+          $ref: '#/components/schemas/excluded-account-tokens'
+        excluded_business_account_tokens:
+          $ref: '#/components/schemas/excluded-business-account-tokens'
+        account_tokens:
+          $ref: '#/components/schemas/account-tokens'
+        business_account_tokens:
+          $ref: '#/components/schemas/business-account-tokens'
+        type:
+          $ref: '#/components/schemas/auth-rule-type'
+        current_version:
+          $ref: '#/components/schemas/current-version'
+        draft_version:
+          $ref: '#/components/schemas/draft-version'
+        name:
+          $ref: '#/components/schemas/auth-rule-name'
+        event_stream:
+          $ref: '#/components/schemas/event-stream'
+        lithic_managed:
+          type: boolean
+          description: Indicates whether this auth rule is managed by Lithic. If true, the rule cannot be modified or deleted by the user
+      required:
+      - token
+      - state
+      - program_level
+      - card_tokens
+      - account_tokens
+      - business_account_tokens
+      - type
+      - current_version
+      - draft_version
+      - name
+      - event_stream
+      - lithic_managed
+    conditional-tokenization-action-parameters:
+      title: Conditional Action (Tokenization) Parameters
+      type: object
+      properties:
+        action:
+          description: The action to take if the conditions are met.
+          $ref: '#/components/schemas/tokenization-action'
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+                description: "The attribute to target.\n\nThe following attributes may be targeted:\n* `TIMESTAMP`: The timestamp of the tokenization request in ISO 8601 format.\n* `TOKENIZATION_CHANNEL`: The channel through which the tokenization request was initiated. Valid values are `DIGITAL_WALLET`, `MERCHANT`.\n* `TOKENIZATION_SOURCE`: The source of the tokenization request. Valid values are `ACCOUNT_ON_FILE`, `MANUAL_PROVISION`, `PUSH_PROVISION`, `CHIP_DIP`, `CONTACTLESS_TAP`, `TOKEN`, `UNKNOWN`.\n* `TOKEN_REQUESTOR_NAME`: The name of the entity requesting the token. Valid values are `ALT_ID`, `AMAZON_ONE`, `AMERICAN_EXPRESS_TOKEN_SERVICE`, `ANDROID_PAY`, `APPLE_PAY`, `FACEBOOK`, `FITBIT_PAY`, `GARMIN_PAY`, `GOOGLE_PAY`, `GOOGLE_VCN`, `ISSUER_HCE`, `MICROSOFT_PAY`, `NETFLIX`, `SAMSUNG_PAY`, `UNKNOWN`, `VISA_CHECKOUT`.\n* `WALLET_ACCOUNT_SCORE`: Risk score for the account in the digital wallet. Numeric value where lower numbers indicate higher risk (e.g., 1 = high risk, 2 = medium risk).\n* `WALLET_DEVICE_SCORE`: Risk score for the device in the digital wallet. Numeric value where lower numbers indicate higher risk (e.g., 1 = high risk, 2 = medium risk).\n* `WALLET_RECOMMENDED_DECISION`: The decision recommended by the digital wallet provider. Valid values include APPROVE, DECLINE, REQUIRE_ADDITIONAL_AUTHENTICATION.\n* `WALLET_RECOMMENDATION_REASONS`: List of reasons provided by the digital wallet provider for the recommended decision. Valid values are:\n  - Common: `ACCOUNT_CARD_TOO_NEW`, `ACCOUNT_RECENTLY_CHANGED`, `ACCOUNT_TOO_NEW`, `ACCOUNT_TOO_NEW_SINCE_LAUNCH`, `DEVICE_RECENTLY_LOST`, `HAS_SUSPENDED_TOKENS`, `HIGH_RISK`, `INACTIVE_ACCOUNT`, `LOW_ACCOUNT_SCORE`, `LOW_DEVICE_SCORE`, `OUTSIDE_HOME_TERRITORY`, `SUSPICIOUS_ACTIVITY`, `TOO_MANY_DIFFERENT_CARDHOLDERS`, `TOO_MANY_RECENT_ATTEMPTS`, `TOO_MANY_RECENT_TOKENS`, `UNABLE_TO_ASSESS`\n  - Visa only: `ACCOUNT_DATA_RECENTLY_CHANGED`, `ACCOUNT_PAN_PAIRING_TOO_NEW`, `LOW_TRANSACTION_VOLUME`, `USER_ACCOUNT_DEVICE_TOO_NEW`, `WALLET_ACCOUNT_TOO_NEW`\n  - Amex only: `DEVICE_USING_VPN_PROXY`, `EXCESSIVE_BILLING_NAME_ATTEMPTS_MODERATE`, `EXCESSIVE_BILLING_NAME_ATTEMPTS_SEVERE`, `EXCESSIVE_CARD_PROVISION_ATTEMPTS_MODERATE`, `EXCESSIVE_CARD_PROVISION_ATTEMPTS_SEVERE`, `EXCESSIVE_WALLET_RESETS`, `EXCESSIVE_ZIP_ATTEMPTS_MODERATE`, `EXCESSIVE_ZIP_ATTEMPTS_SEVERE`, `USER_ID_CARD_PAIRING_TOO_NEW`, `USER_ID_DEVICE_ID_PAIRING_TOO_NEW`, `USER_ID_OS_ID_PAIRING_TOO_NEW`, `USER_ID_TOO_NEW`\n* `TOKEN_REQUESTOR_ID`: Unique identifier for the entity requesting the token.\n* `WALLET_TOKEN_STATUS`: The current status of the wallet token.\n* `CARD_STATE`: The state of the card being tokenized. Valid values are `CLOSED`, `OPEN`, `PAUSED`, `PENDING_ACTIVATION`, `PENDING_FULFILLMENT`."
+                enum:
+                - TIMESTAMP
+                - TOKENIZATION_CHANNEL
+                - TOKENIZATION_SOURCE
+                - TOKEN_REQUESTOR_NAME
+                - WALLET_ACCOUNT_SCORE
+                - WALLET_DEVICE_SCORE
+                - WALLET_RECOMMENDED_DECISION
+                - WALLET_RECOMMENDATION_REASONS
+                - TOKEN_REQUESTOR_ID
+                - WALLET_TOKEN_STATUS
+                - CARD_STATE
+              operation:
+                $ref: '#/components/schemas/conditional-operation'
+              value:
+                $ref: '#/components/schemas/conditional-value'
+            required:
+            - attribute
+            - operation
+            - value
+      required:
+      - action
+      - conditions
+    program-level:
+      title: Auth Rule Program Level Parameter
+      type: boolean
+      description: Whether the Auth Rule applies to all authorizations on the card program.
+    business-account-tokens:
+      title: Auth Rule Business Account Tokens
+      description: Business Account tokens to which the Auth Rule applies.
+      type: array
+      items:
+        type: string
+        format: uuid
+    auth-rule-result:
+      title: Auth Rule Result
+      description: Result of an Auth Rule evaluation
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the evaluation
+        auth_rule_token:
+          type: string
+          format: uuid
+          description: The Auth Rule token
+        event_token:
+          type: string
+          format: uuid
+          description: Token of the event that triggered the evaluation
+        evaluation_time:
+          type: string
+          format: date-time
+          description: Timestamp of the rule evaluation
+        rule_version:
+          type: integer
+          description: Version of the rule that was evaluated
+        transaction_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: The token of the transaction that triggered the rule evaluation
+        mode:
+          $ref: '#/components/schemas/auth-rule-state'
+      oneOf:
+      - title: Authorization Result
+        properties:
+          event_stream:
+            const: AUTHORIZATION
+            description: The event stream during which the rule was evaluated
+          actions:
+            type: array
+            description: Actions returned by the rule evaluation
+            items:
+              allOf:
+              - $ref: '#/components/schemas/result-authorization-action'
+              - $ref: '#/components/schemas/action_explanation'
+        required:
+        - token
+        - auth_rule_token
+        - event_token
+        - transaction_token
+        - evaluation_time
+        - rule_version
+        - mode
+        - actions
+        - event_stream
+      - title: Authentication (3DS) Result
+        properties:
+          event_stream:
+            const: THREE_DS_AUTHENTICATION
+            description: The event stream during which the rule was evaluated
+          actions:
+            type: array
+            description: Actions returned by the rule evaluation
+            items:
+              allOf:
+              - $ref: '#/components/schemas/result-authentication-3ds-action'
+              - $ref: '#/components/schemas/action_explanation'
+        required:
+        - token
+        - auth_rule_token
+        - event_token
+        - transaction_token
+        - evaluation_time
+        - rule_version
+        - mode
+        - actions
+        - event_stream
+      - title: Tokenization Result
+        properties:
+          event_stream:
+            const: TOKENIZATION
+            description: The event stream during which the rule was evaluated
+          actions:
+            type: array
+            description: Actions returned by the rule evaluation
+            items:
+              allOf:
+              - $ref: '#/components/schemas/tokenization-action'
+              - $ref: '#/components/schemas/action_explanation'
+        required:
+        - token
+        - auth_rule_token
+        - event_token
+        - transaction_token
+        - evaluation_time
+        - rule_version
+        - mode
+        - actions
+        - event_stream
+      - title: ACH Result
+        properties:
+          event_stream:
+            type: string
+            enum:
+            - ACH_CREDIT_RECEIPT
+            - ACH_DEBIT_RECEIPT
+            description: The event stream during which the rule was evaluated
+          actions:
+            type: array
+            description: Actions returned by the rule evaluation
+            items:
+              allOf:
+              - $ref: '#/components/schemas/ach-action'
+              - $ref: '#/components/schemas/action_explanation'
+        required:
+        - token
+        - auth_rule_token
+        - event_token
+        - transaction_token
+        - evaluation_time
+        - rule_version
+        - mode
+        - actions
+        - event_stream
+      $defs:
+        action_explanation:
+          type: object
+          properties:
+            explanation:
+              type: string
+              description: Optional explanation for why this action was taken
+    performance-report-v2:
+      title: Auth Rule Performance Report V2
+      type: object
+      properties:
+        auth_rule_token:
+          $ref: '#/components/schemas/auth-rule-token'
+        begin:
+          description: The start date (UTC) of the report.
+          type: string
+          format: date
+        end:
+          description: The end date (UTC) of the report.
+          type: string
+          format: date
+        daily_statistics:
+          description: Daily evaluation statistics for the Auth Rule.
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                description: The date (UTC) for which the statistics are reported.
+                type: string
+                format: date
+              versions:
+                description: Statistics for each version of the rule that was evaluated during the reported day.
+                type: array
+                items:
+                  $ref: '#/components/schemas/report-stats-v2'
+            required:
+            - date
+            - versions
+      required:
+      - auth_rule_token
+      - begin
+      - end
+      - daily_statistics
+    auth-rule-version-id:
+      title: Auth Rule Version
+      type: integer
+      description: The version of the rule, this is incremented whenever the rule's parameters change.
+      readOnly: true
+    backtest-status:
+      title: Backtest Status
+      description: Status of a backtest job
+      type: string
+      enum:
+      - PENDING
+      - RUNNING
+      - SUCCESS
+      - FAILURE
+    account-tokens:
+      title: Auth Rule Account Tokens
+      description: Account tokens to which the Auth Rule applies.
+      type: array
+      items:
+        type: string
+        format: uuid
+    auth-rule-token:
+      title: Auth Rule Token
+      description: Auth Rule Token
+      type: string
+      format: uuid
+    typescript-code-parameters:
+      title: TypeScript Code Parameters
+      description: Parameters for defining a TypeScript code rule
+      type: object
+      properties:
+        features:
+          type: array
+          description: Features available to the TypeScript code at evaluation time
+          items:
+            $ref: '#/components/schemas/rule-feature'
+        code:
+          type: string
+          description: The TypeScript source code of the rule. Must define a `rule()` function that accepts the declared features as positional arguments (in the same order as the `features` array) and returns an array of actions.
+      required:
+      - features
+      - code
+    excluded-business-account-tokens:
+      title: Auth Rule Excluded Business Account Tokens
+      description: Business account tokens to which the Auth Rule does not apply.
+      type: array
+      items:
+        type: string
+        format: uuid
+    create-auth-rule-request:
+      title: Auth Rule Parameters
+      type: object
+      anyOf:
+      - title: Account Level Rule
+        properties:
+          account_tokens:
+            $ref: '#/components/schemas/account-tokens'
+          business_account_tokens:
+            $ref: '#/components/schemas/business-account-tokens'
+          type:
+            $ref: '#/components/schemas/auth-rule-type'
+          parameters:
+            $ref: '#/components/schemas/auth-rule-parameters'
+          name:
+            $ref: '#/components/schemas/auth-rule-name'
+          event_stream:
+            $ref: '#/components/schemas/event-stream'
+        required:
+        - type
+        - parameters
+      - title: Card Level Rule
+        properties:
+          card_tokens:
+            $ref: '#/components/schemas/card-tokens'
+          type:
+            $ref: '#/components/schemas/auth-rule-type'
+          parameters:
+            $ref: '#/components/schemas/auth-rule-parameters'
+          name:
+            $ref: '#/components/schemas/auth-rule-name'
+          event_stream:
+            $ref: '#/components/schemas/event-stream'
+        required:
+        - type
+        - parameters
+        - card_tokens
+      - title: Program Level Rule
+        properties:
+          program_level:
+            $ref: '#/components/schemas/program-level'
+          excluded_card_tokens:
+            $ref: '#/components/schemas/excluded-card-tokens'
+          excluded_account_tokens:
+            $ref: '#/components/schemas/excluded-account-tokens'
+          excluded_business_account_tokens:
+            $ref: '#/components/schemas/excluded-business-account-tokens'
+          type:
+            $ref: '#/components/schemas/auth-rule-type'
+          parameters:
+            $ref: '#/components/schemas/auth-rule-parameters'
+          name:
+            $ref: '#/components/schemas/auth-rule-name'
+          event_stream:
+            $ref: '#/components/schemas/event-stream'
+        required:
+        - type
+        - parameters
+        - program_level
+    velocity-limit-parameters:
+      title: Velocity Limit Parameters
+      type: object
+      properties:
+        scope:
+          $ref: '#/components/schemas/velocity-scope'
+        period:
+          $ref: '#/components/schemas/velocity-limit-period'
+        filters:
+          $ref: '#/components/schemas/velocity-limit-filters'
+        limit_amount:
+          anyOf:
+          - title: Null (no amount limit)
+            type: 'null'
+            description: No velocity limit on amount is applied to the transaction.
+          - title: Limit
+            type: integer
+            format: int64
+            minimum: 0
+            description: The maximum amount of spend velocity allowed in the period in minor units (the smallest unit of a currency, e.g. cents for USD). Transactions exceeding this limit will be declined.
+            example: 10000
+        limit_count:
+          anyOf:
+          - title: Null (no limit)
+            type: 'null'
+            description: No limit on the number of velocity impacting events is applied.
+          - title: Limit
+            type: integer
+            format: int64
+            minimum: 0
+            description: 'The number of spend velocity impacting transactions may not exceed this limit in the period. Transactions exceeding this limit will be declined.
+
+              A spend velocity impacting transaction is a transaction that has been authorized, and optionally settled, or a force post (a transaction that settled without prior authorization).'
+      required:
+      - scope
+      - period
+    detailed_result:
+      example: APPROVED
+      title: Detailed Result
+      type: string
+      enum:
+      - ACCOUNT_DAILY_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_DELINQUENT
+      - ACCOUNT_INACTIVE
+      - ACCOUNT_LIFETIME_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_MONTHLY_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_PAUSED
+      - ACCOUNT_UNDER_REVIEW
+      - ADDRESS_INCORRECT
+      - APPROVED
+      - AUTH_RULE_ALLOWED_COUNTRY
+      - AUTH_RULE_ALLOWED_MCC
+      - AUTH_RULE_BLOCKED_COUNTRY
+      - AUTH_RULE_BLOCKED_MCC
+      - AUTH_RULE
+      - CARD_CLOSED
+      - CARD_CRYPTOGRAM_VALIDATION_FAILURE
+      - CARD_EXPIRED
+      - CARD_EXPIRY_DATE_INCORRECT
+      - CARD_INVALID
+      - CARD_NOT_ACTIVATED
+      - CARD_PAUSED
+      - CARD_PIN_INCORRECT
+      - CARD_RESTRICTED
+      - CARD_SECURITY_CODE_INCORRECT
+      - CARD_SPEND_LIMIT_EXCEEDED
+      - CONTACT_CARD_ISSUER
+      - CUSTOMER_ASA_TIMEOUT
+      - CUSTOM_ASA_RESULT
+      - DECLINED
+      - DO_NOT_HONOR
+      - DRIVER_NUMBER_INVALID
+      - FORMAT_ERROR
+      - INSUFFICIENT_FUNDING_SOURCE_BALANCE
+      - INSUFFICIENT_FUNDS
+      - LITHIC_SYSTEM_ERROR
+      - LITHIC_SYSTEM_RATE_LIMIT
+      - MALFORMED_ASA_RESPONSE
+      - MERCHANT_INVALID
+      - MERCHANT_LOCKED_CARD_ATTEMPTED_ELSEWHERE
+      - MERCHANT_NOT_PERMITTED
+      - OVER_REVERSAL_ATTEMPTED
+      - PIN_BLOCKED
+      - PROGRAM_CARD_SPEND_LIMIT_EXCEEDED
+      - PROGRAM_SUSPENDED
+      - PROGRAM_USAGE_RESTRICTION
+      - REVERSAL_UNMATCHED
+      - SECURITY_VIOLATION
+      - SINGLE_USE_CARD_REATTEMPTED
+      - SUSPECTED_FRAUD
+      - TRANSACTION_INVALID
+      - TRANSACTION_NOT_PERMITTED_TO_ACQUIRER_OR_TERMINAL
+      - TRANSACTION_NOT_PERMITTED_TO_ISSUER_OR_CARDHOLDER
+      - TRANSACTION_PREVIOUSLY_COMPLETED
+      - UNAUTHORIZED_MERCHANT
+      - VEHICLE_NUMBER_INVALID
+      - CARDHOLDER_CHALLENGED
+      - CARDHOLDER_CHALLENGE_FAILED
+    action_explanation:
+      type: object
+      properties:
+        explanation:
+          type: string
+          description: Optional explanation for why this action was taken
+    spend-velocity-filters:
+      title: Spend Velocity Filters
+      allOf:
+      - $ref: '#/components/schemas/velocity-limit-filters'
+      - type: object
+        properties:
+          include_tags:
+            type:
+            - 'null'
+            - object
+            additionalProperties:
+              type: string
+            description: Tag key-value pairs to include in the velocity calculation. Only transactions matching all specified tag key-value pairs will be included in the calculated velocity.
+          exclude_tags:
+            type:
+            - 'null'
+            - object
+            additionalProperties:
+              type: string
+            description: Tag key-value pairs to exclude from the velocity calculation. Transactions matching all specified tag key-value pairs will be excluded from the calculated velocity.
+  responses:
+    responses-BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthRule:
+      description: Auth Rule
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/auth-rule'
+    responses-NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    AuthRuleBacktestToken:
+      name: auth_rule_backtest_token
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    StartingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+        format: uuid
+    EndingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+        format: uuid
+    PageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    AuthRuleToken:
+      name: auth_rule_token
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

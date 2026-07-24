@@ -1,0 +1,202 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Transfer Limits API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Transfer Limits
+paths:
+  /v1/transfer_limits:
+    get:
+      description: Get transfer limits for a specified date
+      operationId: getTransferLimits
+      parameters:
+      - description: Date for which to retrieve transfer limits (ISO 8601 format)
+        example: '2025-11-10'
+        in: query
+        name: date
+        required: false
+        schema:
+          format: date
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transfer_limits_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get transfer limits
+      tags:
+      - Transfer Limits
+components:
+  schemas:
+    directional_limits:
+      title: Directional Limits
+      type: object
+      properties:
+        credit:
+          description: Credit limits
+          $ref: '#/components/schemas/limit_with_progress'
+        debit:
+          description: Debit limits
+          $ref: '#/components/schemas/limit_with_progress'
+      required:
+      - credit
+      - debit
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    transfer_limit_item:
+      title: Transfer Limit Item
+      type: object
+      properties:
+        company_id:
+          description: Company ID
+          type: string
+        is_fbo:
+          description: Whether the company is a FBO; based on the company ID prefix
+          type: boolean
+        date:
+          description: The date for the limit view (ISO format)
+          type: string
+          format: date
+        program_limit_per_transaction:
+          description: Program transaction limits
+          $ref: '#/components/schemas/directional_limits'
+        daily_limit:
+          description: Daily limits with progress
+          $ref: '#/components/schemas/directional_limits'
+        monthly_limit:
+          description: Monthly limits with progress
+          $ref: '#/components/schemas/directional_limits'
+      required:
+      - company_id
+      - is_fbo
+      - date
+      - program_limit_per_transaction
+      - daily_limit
+      - monthly_limit
+    transfer_limits_response:
+      title: Transfer Limits Response
+      type: object
+      properties:
+        data:
+          description: List of transfer limits
+          type: array
+          items:
+            $ref: '#/components/schemas/transfer_limit_item'
+        has_more:
+          description: Whether there are more transfer limits
+          type: boolean
+      required:
+      - data
+      - has_more
+    limit_with_progress:
+      title: Limit With Progress
+      type: object
+      properties:
+        limit:
+          description: The limit amount
+          type: integer
+          minimum: 0
+        amount_originated:
+          description: Amount originated towards limit
+          type: integer
+          minimum: 0
+      required:
+      - limit
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

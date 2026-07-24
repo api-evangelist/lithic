@@ -1,0 +1,2769 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Account Holder API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Account Holder
+paths:
+  /v1/account_holders:
+    get:
+      description: Get a list of individual or business account holders and their KYC or KYB evaluation status.
+      operationId: getAccountHolders
+      parameters:
+      - description: If applicable, represents the external_id associated with the account_holder.
+        example: 00000000-0000-0000-0000-000000000001
+        in: query
+        name: external_id
+        schema:
+          format: uuid
+          type: string
+      - description: The number of account_holders to limit the response to.
+        example: 10
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: (Individual Account Holders only) The first name of the account holder. The query is case insensitive and supports partial matches.
+        example: John
+        in: query
+        name: first_name
+        schema:
+          type: string
+      - description: (Individual Account Holders only) The last name of the account holder. The query is case insensitive and supports partial matches.
+        example: Appleseed
+        in: query
+        name: last_name
+        schema:
+          type: string
+      - description: (Business Account Holders only) The legal business name of the account holder. The query is case insensitive and supports partial matches.
+        example: Busy Business, Inc.
+        in: query
+        name: legal_business_name
+        schema:
+          type: string
+      - description: Phone number of the account holder. The query must be an exact match.
+        example: '+15555555555'
+        in: query
+        name: phone_number
+        schema:
+          type: string
+      - description: Email address of the account holder. The query must be an exact match, case insensitive.
+        example: example@domain.com
+        in: query
+        name: email
+        schema:
+          type: string
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/startingAfter'
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                getAccountHoldersResponse:
+                  value:
+                    data:
+                    - account_token: 6b67b340-ed11-4463-a33d-0d7f7fdcd28c
+                      business_account_token: 00000000-0000-0000-0000-000000000000
+                      created: '2024-01-11T19:50:36.105448'
+                      email: john@appleseed.com
+                      exemption_type: AUTHORIZED_USER
+                      external_id: '+15555555555'
+                      individual:
+                        address:
+                          address1: 123 Main Street
+                          city: New York
+                          country: USA
+                          postal_code: '10128'
+                          state: NY
+                        dob: '2000-01-01'
+                        email: john@appleseed.com
+                        first_name: John
+                        last_name: Appleseed
+                        phone_number: '+15555555555'
+                        entity_token: 49c978db-20c4-46d8-9db4-b0ef28c03533
+                      phone_number: '+15555555555'
+                      status: ACCEPTED
+                      token: b68b7424-aa69-4cbc-a946-30d90181b621
+                      user_type: INDIVIDUAL
+                      verification_application:
+                        created: '2024-01-11T19:58:24.821848'
+                        status: ACCEPTED
+                        status_reasons: []
+                        updated: '2024-01-11T19:58:24.821848'
+                    - account_token: 732f7328-a2d7-4281-a264-e8cb5af8d392
+                      business_account_token: 00000000-0000-0000-0000-000000000000
+                      business_entity:
+                        address:
+                          address1: 22 Street North
+                          city: New York
+                          country: USA
+                          postal_code: '10004'
+                          state: NY
+                        dba_business_name: Busy Business, Inc.
+                        government_id: 98-7654321
+                        legal_business_name: Busy Business, Inc.
+                        parent_company: Example company
+                        phone_numbers:
+                        - '+15555555555'
+                        entity_token: f360a3c0-24e6-4852-ae82-27916a5c4e86
+                      control_person:
+                        address:
+                          address1: 451 New Forest Way
+                          city: Springfield
+                          country: USA
+                          postal_code: '68022'
+                          state: IL
+                        dob: '1991-03-08T08:00:00Z'
+                        email: john@busybusiness.com
+                        first_name: John
+                        last_name: Appleseed
+                        phone_number: '+15555555555'
+                        entity_token: 9d657ba0-7c8a-4946-a596-f99d978a4137
+                      created: '2024-01-11T19:50:36.105449'
+                      exemption_type: AUTHORIZED_USER
+                      external_id: 851030f1-9b7b-4939-8ac9-161bd972d26f
+                      naics_code: '541512'
+                      token: fa68ed76-9d02-4d45-8a3f-782f3b6a8b3f
+                      user_type: BUSINESS
+                      verification_application:
+                        created: '2024-01-11T19:50:36.105449'
+                        status: PENDING_REVIEW
+                        status_reasons: []
+                        updated: '2024-01-11T19:50:36.105449'
+                    has_more: false
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AccountHolder'
+                    type: array
+                  has_more:
+                    description: Whether there are more accounts to be retrieved.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get a list of individual or business account holders
+      tags:
+      - Account Holder
+    post:
+      description: 'Create an account holder and initiate the appropriate onboarding workflow.  Account holders and accounts have a 1:1 relationship. When an account holder is successfully created an associated account is also created.
+
+        All calls to this endpoint will return a synchronous response. The response time will depend on the workflow. In some cases, the response may indicate the workflow is under review or further action will be needed to complete the account creation process.
+
+        This endpoint can only be used on accounts that are part of the program that the calling API key manages.'
+      operationId: postAccountHolders
+      requestBody:
+        content:
+          application/json:
+            examples:
+              kybRequest:
+                summary: Create an account holder with KYB workflow
+                value:
+                  beneficial_owner_individuals:
+                  - address:
+                      address1: 300 Normal Forest Way
+                      city: Portland
+                      country: USA
+                      postal_code: '90210'
+                      state: OR
+                    dob: '1991-03-08T08:00:00Z'
+                    email: tim@left-earth.com
+                    first_name: Timmy
+                    government_id: 211-23-1412
+                    last_name: Turner
+                    phone_number: '+15555555555'
+                  business_entity:
+                    address:
+                      address1: 123 Old Forest Way
+                      city: Omaha
+                      country: USA
+                      postal_code: '61022'
+                      state: NE
+                    dba_business_name: Example Business Solutions
+                    government_id: 12-3456789
+                    legal_business_name: Busy Business, Inc.
+                    phone_numbers:
+                    - '+15555555555'
+                  control_person:
+                    address:
+                      address1: 451 New Forest Way
+                      city: Springfield
+                      country: USA
+                      postal_code: '68022'
+                      state: IL
+                    birthdate: '1980-04-12'
+                    dob: '1991-03-08T08:00:00Z'
+                    email: tom@middle-pluto.com
+                    first_name: Tom
+                    government_id: 111-23-1412
+                    last_name: Timothy
+                    phone_number: '+15555555555'
+                  kyb_passed_timestamp: '2022-03-08T08:00:00Z'
+                  naics_code: '541512'
+                  nature_of_business: Software company selling solutions to the restaurant industry
+                  tos_timestamp: '2022-03-08T08:00:00Z'
+                  website_url: https://www.mybusiness.com
+                  workflow: KYB_BYO
+              kybDelegatedRequest:
+                summary: Create an account holder with KYB_DELEGATED workflow
+                value:
+                  business_entity:
+                    address:
+                      address1: 123 Old Forest Way
+                      city: Omaha
+                      country: USA
+                      postal_code: '61022'
+                      state: NE
+                    legal_business_name: Busy Business, Inc.
+              kycExemptRequest:
+                summary: Create an account holder with KYC Exempt workflow
+                value:
+                  address:
+                    address1: 123 Old Forest Way
+                    city: Omaha
+                    country: USA
+                    postal_code: '68022'
+                    state: NE
+                  business_account_token: e87db14a-4abf-4901-adad-5d5c9f46aff2
+                  email: tom@middle-earth.com
+                  first_name: Tom
+                  kyc_exemption_type: AUTHORIZED_USER
+                  last_name: Bombadil
+                  phone_number: '+15555555555'
+                  workflow: KYC_EXEMPT
+              kycRequest:
+                summary: Create an account holder with KYC workflow
+                value:
+                  individual:
+                    address:
+                      address1: 123 Old Forest Way
+                      city: Omaha
+                      country: USA
+                      postal_code: '68022'
+                      state: NE
+                    dob: '1991-03-08 08:00:00'
+                    email: tom@middle-earth.com
+                    first_name: Tom
+                    government_id: 111-23-1412
+                    last_name: Bombadil
+                    phone_number: '+15555555555'
+                  tos_timestamp: '2022-03-08T08:00:00Z'
+                  workflow: KYC_BASIC
+            schema:
+              oneOf:
+              - $ref: '#/components/schemas/Kyb'
+              - $ref: '#/components/schemas/KybDelegated'
+              - $ref: '#/components/schemas/Kyc'
+              - $ref: '#/components/schemas/KycExempt'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                acceptedEvaluationResponse:
+                  summary: Accepted KYC/KYB evaluation response
+                  value:
+                    account_token: b68b7424-aa69-4cbc-a946-30d90181b621
+                    status: ACCEPTED
+                    status_reasons: []
+                    token: 12345678-aa69-4cbc-a946-30d90181b621
+                    created: '2024-09-16T20:13:41.865274'
+                pendingResubmitResponse:
+                  summary: Pending resubmit KYC evaluation response
+                  value:
+                    account_token: b68b7424-aa69-4cbc-a946-30d90181b621
+                    status: PENDING_RESUBMIT
+                    status_reasons:
+                    - NAME_VERIFICATION_FAILURE
+                    token: 12345678-aa69-4cbc-a946-30d90181b621
+                    created: '2024-09-16T20:13:41.865274'
+                pendingKYBReviewResponse:
+                  summary: Pending review response for a KYB_BASIC request
+                  value:
+                    account_token: 6016af53-87d4-42aa-b021-0170644d6458
+                    status: PENDING_REVIEW
+                    status_reasons:
+                    - PRIMARY_BUSINESS_ENTITY_ADDRESS_VERIFICATION_FAILURE
+                    token: 12345678-aa69-4cbc-a946-30d90181b621
+                    created: '2024-09-16T20:13:41.865274'
+                    required_documents:
+                    - entity_token: 48afea0a-38b0-44e4-aaa7-c2b5413da9d3
+                      valid_documents:
+                      - EIN_LETTER
+                      - TAX_RETURN
+                      - CERTIFICATE_OF_GOOD_STANDING
+                      - ARTICLES_OF_INCORPORATION
+                      - ARTICLES_OF_ORGANIZATION
+                      - CERTIFICATE_OF_FORMATION
+                      - BYLAWS
+                      - GOVERNMENT_BUSINESS_LICENSE
+                      - PARTNERSHIP_AGREEMENT
+                      - BANK_STATEMENT
+                      - UTILITY_BILL_STATEMENT
+                      status_reasons:
+                      - PRIMARY_BUSINESS_ENTITY_ADDRESS_VERIFICATION_FAILURE
+              schema:
+                properties:
+                  account_token:
+                    description: Globally unique identifier for the account.
+                    format: uuid
+                    type: string
+                  created:
+                    description: Timestamp of when the account holder was created.
+                    format: date-time
+                    type: string
+                  external_id:
+                    description: Customer-provided token that indicates a relationship with an object outside of the Lithic ecosystem.
+                    type: string
+                  status:
+                    description: 'KYC and KYB evaluation states.
+
+
+                      Note:
+
+                      * `PENDING_REVIEW` is only applicable for the `KYB_BASIC` workflow.
+
+                      '
+                    enum:
+                    - ACCEPTED
+                    - PENDING_REVIEW
+                    - PENDING_DOCUMENT
+                    - PENDING_RESUBMIT
+                    - REJECTED
+                    type: string
+                  status_reasons:
+                    description: Reason for the evaluation status.
+                    items:
+                      $ref: '#/components/schemas/status-reasons'
+                    type: array
+                  required_documents:
+                    description: Only present for "KYB_BASIC" workflow. A list of documents required for the account holder to be approved.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/required-document'
+                  token:
+                    description: Globally unique identifier for the account holder.
+                    format: uuid
+                    type: string
+                required:
+                - account_token
+                - status
+                - status_reasons
+                - token
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create an individual or business account holder
+      tags:
+      - Account Holder
+  /v1/account_holders/{account_holder_token}:
+    get:
+      description: Get an Individual or Business Account Holder and/or their KYC or KYB evaluation status.
+      operationId: getAccountHolder
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                kycAcceptedReview:
+                  summary: Accepted KYC evaluation response
+                  value:
+                    token: b68b7424-aa69-4cbc-a946-30d90181b621
+                    account_token: 6b67b340-ed11-4463-a33d-0d7f7fdcd28c
+                    business_account_token: 5310469f-3a16-44ce-89f8-cdc4446fcfdf
+                    external_id: ''
+                    created: '2024-01-11T19:50:36.105449'
+                    user_type: INDIVIDUAL
+                    verification_application:
+                      created: '2024-01-11T19:50:36.105449'
+                      updated: '2024-01-11T19:50:36.105449'
+                      status: ACCEPTED
+                      status_reasons: []
+                    individual:
+                      address:
+                        address1: 451 New Forest Way
+                        city: Springfield
+                        state: IL
+                        postal_code: '68022'
+                        country: USA
+                      dob: '1991-03-08T08:00:00Z'
+                      email: john@appleseed.com
+                      first_name: John
+                      last_name: Appleseed
+                      phone_number: '+15555555555'
+                      entity_token: fd771a07-c5c2-42f3-a53c-a6c79c6c0d07
+                    email: john@appleseed.com
+                    phone_number: '+15555555555'
+                    status: ACCEPTED
+                kybBasicPendingReview:
+                  summary: Pending review submission for a KYB_BASIC account_holder
+                  value:
+                    token: fa68ed76-9d02-4d45-8a3f-782f3b6a8b3f
+                    account_token: 732f7328-a2d7-4281-a264-e8cb5af8d392
+                    business_account_token: 00000000-0000-0000-0000-000000000000
+                    external_id: ''
+                    created: '2024-01-11T19:50:36.105449'
+                    user_type: BUSINESS
+                    verification_application:
+                      created: '2024-01-11T19:50:36.105449'
+                      updated: '2024-01-11T19:50:36.105449'
+                      status: PENDING_REVIEW
+                      status_reasons:
+                      - ADDRESS_VERIFICATION_FAILURE
+                    required_documents:
+                    - entity_token: 83cf25ae-c14f-4d10-9fa2-0119f36c7286
+                      status_reasons:
+                      - PRIMARY_BUSINESS_ENTITY_ADDRESS_VERIFICATION_FAILURE
+                      valid_documents:
+                      - EIN_LETTER
+                      - TAX_RETURN
+                      - CERTIFICATE_OF_GOOD_STANDING
+                      - ARTICLES_OF_INCORPORATION
+                      - ARTICLES_OF_ORGANIZATION
+                      - CERTIFICATE_OF_FORMATION
+                      - BYLAWS
+                      - GOVERNMENT_BUSINESS_LICENSE
+                      - PARTNERSHIP_AGREEMENT
+                      - BANK_STATEMENT
+                      - UTILITY_BILL_STATEMENT
+                    business_entity:
+                      address:
+                        address1: 22 Street North
+                        city: New York
+                        state: NY
+                        postal_code: '10004'
+                        country: USA
+                      dba_business_name: Busy Business, Inc.
+                      government_id: 98-7654321
+                      legal_business_name: Busy Business, Inc.
+                      parent_company: Example company
+                      phone_numbers:
+                      - '+15555555555'
+                      entity_token: 05cc03c9-dea6-4d17-a11e-0f3ea57d51a5
+                    control_person:
+                      address:
+                        address1: 451 New Forest Way
+                        city: Springfield
+                        state: IL
+                        postal_code: '68022'
+                        country: USA
+                      dob: '1991-03-08T08:00:00Z'
+                      email: john@appleseed.com
+                      first_name: John
+                      last_name: Appleseed
+                      phone_number: '+15555555555'
+                      entity_token: fd771a07-c5c2-42f3-a53c-a6c79c6c0d07
+              schema:
+                $ref: '#/components/schemas/AccountHolder'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get an individual or business account holder
+      tags:
+      - Account Holder
+    patch:
+      description: 'Update the information associated with a particular account holder (including business owners and control persons associated to a business account).
+
+        If Lithic is performing KYB or KYC and additional verification is required we will run the individual''s or business''s updated information again and return whether the status is accepted or pending (i.e., further action required).
+
+        All calls to this endpoint will return a synchronous response. The response time will depend on the workflow. In some cases, the response may indicate the workflow is under review or further action will be needed to complete the account creation process.
+
+        This endpoint can only be used on existing accounts that are part of the program that the calling API key manages.'
+      operationId: patchAccountHolder
+      parameters:
+      - $ref: '#/components/parameters/accountHolderToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              kybRequest:
+                summary: Update a business account holder with KYB workflow
+                value:
+                  business_entity:
+                    entity_token: 83cf25ae-c14f-4d10-9fa2-0119f36c7286
+                    address:
+                      postal_code: '61023'
+                  control_person:
+                    entity_token: fd771a07-c5c2-42f3-a53c-a6c79c6c0d07
+                    address:
+                      postal_code: '68023'
+                  naics_code: '541512'
+                  website_url: https://www.mynewbusiness.com
+              kycExemptRequest:
+                summary: Update an individual account holder with KYC workflow
+                value:
+                  individual:
+                    entity_token: fd771a07-c5c2-42f3-a53c-a6c79c6c0d07
+                    address:
+                      postal_code: '68023'
+                    phone_number: '+15555555555'
+              kycRequest:
+                summary: Update an individual account holder with KYC workflow
+                value:
+                  individual:
+                    entity_token: fd771a07-c5c2-42f3-a53c-a6c79c6c0d07
+                    address:
+                      postal_code: '68023'
+                    government_id: 111-23-1413
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/kyb-patch-request'
+              - $ref: '#/components/schemas/kyc-patch-request'
+              - $ref: '#/components/schemas/patch-request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/kyb-kyc-patch-response'
+                - $ref: '#/components/schemas/patch-response'
+          description: OK
+        '404':
+          $ref: '#/components/responses/NotFound'
+      summary: Update account holder information and possibly resubmit for evaluation
+      tags:
+      - Account Holder
+  /v1/account_holders/{account_holder_token}/documents:
+    get:
+      description: 'Retrieve the status of account holder document uploads, or retrieve the upload URLs to process your image uploads.
+
+
+        Note that this is not equivalent to checking the status of the KYC evaluation overall (a document may be successfully uploaded but not be sufficient for KYC to pass).
+
+
+        In the event your upload URLs have expired, calling this endpoint will refresh them.
+
+        Similarly, in the event a previous account holder document upload has failed, you can use this endpoint to get a new upload URL for the failed image upload.
+
+
+        When a new document upload is generated for a failed attempt, the response will show an additional entry in the `required_document_uploads` list
+
+        in a `PENDING` state for the corresponding `image_type`.
+
+        '
+      operationId: getAccountHolderDocuments
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/document'
+                    type: array
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get account holder document uploads
+      tags:
+      - Account Holder
+    post:
+      description: 'Use this endpoint to identify which type of supported government-issued documentation you will upload for further verification.
+
+        It will return two URLs to upload your document images to - one for the front image and one for the back image.
+
+
+        This endpoint is only valid for evaluations in a `PENDING_DOCUMENT` state.
+
+
+        Supported file types include `jpg`, `png`, and `pdf`. Each file must be less than 15 MiB. Once both required uploads have been successfully completed, your document will be run through KYC verification.
+
+
+        If you have registered a webhook, you will receive evaluation updates for any document submission evaluations, as well as for any failed document uploads.
+
+
+        Two document submission attempts are permitted via this endpoint before a `REJECTED` status is returned and the account creation process is ended. Currently only one type of
+
+        account holder document is supported per KYC verification.
+
+        '
+      operationId: postAccountHolderDocuments
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              recieveLinkForDriversLicense:
+                summary: Initiate account holder document upload
+                value:
+                  entity_token: 83cf25ae-c14f-4d10-9fa2-0119f36c7286
+                  document_type: EIN_LETTER
+            schema:
+              properties:
+                document_type:
+                  description: The type of document to upload
+                  enum:
+                  - EIN_LETTER
+                  - TAX_RETURN
+                  - OPERATING_AGREEMENT
+                  - CERTIFICATE_OF_FORMATION
+                  - DRIVERS_LICENSE
+                  - PASSPORT
+                  - PASSPORT_CARD
+                  - CERTIFICATE_OF_GOOD_STANDING
+                  - ARTICLES_OF_INCORPORATION
+                  - ARTICLES_OF_ORGANIZATION
+                  - BYLAWS
+                  - GOVERNMENT_BUSINESS_LICENSE
+                  - PARTNERSHIP_AGREEMENT
+                  - SS4_FORM
+                  - BANK_STATEMENT
+                  - UTILITY_BILL_STATEMENT
+                  - SSN_CARD
+                  - ITIN_LETTER
+                  - FINCEN_BOI_REPORT
+                  type: string
+                entity_token:
+                  description: Globally unique identifier for the entity.
+                  type: string
+                  format: uuid
+              required:
+              - document_type
+              - entity_token
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Initiate account holder document upload
+      tags:
+      - Account Holder
+  /v1/account_holders/{account_holder_token}/documents/{document_token}:
+    get:
+      description: 'Check the status of an account holder document upload, or retrieve the upload URLs to process your image uploads.
+
+
+        Note that this is not equivalent to checking the status of the KYC evaluation overall (a document may be successfully uploaded but not be sufficient for KYC to pass).
+
+
+        In the event your upload URLs have expired, calling this endpoint will refresh them.
+
+        Similarly, in the event a document upload has failed, you can use this endpoint to get a new upload URL for the failed image upload.
+
+
+        When a new account holder document upload is generated for a failed attempt, the response will show an additional entry in the `required_document_uploads` array
+
+        in a `PENDING` state for the corresponding `image_type`.
+
+        '
+      operationId: getAccountHolderDocumentByToken
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      - $ref: '#/components/parameters/documentToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get account holder document upload status
+      tags:
+      - Account Holder
+  /v1/account_holders/{account_holder_token}/entities:
+    post:
+      description: 'Create a new beneficial owner individual or replace the control person entity on an existing KYB account holder. This endpoint is only applicable for account holders enrolled through a KYB workflow with the Persona KYB provider.
+
+        A new control person can only replace the existing one. A maximum of 4 beneficial owners can be associated with an account holder.'
+      operationId: postAccountHolderEntities
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              createBeneficialOwner:
+                summary: Create a new beneficial owner individual
+                value:
+                  type: BENEFICIAL_OWNER_INDIVIDUAL
+                  first_name: Timmy
+                  last_name: Turner
+                  dob: '1991-03-08T08:00:00Z'
+                  email: tim@left-earth.com
+                  phone_number: '+15555555555'
+                  government_id: 211-23-1412
+                  address:
+                    address1: 300 Normal Forest Way
+                    city: Portland
+                    country: USA
+                    postal_code: '90210'
+                    state: OR
+              replaceControlPerson:
+                summary: Replace the existing control person entity
+                value:
+                  type: CONTROL_PERSON
+                  first_name: Tom
+                  last_name: Timothy
+                  dob: '1991-03-08T08:00:00Z'
+                  email: tom@middle-pluto.com
+                  phone_number: '+15555555555'
+                  government_id: 111-23-1412
+                  address:
+                    address1: 451 New Forest Way
+                    city: Springfield
+                    country: USA
+                    postal_code: '68022'
+                    state: IL
+            schema:
+              $ref: '#/components/schemas/create-entity-request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                acceptedResponse:
+                  summary: Accepted entity creation response
+                  value:
+                    account_holder_token: fa68ed76-9d02-4d45-8a3f-782f3b6a8b3f
+                    status: ACCEPTED
+                    status_reasons: []
+                    token: 49c978db-20c4-46d8-9db4-b0ef28c03533
+                    created: '2024-09-16T20:13:41.865274'
+                    required_documents: []
+                pendingReviewResponse:
+                  summary: Pending review entity creation response
+                  value:
+                    account_holder_token: fa68ed76-9d02-4d45-8a3f-782f3b6a8b3f
+                    status: PENDING_REVIEW
+                    status_reasons:
+                    - NAME_VERIFICATION_FAILURE
+                    token: 49c978db-20c4-46d8-9db4-b0ef28c03533
+                    created: '2024-09-16T20:13:41.865274'
+                    required_documents: []
+              schema:
+                $ref: '#/components/schemas/create-entity-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create a new beneficial owner individual or replace the existing control person entity
+      tags:
+      - Account Holder
+  /v1/account_holders/{account_holder_token}/entities/{entity_token}:
+    delete:
+      description: Deactivate a beneficial owner individual on an existing KYB account holder. Only beneficial owner individuals can be deactivated.
+      operationId: deleteAccountHolderEntity
+      parameters:
+      - $ref: '#/components/parameters/accountHolderTokenPath'
+      - $ref: '#/components/parameters/entityTokenPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                deactivatedEntityResponse:
+                  summary: Deactivated beneficial owner individual
+                  value:
+                    account_holder_token: fa68ed76-9d02-4d45-8a3f-782f3b6a8b3f
+                    token: 49c978db-20c4-46d8-9db4-b0ef28c03533
+                    type: BENEFICIAL_OWNER_INDIVIDUAL
+                    status: INACTIVE
+                    first_name: Timmy
+                    last_name: Turner
+                    email: tim@left-earth.com
+                    phone_number: '+15555555555'
+                    dob: '1991-03-08T08:00:00Z'
+                    address:
+                      address1: 300 Normal Forest Way
+                      city: Portland
+                      country: USA
+                      postal_code: '90210'
+                      state: OR
+              schema:
+                $ref: '#/components/schemas/entity-response'
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Deactivate a beneficial owner individual
+      tags:
+      - Account Holder
+  /v1/simulate/account_holders/enrollment_review:
+    post:
+      summary: Simulate an account holder's enrollment review
+      description: ' Simulates an enrollment review for an account holder. This endpoint is only applicable for workflows that may required intervention such as `KYB_BASIC`. '
+      operationId: simulateAccountHolderEnrollmentReview
+      requestBody:
+        content:
+          application/json:
+            examples:
+              simulateAcceptedReviewRequest:
+                summary: Simulate an accepted enrollment review request
+                value:
+                  account_holder_token: 1415964d-4400-4d79-9fb3-eee0faaee4e4
+                  status: ACCEPTED
+                  status_reasons: []
+              simulateRejectedReviewRequest:
+                summary: Simulate a rejected enrollment review request
+                value:
+                  account_holder_token: b8d0cdd2-182c-4623-b104-9f50808b8373
+                  status: REJECTED
+                  status_reasons:
+                  - PRIMARY_BUSINESS_ENTITY_ID_VERIFICATION_FAILURE
+              simulatePendingReviewRequest:
+                summary: Simulate a pending review enrollment review request
+                value:
+                  account_holder_token: b8d0cdd2-182c-4623-b104-9f50808b8373
+                  status: PENDING_REVIEW
+                  status_reasons:
+                  - CONTROL_PERSON_NAME_VERIFICATION_FAILURE
+            schema:
+              $ref: '#/components/schemas/simulate-enrollment-review-request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/account-holder-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      tags:
+      - Account Holder
+  /v1/simulate/account_holders/enrollment_document_review:
+    post:
+      summary: Simulate an account holder document upload's review
+      description: Simulates a review for an account holder document upload.
+      operationId: simulateAccountHolderEnrollmentDocumentReview
+      requestBody:
+        content:
+          application/json:
+            examples:
+              simulateUploadedReviewRequest:
+                summary: Simulate an uploaded enrollment document upload review request
+                value:
+                  document_upload_token: b11cd67b-0a52-4180-8365-314f3def5426
+                  status: UPLOADED
+              simulateAcceptedReviewRequest:
+                summary: Simulate an accepted enrollment document upload review request
+                value:
+                  document_upload_token: 70bde493-66a7-454b-8e79-51a0d976a7d2
+                  status: ACCEPTED
+              simulateRejectedReviewRequest:
+                summary: Simulate a rejected enrollment document upload review request
+                value:
+                  document_upload_token: 30a8fff6-941f-4143-9b7b-e7ac4cbeb91f
+                  status: REJECTED
+                  status_reason: DOCUMENT_MISSING_REQUIRED_DATA
+              simulatePartialApprovalReviewRequest:
+                summary: Simulates a partial approval enrollment document upload review request
+                value:
+                  document_upload_token: 30a8fff6-941f-4143-9b7b-e7ac4cbeb91f
+                  status: PARTIAL_APPROVAL
+                  status_reason: DOCUMENT_MISSING_REQUIRED_DATA
+                  accepted_entity_status_reasons:
+                  - PRIMARY_BUSINESS_ENTITY_ID_VERIFICATION_FAILURE
+            schema:
+              $ref: '#/components/schemas/simulate-enrollment-document-review-request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      tags:
+      - Account Holder
+components:
+  parameters:
+    accountHolderToken:
+      description: Globally unique identifier for the account holder.
+      examples:
+        accountHolderTokenExample:
+          summary: A sample account holder token
+          value: 65db64b2-ae89-491a-97d9-f64788f8b2ab
+      in: path
+      name: account_holder_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    accountHolderTokenPath:
+      description: Globally unique identifier for the account holder.
+      examples:
+        accountHolderTokenExample:
+          summary: A sample account holder token
+          value: 65db64b2-ae89-491a-97d9-f64788f8b2ab
+      in: path
+      name: account_holder_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    documentToken:
+      description: Globally unique identifier for the document.
+      examples:
+        documentTokenExample:
+          summary: A sample document token
+          value: 76ca80c3-bf90-491a-97d9-f64788f8b2ab
+      in: path
+      name: document_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    entityTokenPath:
+      description: Globally unique identifier for the entity.
+      examples:
+        entityTokenExample:
+          summary: A sample entity token
+          value: 4e541f1a-bf90-491a-97d9-f64788f8b2ab
+      in: path
+      name: entity_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+  schemas:
+    document-upload-status-reasons:
+      title: Account holder document upload status reasons
+      description: The status reasons for an account holder document upload that is not ACCEPTED
+      type: string
+      enum:
+      - DOCUMENT_MISSING_REQUIRED_DATA
+      - DOCUMENT_UPLOAD_TOO_BLURRY
+      - FILE_SIZE_TOO_LARGE
+      - INVALID_DOCUMENT_TYPE
+      - INVALID_DOCUMENT_UPLOAD
+      - INVALID_ENTITY
+      - DOCUMENT_EXPIRED
+      - DOCUMENT_ISSUED_GREATER_THAN_30_DAYS
+      - DOCUMENT_TYPE_NOT_SUPPORTED
+      - UNKNOWN_FAILURE_REASON
+      - UNKNOWN_ERROR
+    KybDelegated:
+      properties:
+        beneficial_owner_individuals:
+          description: 'You can submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information.
+
+            See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.'
+          items:
+            $ref: '#/components/schemas/KybDelegatedIndividual'
+          minItems: 0
+          type: array
+        business_entity:
+          $ref: '#/components/schemas/KybDelegatedBusinessEntity'
+          description: Information for business for which the account is being opened.
+        control_person:
+          $ref: '#/components/schemas/KybDelegatedIndividual'
+          description: 'An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer,
+
+            Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access
+
+            to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above.
+
+            See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section II) for more background.
+
+            '
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+        naics_code:
+          description: 6-digit North American Industry Classification System (NAICS) code for the business.
+          example: '541512'
+          type: string
+        nature_of_business:
+          description: Short description of the company's line of business (i.e., what does the company do?). Values longer than 255 characters will be truncated before KYB verification
+          example: Software company selling solutions to the restaurant industry
+          type: string
+        tos_timestamp:
+          description: An RFC 3339 timestamp indicating when the account holder accepted the applicable legal agreements (e.g., cardholder terms) as agreed upon during API customer's implementation with Lithic.
+          example: '2022-03-08 08:00:00'
+          type: string
+        website_url:
+          description: Company website URL.
+          example: www.mybusiness.com
+          type: string
+        workflow:
+          description: Specifies the type of KYB workflow to run.
+          enum:
+          - KYB_DELEGATED
+          type: string
+      required:
+      - business_entity
+      type: object
+    KycIndividual:
+      allOf:
+      - $ref: '#/components/schemas/Individual'
+      - required:
+        - address
+        - dob
+        - email
+        - first_name
+        - government_id
+        - last_name
+        - phone_number
+        type: object
+      description: Individuals associated with a KYC application.
+      x-stainless-naming:
+        java:
+          type_name: Individual
+    AccountHolder:
+      properties:
+        account_token:
+          description: Globally unique identifier for the account.
+          format: uuid
+          type: string
+        beneficial_owner_individuals:
+          description: 'Only present when user_type == "BUSINESS".
+
+            You must submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information.
+
+            See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.'
+          items:
+            $ref: '#/components/schemas/AccountHolderIndividualResponse'
+          minItems: 0
+          type: array
+        business_account_token:
+          description: Only applicable for customers using the KYC-Exempt workflow to enroll authorized users of businesses. Pass the account_token of the enrolled business associated with the AUTHORIZED_USER in this field.
+          format: uuid
+          type: string
+        business_entity:
+          $ref: '#/components/schemas/AccountHolderBusinessResponse'
+          description: Only present when user_type == "BUSINESS". Information about the business for which the account is being opened and KYB is being run.
+        control_person:
+          $ref: '#/components/schemas/AccountHolderIndividualResponse'
+          description: 'Only present when user_type == "BUSINESS".
+
+            An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer,
+
+            Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access
+
+            to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above.
+
+            '
+        created:
+          description: Timestamp of when the account holder was created.
+          format: date-time
+          type: string
+        email:
+          description: '(Deprecated. Use control_person.email when user_type == "BUSINESS". Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary email of Account Holder.
+
+            '
+          example: '+15555555555'
+          type: string
+        exemption_type:
+          description: The type of KYC exemption for a KYC-Exempt Account Holder.
+          enum:
+          - AUTHORIZED_USER
+          - PREPAID_CARD_USER
+          type: string
+        external_id:
+          description: Customer-provided token that indicates a relationship with an object outside of the Lithic ecosystem.
+          type: string
+        individual:
+          $ref: '#/components/schemas/AccountHolderIndividualResponse'
+          description: Only present when user_type == "INDIVIDUAL". Information about the individual for which the account is being opened and KYC is being run.
+        naics_code:
+          description: Only present when user_type == "BUSINESS". 6-digit North American Industry Classification System (NAICS) code for the business.
+          type: string
+        nature_of_business:
+          description: Only present when user_type == "BUSINESS". User-submitted description of the business.
+          type: string
+        phone_number:
+          description: '(Deprecated. Use control_person.phone_number when user_type == "BUSINESS". Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary phone of Account Holder, entered in E.164 format.
+
+            '
+          example: '+15555555555'
+          type: string
+        status:
+          description: '(Deprecated. Use verification_application.status instead)
+
+
+            KYC and KYB evaluation states.
+
+
+            Note:
+
+            * `PENDING_REVIEW` is only applicable for the `KYB_BASIC` workflow.
+
+            '
+          enum:
+          - ACCEPTED
+          - PENDING_REVIEW
+          - PENDING_DOCUMENT
+          - PENDING_RESUBMIT
+          - REJECTED
+          type: string
+        status_reasons:
+          description: '(Deprecated. Use verification_application.status_reasons)
+
+
+            Reason for the evaluation status.
+
+            '
+          items:
+            enum:
+            - ADDRESS_VERIFICATION_FAILURE
+            - AGE_THRESHOLD_FAILURE
+            - COMPLETE_VERIFICATION_FAILURE
+            - DOB_VERIFICATION_FAILURE
+            - ID_VERIFICATION_FAILURE
+            - MAX_DOCUMENT_ATTEMPTS
+            - MAX_RESUBMISSION_ATTEMPTS
+            - NAME_VERIFICATION_FAILURE
+            - OTHER_VERIFICATION_FAILURE
+            - RISK_THRESHOLD_FAILURE
+            - WATCHLIST_ALERT_FAILURE
+            type: string
+          type: array
+        token:
+          description: Globally unique identifier for the account holder.
+          format: uuid
+          type: string
+        user_type:
+          description: 'The type of Account Holder. If the type is "INDIVIDUAL", the "individual" attribute will be present.
+
+            If the type is "BUSINESS" then the "business_entity", "control_person", "beneficial_owner_individuals", "naics_code", "nature_of_business", and "website_url" attributes will be present.'
+          enum:
+          - BUSINESS
+          - INDIVIDUAL
+          type: string
+        verification_application:
+          $ref: '#/components/schemas/AccountHolderVerificationApplication'
+          description: Information about the most recent identity verification attempt
+        required_documents:
+          description: Only present for "KYB_BASIC" workflow. A list of documents required for the account holder to be approved.
+          type: array
+          items:
+            $ref: '#/components/schemas/required-document'
+        website_url:
+          description: Only present when user_type == "BUSINESS". Business's primary website.
+          type: string
+      required:
+      - token
+      - created
+      type: object
+    KybIndividual:
+      allOf:
+      - $ref: '#/components/schemas/Individual'
+      - required:
+        - address
+        - dob
+        - email
+        - first_name
+        - government_id
+        - last_name
+        type: object
+      description: Individuals associated with a KYB application. Phone number is optional.
+    kyb-kyc-patch-response:
+      title: Business/Individual Patch Response
+      type: object
+      properties:
+        token:
+          description: Globally unique identifier for the account holder.
+          type: string
+          format: uuid
+        account_token:
+          description: Globally unique identifier for the account.
+          type: string
+          format: uuid
+        business_account_token:
+          description: Only applicable for customers using the KYC-Exempt workflow to enroll authorized users of businesses. Pass the account_token of the enrolled business associated with the AUTHORIZED_USER in this field.
+          type:
+          - string
+          - 'null'
+          format: uuid
+        created:
+          description: Timestamp of when the account holder was created.
+          type: string
+          format: date-time
+        exemption_type:
+          description: The type of KYC exemption for a KYC-Exempt Account Holder. `null` if the account holder is not KYC-Exempt.
+          type: string
+          enum:
+          - AUTHORIZED_USER
+          - PREPAID_CARD_USER
+        external_id:
+          description: Customer-provided token that indicates a relationship with an object outside of the Lithic ecosystem.
+          type: string
+        user_type:
+          description: 'The type of Account Holder. If the type is "INDIVIDUAL", the "individual" attribute will be present.
+
+
+            If the type is "BUSINESS" then the "business_entity", "control_person", "beneficial_owner_individuals",
+
+            "naics_code", "nature_of_business", and "website_url" attributes will be present.'
+          type: string
+          enum:
+          - BUSINESS
+          - INDIVIDUAL
+        verification_application:
+          $ref: '#/components/schemas/verification-application'
+          description: Information about the most recent identity verification attempt
+        individual:
+          $ref: '#/components/schemas/individual'
+          description: Only present when user_type == "INDIVIDUAL". Information about the individual for which the account is being opened and KYC is being run.
+        business_entity:
+          $ref: '#/components/schemas/kyb-business-entity'
+          description: Only present when user_type == "BUSINESS". Information about the business for which the account is being opened and KYB is being run.
+        beneficial_owner_individuals:
+          description: Only present when user_type == "BUSINESS". You must submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information. See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.
+          type: array
+          items:
+            $ref: '#/components/schemas/individual'
+          minItems: 0
+        control_person:
+          $ref: '#/components/schemas/individual'
+          description: 'Only present when user_type == "BUSINESS".
+
+
+            An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer,
+
+
+            Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access
+
+
+            to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above.'
+        naics_code:
+          description: Only present when user_type == "BUSINESS". 6-digit North American Industry Classification System (NAICS) code for the business.
+          type: string
+        nature_of_business:
+          description: Only present when user_type == "BUSINESS". User-submitted description of the business.
+          type: string
+        website_url:
+          description: Only present when user_type == "BUSINESS". Business's primary website.
+          type: string
+        email:
+          description: '(Deprecated. Use control_person.email when user_type == "BUSINESS".
+
+            Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary email of Account Holder.
+
+            '
+          type: string
+        phone_number:
+          description: '(Deprecated. Use control_person.phone_number when user_type == "BUSINESS".
+
+            Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary phone of Account Holder, entered in E.164 format.
+
+            '
+          type: string
+        status:
+          description: '(Deprecated. Use verification_application.status instead)
+
+            KYC and KYB evaluation states.
+
+
+            Note: `PENDING_RESUBMIT` and `PENDING_DOCUMENT` are only applicable for the `ADVANCED` workflow.
+
+
+            '
+          $ref: '#/components/schemas/status'
+        status_reasons:
+          description: "(Deprecated. Use verification_application.status_reasons)\n Reason for the evaluation status."
+          type: array
+          items:
+            $ref: '#/components/schemas/status-reasons'
+        required_documents:
+          description: Only present for "KYB_BASIC" and "KYC_ADVANCED" workflows. A list of documents required for the account holder to be approved.
+          type: array
+          items:
+            $ref: '#/components/schemas/required-document'
+    create-entity-response:
+      title: Account Holder Entity Create Response
+      type: object
+      description: Response body for creating a new beneficial owner or replacing the control person entity on an existing KYB account holder.
+      properties:
+        account_holder_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the account holder
+        created:
+          type: string
+          format: date-time
+          description: Timestamp of when the entity was created
+        status:
+          $ref: '#/components/schemas/entity-status'
+          description: Entity verification status
+        status_reasons:
+          type: array
+          description: Reason for the evaluation status
+          items:
+            $ref: '#/components/schemas/status-reasons'
+        required_documents:
+          type: array
+          description: A list of documents required for the entity to be approved
+          items:
+            $ref: '#/components/schemas/required-document'
+        token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the entity
+      required:
+      - account_holder_token
+      - created
+      - status
+      - status_reasons
+      - token
+      - required_documents
+    kyb-business-entity:
+      title: KYB Business Entity
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/address'
+          description: Business''s physical address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+        dba_business_name:
+          description: Any name that the business operates under that is not its legal business name (if applicable).
+          type: string
+        government_id:
+          description: Government-issued identification number. US Federal Employer Identification Numbers (EIN) are currently supported, entered as full nine-digits, with or without hyphens.
+          example: 114-123-1513
+          type: string
+        legal_business_name:
+          description: Legal (formal) business name.
+          example: Acme, Inc.
+          type: string
+        parent_company:
+          description: Parent company name (if applicable).
+          type: string
+        phone_numbers:
+          description: One or more of the business's phone number(s), entered as a list in E.164 format.
+          items:
+            description: Business phone number, entered in E.164 format.
+            example: '+15555555555'
+            type: string
+          minItems: 1
+          type: array
+      required:
+      - address
+      - government_id
+      - legal_business_name
+      - phone_numbers
+    document-type:
+      title: Account Holder document types
+      description: Type of documentation to be submitted for verification of an account holder
+      type: string
+      enum:
+      - DRIVERS_LICENSE
+      - PASSPORT
+      - PASSPORT_CARD
+      - EIN_LETTER
+      - TAX_RETURN
+      - OPERATING_AGREEMENT
+      - CERTIFICATE_OF_FORMATION
+      - CERTIFICATE_OF_GOOD_STANDING
+      - ARTICLES_OF_INCORPORATION
+      - ARTICLES_OF_ORGANIZATION
+      - BYLAWS
+      - GOVERNMENT_BUSINESS_LICENSE
+      - PARTNERSHIP_AGREEMENT
+      - SS4_FORM
+      - BANK_STATEMENT
+      - UTILITY_BILL_STATEMENT
+      - SSN_CARD
+      - ITIN_LETTER
+      - FINCEN_BOI_REPORT
+    document-upload-status:
+      title: Account holder document upload status
+      description: Status of an account holder's document upload.
+      type: string
+      enum:
+      - ACCEPTED
+      - REJECTED
+      - PENDING_UPLOAD
+      - UPLOADED
+      - PARTIAL_APPROVAL
+    kyb-individual-patch:
+      title: KYB Individual
+      type: object
+      description: Individuals associated with a KYB application. Phone number is optional.
+      allOf:
+      - $ref: '#/components/schemas/individual-patch'
+      - required:
+        - entity_token
+    patch-request:
+      title: Legacy Patch Request
+      type: object
+      description: The legacy request for updating an account holder.
+      properties:
+        email:
+          description: Allowed for all Account Holders. Account holder's email address. The primary purpose of this field is for cardholder identification and verification during the digital wallet tokenization process.
+          type: string
+        phone_number:
+          description: Allowed for all Account Holders. Account holder's phone number, entered in E.164 format. The primary purpose of this field is for cardholder identification and verification during the digital wallet tokenization process.
+          type: string
+        address:
+          description: 'Allowed for: KYC-Exempt, BYO-KYC, BYO-KYB.'
+          $ref: '#/components/schemas/address-patch'
+        business_account_token:
+          description: 'Allowed for: KYC-Exempt, BYO-KYC. The token of the business account to which the account holder is associated.'
+          type: string
+        first_name:
+          description: Allowed for KYC-Exempt, BYO-KYC. Account holder's first name.
+          type: string
+        last_name:
+          description: Allowed for KYC-Exempt, BYO-KYC. Account holder's last name.
+          type: string
+        legal_business_name:
+          description: Allowed for BYO-KYB. Legal business name of the account holder.
+          type: string
+    AccountHolderIndividualResponse:
+      description: Information about an individual associated with an account holder. A subset of the information provided via KYC. For example, we do not return the government id.
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: Individual's current address
+        dob:
+          description: Individual's date of birth, as an RFC 3339 date.
+          example: '1991-03-08 08:00:00'
+          type: string
+        email:
+          description: Individual's email address.
+          example: tom@middle-earth.com
+          type: string
+        first_name:
+          description: Individual's first name, as it appears on government-issued identity documents.
+          example: Tom
+          type: string
+        last_name:
+          description: Individual's last name, as it appears on government-issued identity documents.
+          example: Bombadil
+          type: string
+        phone_number:
+          description: Individual's phone number, entered in E.164 format.
+          example: '+15555555555'
+          type: string
+        entity_token:
+          description: Globally unique identifier for the entity.
+          type: string
+          format: uuid
+      type: object
+      required:
+      - address
+      - dob
+      - email
+      - first_name
+      - last_name
+      - phone_number
+      - entity_token
+    status-reasons:
+      title: KYC/KYB Status Reasons
+      description: Status Reasons for KYC/KYB enrollment states
+      type: string
+      enum:
+      - ADDRESS_VERIFICATION_FAILURE
+      - AGE_THRESHOLD_FAILURE
+      - COMPLETE_VERIFICATION_FAILURE
+      - DOB_VERIFICATION_FAILURE
+      - ID_VERIFICATION_FAILURE
+      - MAX_DOCUMENT_ATTEMPTS
+      - MAX_RESUBMISSION_ATTEMPTS
+      - NAME_VERIFICATION_FAILURE
+      - OTHER_VERIFICATION_FAILURE
+      - RISK_THRESHOLD_FAILURE
+      - WATCHLIST_ALERT_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_ID_VERIFICATION_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_ADDRESS_VERIFICATION_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_NAME_VERIFICATION_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_BUSINESS_OFFICERS_NOT_MATCHED
+      - PRIMARY_BUSINESS_ENTITY_SOS_FILING_INACTIVE
+      - PRIMARY_BUSINESS_ENTITY_SOS_NOT_MATCHED
+      - PRIMARY_BUSINESS_ENTITY_CMRA_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_WATCHLIST_FAILURE
+      - PRIMARY_BUSINESS_ENTITY_REGISTERED_AGENT_FAILURE
+      - CONTROL_PERSON_BLOCKLIST_ALERT_FAILURE
+      - CONTROL_PERSON_ID_VERIFICATION_FAILURE
+      - CONTROL_PERSON_DOB_VERIFICATION_FAILURE
+      - CONTROL_PERSON_NAME_VERIFICATION_FAILURE
+    individual-patch:
+      title: Individual
+      type: object
+      properties:
+        entity_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for an entity.
+        address:
+          $ref: '#/components/schemas/address-patch'
+          description: Individual's current address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable. Only USA addresses are currently supported.
+        dob:
+          type: string
+          example: '1991-03-08 08:00:00'
+          description: Individual's date of birth, as an RFC 3339 date.
+        email:
+          type: string
+          example: tom@middle-earth.com
+          description: Individual's email address. If utilizing Lithic for chargeback processing, this customer email address may be used to communicate dispute status and resolution.
+        first_name:
+          type: string
+          example: Tom
+          description: Individual's first name, as it appears on government-issued identity documents.
+        last_name:
+          type: string
+          example: Bombadil
+          description: Individual's last name, as it appears on government-issued identity documents.
+        phone_number:
+          type: string
+          example: '+15555555555'
+          description: Individual's phone number, entered in E.164 format.
+        government_id:
+          type: string
+          example: 111-23-1412
+          description: Government-issued identification number (required for identity verification and compliance with banking regulations). Social Security Numbers (SSN) and Individual Taxpayer Identification Numbers (ITIN) are currently supported, entered as full nine-digits, with or without hyphens
+          writeOnly: true
+    account-holder-response:
+      title: Account Holder
+      type: object
+      properties:
+        token:
+          description: Globally unique identifier for the account holder.
+          type: string
+          format: uuid
+        account_token:
+          description: Globally unique identifier for the account.
+          type: string
+          format: uuid
+        business_account_token:
+          description: Only applicable for customers using the KYC-Exempt workflow to enroll authorized users of businesses. Pass the account_token of the enrolled business associated with the AUTHORIZED_USER in this field.
+          type:
+          - string
+          - 'null'
+          format: uuid
+        created:
+          description: Timestamp of when the account holder was created.
+          type: string
+          format: date-time
+        exemption_type:
+          description: The type of KYC exemption for a KYC-Exempt Account Holder. `null` if the account holder is not KYC-Exempt.
+          type:
+          - string
+          - 'null'
+          enum:
+          - AUTHORIZED_USER
+          - PREPAID_CARD_USER
+        external_id:
+          description: Customer-provided token that indicates a relationship with an object outside of the Lithic ecosystem.
+          type: string
+        user_type:
+          description: 'The type of Account Holder. If the type is "INDIVIDUAL", the "individual" attribute will be present.
+
+
+            If the type is "BUSINESS" then the "business_entity", "control_person", "beneficial_owner_individuals",
+
+            "naics_code", "nature_of_business", and "website_url" attributes will be present.'
+          type: string
+          enum:
+          - BUSINESS
+          - INDIVIDUAL
+        verification_application:
+          $ref: '#/components/schemas/verification-application'
+          description: Information about the most recent identity verification attempt
+        individual:
+          $ref: '#/components/schemas/individual'
+          description: Only present when user_type == "INDIVIDUAL". Information about the individual for which the account is being opened and KYC is being run.
+        business_entity:
+          $ref: '#/components/schemas/kyb-business-entity'
+          description: Only present when user_type == "BUSINESS". Information about the business for which the account is being opened and KYB is being run.
+        beneficial_owner_individuals:
+          description: Only present when user_type == "BUSINESS". You must submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information. See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.
+          type: array
+          items:
+            $ref: '#/components/schemas/individual'
+          minItems: 0
+        control_person:
+          $ref: '#/components/schemas/individual'
+          description: 'Only present when user_type == "BUSINESS".
+
+
+            An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer,
+
+
+            Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access
+
+
+            to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above.'
+        naics_code:
+          description: Only present when user_type == "BUSINESS". 6-digit North American Industry Classification System (NAICS) code for the business.
+          type: string
+        nature_of_business:
+          description: Only present when user_type == "BUSINESS". User-submitted description of the business.
+          type: string
+        website_url:
+          description: Only present when user_type == "BUSINESS". Business's primary website.
+          type: string
+        email:
+          description: '(Deprecated. Use control_person.email when user_type == "BUSINESS".
+
+            Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary email of Account Holder.
+
+            '
+          type: string
+        phone_number:
+          description: '(Deprecated. Use control_person.phone_number when user_type == "BUSINESS".
+
+            Use individual.phone_number when user_type == "INDIVIDUAL".)
+
+            Primary phone of Account Holder, entered in E.164 format.
+
+            '
+          type: string
+        status:
+          description: '(Deprecated. Use verification_application.status instead)
+
+            KYC and KYB evaluation states.
+
+
+            Note: `PENDING_RESUBMIT` and `PENDING_DOCUMENT` are only applicable for the `ADVANCED` workflow.
+
+
+            '
+          $ref: '#/components/schemas/status'
+        status_reasons:
+          description: '(Deprecated. Use verification_application.status_reasons)
+
+            Reason for the evaluation status.'
+          type: array
+          items:
+            $ref: '#/components/schemas/status-reasons'
+        required_documents:
+          description: Only present for "KYB_BASIC" and "KYC_ADVANCED" workflows. A list of documents required for the account holder to be approved.
+          type: array
+          items:
+            $ref: '#/components/schemas/required-document'
+    required-document:
+      title: Account Holder Required Document
+      type: object
+      properties:
+        entity_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for an entity.
+        valid_documents:
+          type: array
+          description: A list of valid documents that will satisfy the KYC requirements for the specified entity.
+          items:
+            type: string
+            description: The name of a required document.
+        status_reasons:
+          type: array
+          description: Provides the status reasons that will be satisfied by providing one of the valid documents.
+          items:
+            type: string
+            description: An account holder's status reason
+      required:
+      - entity_token
+      - valid_documents
+      - status_reasons
+    status:
+      title: KYC/KYB Status
+      description: Enrollment status for KYC/KYB
+      type: string
+      enum:
+      - ACCEPTED
+      - PENDING_DOCUMENT
+      - PENDING_RESUBMIT
+      - REJECTED
+    KycExempt:
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: 'KYC Exempt user''s current address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+
+            '
+        business_account_token:
+          description: Only applicable for customers using the KYC-Exempt workflow to enroll authorized users of businesses. Pass the account_token of the enrolled business associated with the AUTHORIZED_USER in this field.
+          type: string
+        email:
+          description: The KYC Exempt user's email
+          type: string
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+        first_name:
+          description: The KYC Exempt user's first name
+          type: string
+        kyc_exemption_type:
+          description: Specifies the type of KYC Exempt user
+          enum:
+          - AUTHORIZED_USER
+          - PREPAID_CARD_USER
+          type: string
+        last_name:
+          description: The KYC Exempt user's last name
+          type: string
+        phone_number:
+          description: The KYC Exempt user's phone number, entered in E.164 format.
+          type: string
+        workflow:
+          description: Specifies the workflow type. This must be 'KYC_EXEMPT'
+          enum:
+          - KYC_EXEMPT
+          type: string
+      required:
+      - address
+      - email
+      - first_name
+      - kyc_exemption_type
+      - last_name
+      - phone_number
+      - workflow
+      type: object
+    kyb-business-entity-patch:
+      title: KYB Business Entity
+      type: object
+      properties:
+        entity_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for an entity.
+        address:
+          $ref: '#/components/schemas/address-patch'
+          description: Business''s physical address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+        dba_business_name:
+          description: Any name that the business operates under that is not its legal business name (if applicable).
+          type: string
+        government_id:
+          description: Government-issued identification number. US Federal Employer Identification Numbers (EIN) are currently supported, entered as full nine-digits, with or without hyphens.
+          example: 114-123-1513
+          type: string
+        legal_business_name:
+          description: Legal (formal) business name.
+          example: Acme, Inc.
+          type: string
+        parent_company:
+          description: Parent company name (if applicable).
+          type: string
+        phone_numbers:
+          description: One or more of the business's phone number(s), entered as a list in E.164 format.
+          items:
+            description: Business phone number, entered in E.164 format.
+            example: '+15555555555'
+            type: string
+          minItems: 1
+          type: array
+      required:
+      - entity_token
+    KybDelegatedIndividual:
+      allOf:
+      - $ref: '#/components/schemas/Individual'
+      - required:
+        - first_name
+        - last_name
+        type: object
+      description: Individuals associated with a KYB_DELEGATED application. Only first and last name are required.
+    Individual:
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: 'Individual''s current address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable. Only USA addresses are currently supported.
+
+            '
+        dob:
+          description: Individual's date of birth, as an RFC 3339 date.
+          example: '1991-03-08 08:00:00'
+          type: string
+        email:
+          description: 'Individual''s email address.
+
+            If utilizing Lithic for chargeback processing, this customer email address may be used to communicate dispute status and resolution.
+
+            '
+          example: tom@middle-earth.com
+          type: string
+        first_name:
+          description: Individual's first name, as it appears on government-issued identity documents.
+          example: Tom
+          type: string
+        government_id:
+          description: 'Government-issued identification number (required for identity verification and compliance with banking regulations). Social Security Numbers (SSN) and Individual Taxpayer Identification Numbers (ITIN) are currently supported, entered as full nine-digits, with or without hyphens
+
+            '
+          example: 111-23-1412
+          type: string
+        last_name:
+          description: Individual's last name, as it appears on government-issued identity documents.
+          example: Bombadil
+          type: string
+        phone_number:
+          description: 'Individual''s phone number, entered in E.164 format.
+
+            '
+          example: '+15555555555'
+          type: string
+      type: object
+    address:
+      title: Address
+      type: object
+      properties:
+        address1:
+          description: Valid deliverable address (no PO boxes).
+          example: 123 Old Forest Way
+          type: string
+        address2:
+          description: Unit or apartment number (if applicable).
+          type: string
+        city:
+          description: Name of city.
+          example: Omaha
+          type: string
+        country:
+          description: Valid country code. Only USA is currently supported, entered in uppercase ISO 3166-1 alpha-3 three-character format.
+          example: USA
+          type: string
+        postal_code:
+          description: Valid postal code. Only USA ZIP codes are currently supported, entered as a five-digit ZIP or nine-digit ZIP+4.
+          example: '68022'
+          type: string
+        state:
+          description: Valid state code. Only USA state codes are currently supported, entered in uppercase ISO 3166-2 two-character format.
+          example: NE
+          type: string
+      required:
+      - address1
+      - city
+      - country
+      - postal_code
+      - state
+    individual:
+      title: Individual
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/address'
+          description: Individual's current address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable. Only USA addresses are currently supported.
+        dob:
+          type: string
+          example: '1991-03-08 08:00:00'
+          description: Individual's date of birth, as an RFC 3339 date.
+        email:
+          type: string
+          example: tom@middle-earth.com
+          description: Individual's email address. If utilizing Lithic for chargeback processing, this customer email address may be used to communicate dispute status and resolution.
+        first_name:
+          type: string
+          example: Tom
+          description: Individual's first name, as it appears on government-issued identity documents.
+        last_name:
+          type: string
+          example: Bombadil
+          description: Individual's last name, as it appears on government-issued identity documents.
+        phone_number:
+          type: string
+          example: '+15555555555'
+          description: Individual's phone number, entered in E.164 format.
+        government_id:
+          type: string
+          example: 111-23-1412
+          description: Government-issued identification number (required for identity verification and compliance with banking regulations). Social Security Numbers (SSN) and Individual Taxpayer Identification Numbers (ITIN) are currently supported, entered as full nine-digits, with or without hyphens
+          writeOnly: true
+    kyb-patch-request:
+      title: Business Patch Request
+      type: object
+      description: The KYB request payload for updating a business.
+      properties:
+        beneficial_owner_individuals:
+          description: You must submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information. See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.
+          items:
+            $ref: '#/components/schemas/kyb-individual-patch'
+          minItems: 0
+          type: array
+        business_entity:
+          description: Information for business for which the account is being opened and KYB is being run.
+          $ref: '#/components/schemas/kyb-business-entity-patch'
+        control_person:
+          description: An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer, Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above. See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section II) for more background.
+          $ref: '#/components/schemas/kyb-individual-patch'
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+        naics_code:
+          description: 6-digit North American Industry Classification System (NAICS) code for the business.
+          example: '541512'
+          type: string
+        nature_of_business:
+          description: Short description of the company's line of business (i.e., what does the company do?). Values longer than 255 characters will be truncated before KYB verification
+          example: Software company selling solutions to the restaurant industry
+          type: string
+        website_url:
+          description: Company website URL.
+          example: www.mybusiness.com
+          type: string
+    Address:
+      properties:
+        address1:
+          description: Valid deliverable address (no PO boxes).
+          example: 123 Old Forest Way
+          type: string
+        address2:
+          description: Unit or apartment number (if applicable).
+          type: string
+        city:
+          description: Name of city.
+          example: Omaha
+          type: string
+        country:
+          description: 'Valid country code, entered in uppercase ISO 3166-1 alpha-3 three-character format. Only USA is currently supported for all workflows. KYC_EXEMPT supports CAN additionally. '
+          example: USA
+          type: string
+        postal_code:
+          description: 'Valid postal code. USA postal codes (ZIP codes) are supported, entered as a five-digit postal code or nine-digit postal code (ZIP+4) using the format 12345-1234.  KYC_EXEMPT supports Canadian postal codes. '
+          example: '68022'
+          type: string
+        state:
+          description: Valid state code. USA state codes are supported, entered in uppercase ISO 3166-2 two-character format. KYC_EXEMPT supports Canadian province codes.
+          example: NE
+          type: string
+      required:
+      - address1
+      - city
+      - country
+      - postal_code
+      - state
+      type: object
+    kyc-patch-request:
+      title: Individual Patch Request
+      type: object
+      description: The KYC request payload for updating an account holder.
+      properties:
+        individual:
+          $ref: '#/components/schemas/kyc-individual-patch'
+          description: Information on the individual for whom the account is being opened and KYC is being run.
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+    Kyb:
+      properties:
+        beneficial_owner_individuals:
+          description: 'You must submit a list of all direct and indirect individuals with 25% or more ownership in the company. A maximum of 4 beneficial owners can be submitted. If no individual owns 25% of the company you do not need to send beneficial owner information.
+
+            See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section I) for more background on individuals that should be included.'
+          items:
+            $ref: '#/components/schemas/KybIndividual'
+          minItems: 0
+          type: array
+        business_entity:
+          $ref: '#/components/schemas/BusinessEntity'
+          description: Information for business for which the account is being opened and KYB is being run.
+        control_person:
+          $ref: '#/components/schemas/KybIndividual'
+          description: 'An individual with significant responsibility for managing the legal entity (e.g., a Chief Executive Officer, Chief Financial Officer, Chief Operating Officer,
+
+            Managing Member, General Partner, President, Vice President, or Treasurer). This can be an executive, or someone who will have program-wide access
+
+            to the cards that Lithic will provide. In some cases, this individual could also be a beneficial owner listed above.
+
+            See [FinCEN requirements](https://www.fincen.gov/sites/default/files/shared/CDD_Rev6.7_Sept_2017_Certificate.pdf) (Section II) for more background.
+
+            '
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+        kyb_passed_timestamp:
+          description: 'An RFC 3339 timestamp indicating when precomputed KYB was completed on the business with a pass result.
+
+
+            This field is required only if workflow type is `KYB_BYO`.
+
+            '
+          example: '2018-05-29T21:16:05Z'
+          type: string
+        naics_code:
+          description: 6-digit North American Industry Classification System (NAICS) code for the business.
+          example: '541512'
+          type: string
+        nature_of_business:
+          description: Short description of the company's line of business (i.e., what does the company do?). Values longer than 255 characters will be truncated before KYB verification
+          example: Software company selling solutions to the restaurant industry
+          type: string
+        tos_timestamp:
+          description: An RFC 3339 timestamp indicating when the account holder accepted the applicable legal agreements (e.g., cardholder terms) as agreed upon during API customer's implementation with Lithic.
+          example: '2018-05-29T21:16:05Z'
+          type: string
+        website_url:
+          description: Company website URL.
+          example: www.mybusiness.com
+          type: string
+        workflow:
+          description: Specifies the type of KYB workflow to run.
+          enum:
+          - KYB_BASIC
+          - KYB_BYO
+          type: string
+      required:
+      - beneficial_owner_individuals
+      - business_entity
+      - control_person
+      - nature_of_business
+      - tos_timestamp
+      - workflow
+      type: object
+    kyc-individual-patch:
+      title: Individuals associated with a KYC application.
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/individual-patch'
+      - required:
+        - entity_token
+    AccountHolderVerificationApplication:
+      description: Represents the status of an identity verification application for an account holder
+      properties:
+        created:
+          description: Timestamp of when the application was created.
+          format: date-time
+          type: string
+        status:
+          description: 'KYC and KYB evaluation states.
+
+
+            Note:
+
+            * `PENDING_REVIEW` is only applicable for the `KYB_BASIC` workflow.
+
+            '
+          enum:
+          - ACCEPTED
+          - PENDING_REVIEW
+          - PENDING_DOCUMENT
+          - PENDING_RESUBMIT
+          - REJECTED
+          type: string
+        status_reasons:
+          description: Reason for the evaluation status.
+          items:
+            enum:
+            - ADDRESS_VERIFICATION_FAILURE
+            - AGE_THRESHOLD_FAILURE
+            - COMPLETE_VERIFICATION_FAILURE
+            - DOB_VERIFICATION_FAILURE
+            - ID_VERIFICATION_FAILURE
+            - MAX_DOCUMENT_ATTEMPTS
+            - MAX_RESUBMISSION_ATTEMPTS
+            - NAME_VERIFICATION_FAILURE
+            - OTHER_VERIFICATION_FAILURE
+            - RISK_THRESHOLD_FAILURE
+            - WATCHLIST_ALERT_FAILURE
+            type: string
+          type: array
+        updated:
+          description: Timestamp of when the application was last updated.
+          format: date-time
+          type: string
+      type: object
+    Kyc:
+      properties:
+        external_id:
+          description: A user provided id that can be used to link an account holder with an external system
+          type: string
+        individual:
+          $ref: '#/components/schemas/KycIndividual'
+          description: Information on individual for whom the account is being opened and KYC is being run.
+        kyc_passed_timestamp:
+          description: 'An RFC 3339 timestamp indicating when precomputed KYC was completed on the individual with a pass result.
+
+
+            This field is required only if workflow type is `KYC_BYO`.
+
+            '
+          type: string
+        tos_timestamp:
+          description: An RFC 3339 timestamp indicating when the account holder accepted the applicable legal agreements (e.g., cardholder terms) as agreed upon during API customer's implementation with Lithic.
+          type: string
+        workflow:
+          description: Specifies the type of KYC workflow to run.
+          enum:
+          - KYC_BASIC
+          - KYC_BYO
+          type: string
+      required:
+      - individual
+      - tos_timestamp
+      - workflow
+      type: object
+    address-patch:
+      title: Address
+      type: object
+      properties:
+        address1:
+          description: Valid deliverable address (no PO boxes).
+          example: 123 Old Forest Way
+          type: string
+        address2:
+          description: Unit or apartment number (if applicable).
+          type: string
+        city:
+          description: Name of city.
+          example: Omaha
+          type: string
+        country:
+          description: Valid country code. Only USA is currently supported, entered in uppercase ISO 3166-1 alpha-3 three-character format.
+          example: USA
+          type: string
+        postal_code:
+          description: Valid postal code. Only USA ZIP codes are currently supported, entered as a five-digit ZIP or nine-digit ZIP+4.
+          example: '68022'
+          type: string
+        state:
+          description: Valid state code. Only USA state codes are currently supported, entered in uppercase ISO 3166-2 two-character format.
+          example: NE
+          type: string
+    document:
+      title: Account Holder KYC Document
+      type: object
+      description: 'Describes the document and the required document image uploads
+
+        required to re-run KYC'
+      examples:
+      - account_holder_token: aab6ad9a-3630-4cd0-bbec-1a0fa5c7e149
+        token: f41c975e-cad8-4e4f-a5cb-cef92ed91083
+        document_type: EIN_LETTER
+        entity_token: b50a84c9-8e86-4016-b1c7-0b9f71d4bb84
+        required_document_uploads:
+        - image_type: FRONT
+          status: PENDING_UPLOAD
+          status_reasons: []
+          upload_url: https://lithic-document-verification-uploads.com
+          token: e254beee-67db-4d8c-b610-306ee07de886
+          accepted_entity_status_reasons: []
+          rejected_entity_status_reasons: []
+          created: '2024-09-18T12:34:56Z'
+          updated: '2024-09-18T12:34:56Z'
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the document.
+        account_holder_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the account holder.
+        document_type:
+          $ref: '#/components/schemas/document-type'
+        entity_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for an entity.
+        required_document_uploads:
+          type: array
+          description: Represents a single image of the document to upload.
+          items:
+            type: object
+            description: Represents a single image of the document to upload.
+            properties:
+              image_type:
+                type: string
+                enum:
+                - FRONT
+                - BACK
+                description: Type of image to upload.
+              status:
+                $ref: '#/components/schemas/document-upload-status'
+              status_reasons:
+                description: Reasons for document image upload status.
+                type: array
+                items:
+                  $ref: '#/components/schemas/document-upload-status-reasons'
+              upload_url:
+                type: string
+                description: 'URL to upload document image to.
+
+
+                  Note that the upload URLs expire after 7 days. If an upload URL expires, you can
+
+                  refresh the URLs by retrieving the document upload from `GET /account_holders/{account_holder_token}/documents`.'
+              token:
+                type: string
+                format: uuid
+                description: Globally unique identifier for the document upload.
+              accepted_entity_status_reasons:
+                description: A list of status reasons associated with a KYB account holder that have been satisfied by the document upload
+                type: array
+                items:
+                  type: string
+              rejected_entity_status_reasons:
+                description: A list of status reasons associated with a KYB account holder that have not been satisfied by the document upload
+                type: array
+                items:
+                  type: string
+              created:
+                type: string
+                format: date-time
+                description: When the document upload was created
+              updated:
+                type: string
+                format: date-time
+                description: When the document upload was last updated
+            required:
+            - image_type
+            - status
+            - status_reasons
+            - upload_url
+            - token
+            - created
+            - updated
+            - accepted_entity_status_reasons
+            - rejected_entity_status_reasons
+      required:
+      - account_holder_token
+      - document_type
+      - entity_token
+      - required_document_uploads
+      - token
+    create-entity-request:
+      title: Account Holder Entity Create Request
+      description: Request body for creating a new beneficial owner or replacing the control person entity on an existing KYB account holder.
+      allOf:
+      - $ref: '#/components/schemas/individual'
+      - type: object
+        properties:
+          type:
+            $ref: '#/components/schemas/entity-type'
+            description: The type of entity to create on the account holder
+        required:
+        - type
+        - first_name
+        - last_name
+        - dob
+        - email
+        - phone_number
+        - government_id
+        - address
+    entity-status:
+      title: Account Holder Entity Status
+      description: The status of an entity associated with an account holder
+      type: string
+      enum:
+      - ACCEPTED
+      - INACTIVE
+      - PENDING_REVIEW
+      - REJECTED
+    simulate-enrollment-document-review-request:
+      title: Simulate account holder enrollment document review request body
+      type: object
+      properties:
+        document_upload_token:
+          description: The account holder document upload which to perform the simulation upon.
+          type: string
+        status:
+          description: An account holder document's upload status for use within the simulation.
+          type: string
+          enum:
+          - UPLOADED
+          - ACCEPTED
+          - REJECTED
+          - PARTIAL_APPROVAL
+        status_reason:
+          $ref: '#/components/schemas/document-upload-status-reasons'
+          description: Status reason that will be associated with the simulated account holder status. Only required for a `REJECTED` status or `PARTIAL_APPROVAL` status.
+        accepted_entity_status_reasons:
+          description: A list of status reasons associated with a KYB account holder in PENDING_REVIEW
+          type: array
+          items:
+            type: string
+      required:
+      - document_upload_token
+      - status
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    patch-response:
+      title: Legacy Patch Response
+      type: object
+      properties:
+        token:
+          description: The token for the account holder that was updated
+          type: string
+        email:
+          description: The email for the account holder
+          type: string
+        phone_number:
+          description: The phone_number for the account holder
+          type: string
+        business_account_token:
+          description: The token for the business account that the account holder is associated with
+          type:
+          - string
+          - 'null'
+        address:
+          description: The address for the account holder
+          $ref: '#/components/schemas/address'
+        first_name:
+          description: The first name for the account holder
+          type: string
+        last_name:
+          description: The last name for the account holder
+          type: string
+        legal_business_name:
+          description: The legal business name for the account holder
+          type: string
+    entity-response:
+      title: Account Holder Entity
+      type: object
+      description: Information about an entity associated with an account holder
+      properties:
+        account_holder_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the account holder
+        token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the entity
+        type:
+          $ref: '#/components/schemas/entity-type'
+          description: The type of entity
+        status:
+          $ref: '#/components/schemas/entity-status'
+          description: The status of the entity
+        first_name:
+          type:
+          - string
+          - 'null'
+          description: Individual's first name, as it appears on government-issued identity documents
+          example: Tom
+        last_name:
+          type:
+          - string
+          - 'null'
+          description: Individual's last name, as it appears on government-issued identity documents
+          example: Bombadil
+        email:
+          type:
+          - string
+          - 'null'
+          description: Individual's email address
+          example: tom@middle-earth.com
+        phone_number:
+          type:
+          - string
+          - 'null'
+          description: Individual's phone number, entered in E.164 format
+          example: '+15555555555'
+        dob:
+          type:
+          - string
+          - 'null'
+          description: Individual's date of birth, as an RFC 3339 date
+          example: '1991-03-08 08:00:00'
+        address:
+          $ref: '#/components/schemas/address'
+          description: Individual's current address
+      required:
+      - account_holder_token
+      - token
+      - type
+      - status
+      - first_name
+      - last_name
+      - email
+      - phone_number
+      - dob
+      - address
+    entity-type:
+      title: Account Holder Entity Type
+      description: The type of entity associated with an account holder
+      type: string
+      enum:
+      - BENEFICIAL_OWNER_INDIVIDUAL
+      - CONTROL_PERSON
+    AccountHolderBusinessResponse:
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: 'Business''s physical address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+
+            '
+        dba_business_name:
+          description: Any name that the business operates under that is not its legal business name (if applicable).
+          type: string
+        government_id:
+          description: 'Government-issued identification number. US Federal Employer Identification Numbers (EIN) are currently supported, entered as full nine-digits, with or without hyphens.
+
+            '
+          example: 114-123-1513
+          type: string
+        legal_business_name:
+          description: Legal (formal) business name.
+          example: Acme, Inc.
+          type: string
+        parent_company:
+          description: Parent company name (if applicable).
+          type: string
+        phone_numbers:
+          description: One or more of the business's phone number(s), entered as a list in E.164 format.
+          items:
+            description: Business phone number, entered in E.164 format.
+            example: '+15555555555'
+            type: string
+          minItems: 1
+          type: array
+        entity_token:
+          description: Globally unique identifier for the entity.
+          type: string
+          format: uuid
+      required:
+      - address
+      - government_id
+      - dba_business_name
+      - legal_business_name
+      - phone_numbers
+      - entity_token
+      type: object
+    verification-application:
+      title: Verification Application
+      type: object
+      description: Represents the status of an identity verification application for an account holder
+      properties:
+        created:
+          type: string
+          format: date-time
+          description: Timestamp of when the application was created.
+        status:
+          description: 'KYC and KYB evaluation states.
+
+
+            Note: `PENDING_RESUBMIT` and `PENDING_DOCUMENT` are only applicable for the `ADVANCED` workflow.'
+          $ref: '#/components/schemas/status'
+        status_reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/status-reasons'
+          description: Reason for the evaluation status.
+        updated:
+          type: string
+          format: date-time
+          description: Timestamp of when the application was last updated.
+        ky_passed_at:
+          type: string
+          format: date-time
+          description: Timestamp of when the application passed the verification process. Only present if `status` is `ACCEPTED`
+      required:
+      - created
+      - status
+      - status_reasons
+      - updated
+    KybDelegatedBusinessEntity:
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: 'Business''s physical address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+
+            '
+        dba_business_name:
+          description: Any name that the business operates under that is not its legal business name (if applicable).
+          type: string
+        government_id:
+          description: 'Government-issued identification number. US Federal Employer Identification Numbers (EIN) are currently supported, entered as full nine-digits, with or without hyphens.
+
+            '
+          example: 114-123-1513
+          type: string
+        legal_business_name:
+          description: Legal (formal) business name.
+          example: Acme, Inc.
+          type: string
+        parent_company:
+          description: Parent company name (if applicable).
+          type: string
+        phone_numbers:
+          description: One or more of the business's phone number(s), entered as a list in E.164 format.
+          items:
+            description: Business phone number, entered in E.164 format.
+            example: '+15555555555'
+            type: string
+          minItems: 1
+          type: array
+      required:
+      - address
+      - legal_business_name
+      type: object
+    BusinessEntity:
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+          description: 'Business''s physical address - PO boxes, UPS drops, and FedEx drops are not acceptable; APO/FPO are acceptable.
+
+            '
+        dba_business_name:
+          description: Any name that the business operates under that is not its legal business name (if applicable).
+          type: string
+        government_id:
+          description: 'Government-issued identification number. US Federal Employer Identification Numbers (EIN) are currently supported, entered as full nine-digits, with or without hyphens.
+
+            '
+          example: 114-123-1513
+          type: string
+        legal_business_name:
+          description: Legal (formal) business name.
+          example: Acme, Inc.
+          type: string
+        parent_company:
+          description: Parent company name (if applicable).
+          type: string
+        phone_numbers:
+          description: One or more of the business's phone number(s), entered as a list in E.164 format.
+          items:
+            description: Business phone number, entered in E.164 format.
+            example: '+15555555555'
+            type: string
+          minItems: 1
+          type: array
+      required:
+      - address
+      - government_id
+      - legal_business_name
+      - phone_numbers
+      type: object
+    simulate-enrollment-review-request:
+      title: Simulate account holder enrollment review request body
+      type: object
+      properties:
+        account_holder_token:
+          description: The account holder which to perform the simulation upon.
+          type: string
+        status:
+          description: An account holder's status for use within the simulation.
+          type: string
+          enum:
+          - ACCEPTED
+          - REJECTED
+          - PENDING_REVIEW
+        status_reasons:
+          description: Status reason that will be associated with the simulated account holder status. Only required for a `REJECTED` status.
+          type: array
+          items:
+            type: string
+            enum:
+            - PRIMARY_BUSINESS_ENTITY_ID_VERIFICATION_FAILURE
+            - PRIMARY_BUSINESS_ENTITY_ADDRESS_VERIFICATION_FAILURE
+            - PRIMARY_BUSINESS_ENTITY_NAME_VERIFICATION_FAILURE
+            - PRIMARY_BUSINESS_ENTITY_BUSINESS_OFFICERS_NOT_MATCHED
+            - PRIMARY_BUSINESS_ENTITY_SOS_FILING_INACTIVE
+            - PRIMARY_BUSINESS_ENTITY_SOS_NOT_MATCHED
+            - PRIMARY_BUSINESS_ENTITY_CMRA_FAILURE
+            - PRIMARY_BUSINESS_ENTITY_WATCHLIST_FAILURE
+            - PRIMARY_BUSINESS_ENTITY_REGISTERED_AGENT_FAILURE
+            - CONTROL_PERSON_BLOCKLIST_ALERT_FAILURE
+            - CONTROL_PERSON_ID_VERIFICATION_FAILURE
+            - CONTROL_PERSON_DOB_VERIFICATION_FAILURE
+            - CONTROL_PERSON_NAME_VERIFICATION_FAILURE
+            - BENEFICIAL_OWNER_INDIVIDUAL_DOB_VERIFICATION_FAILURE
+            - BENEFICIAL_OWNER_INDIVIDUAL_BLOCKLIST_ALERT_FAILURE
+            - BENEFICIAL_OWNER_INDIVIDUAL_ID_VERIFICATION_FAILURE
+            - BENEFICIAL_OWNER_INDIVIDUAL_NAME_VERIFICATION_FAILURE
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Conflict:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The request could not be completed due to a conflict with the current state of the target resource.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

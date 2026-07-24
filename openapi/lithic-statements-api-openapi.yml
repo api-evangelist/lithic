@@ -1,0 +1,1494 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Statements API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Statements
+paths:
+  /v1/financial_accounts/{financial_account_token}/statements:
+    get:
+      description: List the statements for a given financial account.
+      operationId: getStatements
+      parameters:
+      - description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+        in: query
+        name: begin
+        required: false
+        schema:
+          description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+          format: date
+          title: Begin
+          type: string
+      - description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+        in: query
+        name: end
+        required: false
+        schema:
+          description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+          format: date
+          title: End
+          type: string
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        required: false
+        schema:
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+          title: Ending Before
+          type: string
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - description: Page size (for pagination).
+        in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          description: Page size (for pagination).
+          maximum: 100
+          minimum: 1
+          title: Page Size
+          type: integer
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        required: false
+        schema:
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+          title: Starting After
+          type: string
+      - description: Whether to include the initial statement. It is not included by default.
+        in: query
+        name: include_initial_statements
+        required: false
+        schema:
+          description: Whether to include the initial statement. It is not included by default.
+          title: Include Initial Statements
+          type: boolean
+          default: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statements_response'
+          description: OK
+      summary: List statements
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/statements/{statement_token}:
+    get:
+      description: Get a specific statement for a given financial account.
+      operationId: getStatement
+      parameters:
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - description: Globally unique identifier for statements.
+        in: path
+        name: statement_token
+        required: true
+        schema:
+          description: Globally unique identifier for statements.
+          title: Statement Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statement_response'
+          description: OK
+      summary: Get statement by token
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/statements/{statement_token}/line_items:
+    get:
+      description: List the line items for a given statement within a given financial account.
+      operationId: getStatementLineItems
+      parameters:
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        required: false
+        schema:
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+          title: Ending Before
+          type: string
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - description: Page size (for pagination).
+        in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          description: Page size (for pagination).
+          maximum: 100
+          minimum: 1
+          title: Page Size
+          type: integer
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        required: false
+        schema:
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+          title: Starting After
+          type: string
+      - description: Globally unique identifier for statements.
+        in: path
+        name: statement_token
+        required: true
+        schema:
+          description: Globally unique identifier for statements.
+          title: Statement Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statement_line_items_response'
+          description: OK
+      summary: List line items for a statement
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/loan_tapes:
+    get:
+      description: List the loan tapes for a given financial account.
+      operationId: getLoanTapes
+      parameters:
+      - description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+        in: query
+        name: begin
+        required: false
+        schema:
+          description: Date string in RFC 3339 format. Only entries created after the specified date will be included.
+          format: date
+          title: Begin
+          type: string
+      - description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+        in: query
+        name: end
+        required: false
+        schema:
+          description: Date string in RFC 3339 format. Only entries created before the specified date will be included.
+          format: date
+          title: End
+          type: string
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        required: false
+        schema:
+          description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+          title: Ending Before
+          type: string
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - description: Page size (for pagination).
+        in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          description: Page size (for pagination).
+          maximum: 100
+          minimum: 1
+          title: Page Size
+          type: integer
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        required: false
+        schema:
+          description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+          title: Starting After
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loan_tapes_response'
+          description: OK
+      summary: List loan tapes
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/loan_tapes/{loan_tape_token}:
+    get:
+      description: Get a specific loan tape for a given financial account.
+      operationId: getLoanTape
+      parameters:
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - description: Globally unique identifier for loan tape.
+        in: path
+        name: loan_tape_token
+        required: true
+        schema:
+          description: Globally unique identifier for loan tape.
+          title: Loan Tape Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loan_tape_response'
+          description: OK
+      summary: Get loan tape by token
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/loan_tape_configuration:
+    get:
+      description: Get the loan tape configuration for a given financial account.
+      operationId: getLoanTapeConfiguration
+      parameters:
+      - description: Globally unique identifier for financial account.
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          description: Globally unique identifier for financial account.
+          format: uuid
+          title: Financial Account Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loan_tape_configuration'
+          description: OK
+      summary: Get loan tape configuration
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/interest_tier_schedule:
+    get:
+      description: 'List interest tier schedules for a financial account with optional date filtering.
+
+
+        If no date parameters are provided, returns all tier schedules.
+
+        If date parameters are provided, uses filtering to return matching schedules (max 100).
+
+        - for_date: Returns exact match (takes precedence over other dates)
+
+        - before_date: Returns schedules with effective_date <= before_date
+
+        - after_date: Returns schedules with effective_date >= after_date
+
+        - Both before_date and after_date: Returns schedules in range'
+      operationId: listInterestTierSchedules
+      parameters:
+      - description: Return schedules with effective_date >= after_date (ISO format YYYY-MM-DD)
+        in: query
+        name: after_date
+        required: false
+        schema:
+          format: date
+          type: string
+      - description: Return schedules with effective_date <= before_date (ISO format YYYY-MM-DD)
+        in: query
+        name: before_date
+        required: false
+        schema:
+          format: date
+          type: string
+      - description: Globally unique identifier for financial account
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: Return schedule with effective_date == for_date (ISO format YYYY-MM-DD)
+        in: query
+        name: for_date
+        required: false
+        schema:
+          format: date
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tier_schedule_response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List interest tier schedules
+      tags:
+      - Statements
+    post:
+      description: Create a new interest tier schedule entry for a supported financial account
+      operationId: createInterestTierSchedule
+      parameters:
+      - description: Globally unique identifier for financial account
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/tier_schedule_entry'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tier_schedule_entry'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create interest tier schedule
+      tags:
+      - Statements
+  /v1/financial_accounts/{financial_account_token}/interest_tier_schedule/{effective_date}:
+    delete:
+      description: "Delete an interest tier schedule entry.\n\nReturns:\n- 400 Bad Request: Invalid effective_date format OR attempting to delete the earliest\n  tier schedule entry for a non-PENDING account\n- 404 Not Found: Tier schedule entry not found for the given effective_date OR ledger account not found\n\nNote: PENDING accounts can delete the earliest tier schedule entry (account hasn't opened yet).\nActive/non-PENDING accounts cannot delete the earliest entry to prevent orphaning the account.\n\nIf the deleted tier schedule has a past effective_date and the account is ACTIVE,\nthe loan tape rebuild configuration will be updated to trigger rebuilds from that date."
+      operationId: deleteInterestTierSchedule
+      parameters:
+      - description: Effective date in ISO format (YYYY-MM-DD)
+        in: path
+        name: effective_date
+        required: true
+        schema:
+          format: date
+          type: string
+      - description: Globally unique identifier for financial account
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Delete interest tier schedule
+      tags:
+      - Statements
+    get:
+      description: Get a specific interest tier schedule by effective date
+      operationId: getInterestTierSchedule
+      parameters:
+      - description: Effective date in ISO format (YYYY-MM-DD)
+        in: path
+        name: effective_date
+        required: true
+        schema:
+          format: date
+          type: string
+      - description: Globally unique identifier for financial account
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tier_schedule_entry'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get interest tier schedule
+      tags:
+      - Statements
+    put:
+      description: Update an existing interest tier schedule
+      operationId: updateInterestTierSchedule
+      parameters:
+      - description: Effective date in ISO format (YYYY-MM-DD)
+        in: path
+        name: effective_date
+        required: true
+        schema:
+          format: date
+          type: string
+      - description: Globally unique identifier for financial account
+        in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update_tier_schedule_entry_request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tier_schedule_entry'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update interest tier schedule
+      tags:
+      - Statements
+components:
+  schemas:
+    interest_calculation_method:
+      type: string
+      enum:
+      - DAILY
+      - AVERAGE_DAILY
+      title: Interest Calculation method
+    statement_totals:
+      title: Statement Totals
+      type: object
+      properties:
+        payments:
+          type: integer
+          description: Any funds transfers which affective the balance in cents
+        payment_details:
+          $ref: '#/components/schemas/payment_details'
+        purchases:
+          type: integer
+          description: Net card transaction volume less any cash advances in cents
+        fees:
+          type: integer
+          description: Volume of debit management operation transactions less any interest in cents
+        debits:
+          type: integer
+          description: Volume of debit management operation transactions less any interest in cents
+        debit_details:
+          $ref: '#/components/schemas/debit_details'
+        credits:
+          type: integer
+          description: Volume of credit management operation transactions less any balance transfers in cents
+        credit_details:
+          $ref: '#/components/schemas/credit_details'
+        interest:
+          type: integer
+          description: Interest accrued in cents
+        cash_advances:
+          type: integer
+          description: ATM and cashback transactions in cents
+        balance_transfers:
+          type: integer
+          description: Opening balance transferred from previous account in cents
+      required:
+      - payments
+      - purchases
+      - fees
+      - debits
+      - credits
+      - interest
+      - cash_advances
+      - balance_transfers
+    loan_tape_response:
+      title: Loan Tape Response
+      type: object
+      properties:
+        token:
+          type: string
+          description: Globally unique identifier for a loan tape
+          title: Loan Tape Token
+        financial_account_token:
+          description: Globally unique identifier for a financial account
+          type: string
+          format: uuid
+        date:
+          description: Date of transactions that this loan tape covers
+          type: string
+          format: date
+        created:
+          description: Timestamp of when the loan tape was created
+          type: string
+          format: date-time
+        updated:
+          description: Timestamp of when the loan tape was updated
+          type: string
+          format: date-time
+        version:
+          description: Version number of the loan tape. This starts at 1
+          type: integer
+        ytd_totals:
+          $ref: '#/components/schemas/statement_totals'
+        period_totals:
+          $ref: '#/components/schemas/statement_totals'
+        day_totals:
+          $ref: '#/components/schemas/statement_totals'
+        balances:
+          $ref: '#/components/schemas/balances'
+        starting_balance:
+          description: Balance at the start of the day
+          type: integer
+        ending_balance:
+          description: Balance at the end of the day
+          type: integer
+        credit_limit:
+          description: For prepay accounts, this is the minimum prepay balance that must be maintained. For charge card accounts, this is the maximum credit balance extended by a lender
+          type: integer
+        available_credit:
+          description: Amount of credit available to spend in cents
+          type: integer
+        excess_credits:
+          description: Excess credits in the form of provisional credits, payments, or purchase refunds. If positive, the account is in net credit state with no outstanding balances. An overpayment could land an account in this state
+          type: integer
+        account_standing:
+          $ref: '#/components/schemas/account_standing'
+        credit_product_token:
+          description: Globally unique identifier for a credit product
+          type: string
+        tier:
+          description: Interest tier to which this account belongs to
+          type:
+          - string
+          - 'null'
+        payment_allocation:
+          $ref: '#/components/schemas/payment_allocation'
+        minimum_payment_balance:
+          $ref: '#/components/schemas/balance_details'
+        previous_statement_balance:
+          $ref: '#/components/schemas/balance_details'
+        interest_details:
+          anyOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/interest_details'
+      required:
+      - token
+      - financial_account_token
+      - date
+      - created
+      - updated
+      - version
+      - ytd_totals
+      - period_totals
+      - day_totals
+      - credit_limit
+      - excess_credits
+      - account_standing
+      - credit_product_token
+      - payment_allocation
+      - balances
+      - minimum_payment_balance
+      - previous_statement_balance
+      - starting_balance
+      - ending_balance
+      - available_credit
+      - interest_details
+    payment_allocation:
+      title: Payment Allocation
+      type: object
+      properties:
+        interest:
+          type: integer
+          description: Amount allocated to interest in cents
+        principal:
+          type: integer
+          description: Amount allocated to principal in cents
+        fees:
+          type: integer
+          description: Amount allocated to fees in cents
+        interest_details:
+          anyOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/category_details'
+        principal_details:
+          anyOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/category_details'
+        fee_details:
+          anyOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/category_details'
+      required:
+      - interest
+      - principal
+      - fees
+      - interest_details
+      - principal_details
+      - fee_details
+    statement_type:
+      type: string
+      enum:
+      - INITIAL
+      - PERIOD_END
+      - FINAL
+      title: Statement Type
+    statement_line_items_response:
+      title: Statement Line Items Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/statement_line_item_response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    financial-account-status:
+      title: Financial Account Status
+      description: Status of the financial account
+      type: string
+      enum:
+      - OPEN
+      - CLOSED
+      - SUSPENDED
+      - PENDING
+    payoff_details:
+      title: Payoff Details
+      description: Details on number and size of payments to pay off balance
+      type: object
+      properties:
+        minimum_payment_months:
+          description: The number of months it would take to pay off the balance in full by only paying the minimum payment. "NA" will signal negative or zero amortization
+          type: string
+        minimum_payment_total:
+          description: The sum of all interest and principal paid, in cents, when only paying minimum monthly payment. "NA" will signal negative or zero amortization
+          type: string
+        payoff_period_length_months:
+          description: Number of months to full pay off
+          type:
+          - integer
+          - 'null'
+        payoff_period_monthly_payment_amount:
+          description: The amount needed to be paid, in cents, each month in order to pay off current balance in the payoff period
+          type:
+          - integer
+          - 'null'
+        payoff_period_payment_total:
+          description: The sum of all interest and principal paid, in cents, when paying off in the payoff period
+          type:
+          - integer
+          - 'null'
+      required:
+      - minimum_payment_months
+      - minimum_payment_total
+      - payoff_period_length_months
+      - payoff_period_monthly_payment_amount
+      - payoff_period_payment_total
+    statement_line_item_response:
+      title: Statement Line Item Response
+      type: object
+      properties:
+        token:
+          type: string
+          description: Globally unique identifier for a Statement Line Item
+        financial_account_token:
+          description: Globally unique identifier for a financial account
+          type: string
+          format: uuid
+        card_token:
+          description: Globally unique identifier for a card
+          type: string
+          format: uuid
+        financial_transaction_token:
+          description: Globally unique identifier for a financial transaction
+          type: string
+          format: uuid
+        financial_transaction_event_token:
+          description: Globally unique identifier for a financial transaction event
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/transaction_category'
+        event_type:
+          $ref: '#/components/schemas/financial_event_type'
+        event_subtype:
+          type:
+          - string
+          - 'null'
+          description: Subtype of the event that generated the line items
+        loan_tape_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Date of the loan tape that generated this line item
+        effective_date:
+          description: Date that the transaction effected the account balance
+          type: string
+          format: date
+        descriptor:
+          type: string
+        amount:
+          type: integer
+          description: Transaction amount in cents
+        currency:
+          type: string
+          description: 3-character alphabetic ISO 4217 code for the settling currency of the transaction
+        created:
+          type: string
+          format: date-time
+          description: Timestamp of when the line item was generated
+      required:
+      - token
+      - financial_account_token
+      - financial_transaction_token
+      - financial_transaction_event_token
+      - category
+      - event_type
+      - effective_date
+      - amount
+      - currency
+      - created
+    financial_event_type:
+      title: Financial Event Type
+      type: string
+      enum:
+      - ACH_ORIGINATION_CANCELLED
+      - ACH_ORIGINATION_INITIATED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_REJECTED
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_PROCESSED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_SETTLED
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_REJECTED
+      - ACH_RETURN_SETTLED
+      - AUTHORIZATION
+      - AUTHORIZATION_ADVICE
+      - AUTHORIZATION_EXPIRY
+      - AUTHORIZATION_REVERSAL
+      - BALANCE_INQUIRY
+      - BILLING_ERROR
+      - BILLING_ERROR_REVERSAL
+      - CARD_TO_CARD
+      - CASH_BACK
+      - CASH_BACK_REVERSAL
+      - CLEARING
+      - COLLECTION
+      - CORRECTION_CREDIT
+      - CORRECTION_DEBIT
+      - CREDIT_AUTHORIZATION
+      - CREDIT_AUTHORIZATION_ADVICE
+      - CURRENCY_CONVERSION
+      - CURRENCY_CONVERSION_REVERSAL
+      - DISPUTE_WON
+      - EXTERNAL_ACH_CANCELED
+      - EXTERNAL_ACH_INITIATED
+      - EXTERNAL_ACH_RELEASED
+      - EXTERNAL_ACH_REVERSED
+      - EXTERNAL_ACH_SETTLED
+      - EXTERNAL_CHECK_CANCELED
+      - EXTERNAL_CHECK_INITIATED
+      - EXTERNAL_CHECK_RELEASED
+      - EXTERNAL_CHECK_REVERSED
+      - EXTERNAL_CHECK_SETTLED
+      - EXTERNAL_FEDNOW_CANCELED
+      - EXTERNAL_FEDNOW_INITIATED
+      - EXTERNAL_FEDNOW_RELEASED
+      - EXTERNAL_FEDNOW_REVERSED
+      - EXTERNAL_FEDNOW_SETTLED
+      - EXTERNAL_RTP_CANCELED
+      - EXTERNAL_RTP_INITIATED
+      - EXTERNAL_RTP_RELEASED
+      - EXTERNAL_RTP_REVERSED
+      - EXTERNAL_RTP_SETTLED
+      - EXTERNAL_TRANSFER_CANCELED
+      - EXTERNAL_TRANSFER_INITIATED
+      - EXTERNAL_TRANSFER_RELEASED
+      - EXTERNAL_TRANSFER_REVERSED
+      - EXTERNAL_TRANSFER_SETTLED
+      - EXTERNAL_WIRE_CANCELED
+      - EXTERNAL_WIRE_INITIATED
+      - EXTERNAL_WIRE_RELEASED
+      - EXTERNAL_WIRE_REVERSED
+      - EXTERNAL_WIRE_SETTLED
+      - FINANCIAL_AUTHORIZATION
+      - FINANCIAL_CREDIT_AUTHORIZATION
+      - INTEREST
+      - INTEREST_REVERSAL
+      - INTERNAL_ADJUSTMENT
+      - LATE_PAYMENT
+      - LATE_PAYMENT_REVERSAL
+      - LOSS_WRITE_OFF
+      - PROVISIONAL_CREDIT
+      - PROVISIONAL_CREDIT_REVERSAL
+      - SERVICE
+      - RETURN
+      - RETURN_REVERSAL
+      - TRANSFER
+      - TRANSFER_INSUFFICIENT_FUNDS
+      - RETURNED_PAYMENT
+      - RETURNED_PAYMENT_REVERSAL
+      - LITHIC_NETWORK_PAYMENT
+      - ANNUAL
+      - ANNUAL_REVERSAL
+      - QUARTERLY
+      - QUARTERLY_REVERSAL
+      - MONTHLY
+      - MONTHLY_REVERSAL
+    loan_tape_configuration:
+      title: Loan Tape Configuration
+      description: Configuration for loan tapes
+      type: object
+      properties:
+        instance_token:
+          type: string
+          format: uuid
+        financial_account_token:
+          type: string
+          format: uuid
+        credit_product_token:
+          type: string
+        loan_tape_rebuild_configuration:
+          $ref: '#/components/schemas/loan_tape_rebuild_configuration'
+        tier_schedule_changed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - instance_token
+      - financial_account_token
+      - created_at
+      - updated_at
+    tier_schedule_entry:
+      title: Tier Schedule Entry
+      description: Entry in the Tier Schedule of an account
+      type: object
+      properties:
+        tier_name:
+          type: string
+          description: Name of a tier contained in the credit product. Mutually exclusive with tier_rates
+        effective_date:
+          type: string
+          format: date
+          description: Date the tier should be effective in YYYY-MM-DD format
+        tier_rates:
+          type: object
+          patternProperties:
+            ^.*$:
+              $ref: '#/components/schemas/category_tier'
+          description: Custom rates per category.  Mutually exclusive with tier_name
+        penalty_rates:
+          type: object
+          patternProperties:
+            ^.*$:
+              $ref: '#/components/schemas/category_tier'
+          description: Custom rates per category for penalties
+        credit_product_token:
+          type: string
+          description: Globally unique identifier for a credit product
+      required:
+      - effective_date
+      - credit_product_token
+    debit_details:
+      title: Debit Details
+      description: Breakdown of debits
+      type: object
+      patternProperties:
+        ^.*$:
+          type: object
+          patternProperties:
+            ^.*$:
+              type: integer
+              description: Amount in cents for this debit category and event type combination
+          additionalProperties: false
+      additionalProperties: false
+    statements_response:
+      title: Statements Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/statement_response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    loan_tape_rebuild_configuration:
+      title: Loan Tape Rebuild Configuration
+      description: Configuration for building loan tapes
+      type: object
+      properties:
+        rebuild_needed:
+          type: boolean
+          description: Whether the account's loan tapes need to be rebuilt or not
+        rebuild_from:
+          type: string
+          format: date
+          description: Date from which to start rebuilding from if the account requires a rebuild
+        last_rebuild:
+          type: string
+          format: date
+          description: The date for which the account's loan tapes were last rebuilt
+      required:
+      - rebuild_needed
+    loan_tapes_response:
+      title: Loan Tapes Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/loan_tape_response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    interest_details:
+      title: Interest Details
+      type: object
+      properties:
+        prime_rate:
+          type:
+          - string
+          - 'null'
+        interest_calculation_method:
+          $ref: '#/components/schemas/interest_calculation_method'
+        effective_apr:
+          $ref: '#/components/schemas/category_details'
+        interest_for_period:
+          $ref: '#/components/schemas/category_details'
+        daily_balance_amounts:
+          $ref: '#/components/schemas/category_details'
+        minimum_interest_charged:
+          type:
+          - integer
+          - 'null'
+        actual_interest_charged:
+          type:
+          - integer
+          - 'null'
+      required:
+      - prime_rate
+      - interest_calculation_method
+      - effective_apr
+      - interest_for_period
+      - actual_interest_charged
+      - daily_balance_amounts
+    category_details:
+      title: Category Details
+      type: object
+      properties:
+        purchases:
+          type: string
+        cash_advances:
+          type: string
+        balance_transfers:
+          type: string
+      required:
+      - purchases
+      - cash_advances
+      - balance_transfers
+    credit_details:
+      title: Credit Details
+      description: Breakdown of credits
+      type: object
+      patternProperties:
+        ^.*$:
+          type: object
+          patternProperties:
+            ^.*$:
+              type: integer
+              description: Amount in cents for this credit category and event type combination
+          additionalProperties: false
+      additionalProperties: false
+    update_tier_schedule_entry_request:
+      title: Update Tier Schedule Entry Request
+      description: Entry in the Tier Schedule of an account
+      type: object
+      properties:
+        tier_name:
+          type: string
+          description: Name of a tier contained in the credit product. Mutually exclusive with tier_rates
+        tier_rates:
+          type: object
+          patternProperties:
+            ^.*$:
+              $ref: '#/components/schemas/category_tier'
+          description: Custom rates per category.  Mutually exclusive with tier_name
+        penalty_rates:
+          type: object
+          patternProperties:
+            ^.*$:
+              $ref: '#/components/schemas/category_tier'
+          description: Custom rates per category for penalties
+    financial_account_state:
+      title: Financial Account State
+      description: Information about the financial account state
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/financial-account-status'
+        substatus:
+          oneOf:
+          - $ref: '#/components/schemas/financial-account-substatus'
+          - type: 'null'
+      required:
+      - status
+    category_tier:
+      title: Category Tier
+      description: Rate and rate cap for interest on a category
+      type: object
+      properties:
+        rate:
+          type: string
+          description: Interest rate for this category, e.g. '0.0525' for 5.25%
+        cap_rate:
+          type: string
+          description: Maximum interest rate for this category, e.g. '0.0525' for 5.25%
+    account_standing:
+      title: Account Standing
+      type: object
+      properties:
+        period_state:
+          $ref: '#/components/schemas/period_state'
+        period_number:
+          description: Current overall period number
+          type: integer
+        consecutive_minimum_payments_made:
+          description: Number of consecutive minimum payments made
+          type: integer
+        consecutive_minimum_payments_missed:
+          description: Number of consecutive minimum payments missed
+          type: integer
+        consecutive_full_payments_made:
+          description: Number of consecutive full payments made
+          type: integer
+        days_past_due:
+          description: Number of days past due
+          type: integer
+        has_grace:
+          description: Whether the account currently has grace or not
+          type: boolean
+        financial_account_state:
+          $ref: '#/components/schemas/financial_account_state'
+      required:
+      - period_state
+      - period_number
+      - consecutive_minimum_payments_made
+      - consecutive_minimum_payments_missed
+      - consecutive_full_payments_made
+      - days_past_due
+      - has_grace
+      - financial_account_state
+    category_balances:
+      title: Category Balances
+      type: object
+      properties:
+        interest:
+          type: integer
+        principal:
+          type: integer
+        fees:
+          type: integer
+      required:
+      - interest
+      - principal
+      - fees
+    payment_details:
+      title: Payment Details
+      description: Breakdown of payments
+      type: object
+      patternProperties:
+        ^.*$:
+          type: object
+          patternProperties:
+            ^.*$:
+              type: integer
+              description: Amount in cents for this payment category and event type combination
+          additionalProperties: false
+      additionalProperties: false
+    amount_due:
+      title: Amount Due
+      type: object
+      properties:
+        amount:
+          description: Payment due at the end of the billing period in cents. Negative amount indicates something is owed. If the amount owed is positive there was a net credit. If auto-collections are enabled this is the amount that will be requested on the payment due date
+          type: integer
+        past_due:
+          description: Amount past due for statement in cents
+          type: integer
+      required:
+      - amount
+      - past_due
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    transaction_category:
+      title: Transaction Category
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). The WIRE category is a preview. To learn more, contact your customer success manager.'
+      type: string
+      enum:
+      - ACH
+      - WIRE
+      - BALANCE_OR_FUNDING
+      - FEE
+      - REWARD
+      - ADJUSTMENT
+      - DERECOGNITION
+      - DISPUTE
+      - CARD
+      - EXTERNAL_ACH
+      - EXTERNAL_CHECK
+      - EXTERNAL_FEDNOW
+      - EXTERNAL_RTP
+      - EXTERNAL_TRANSFER
+      - EXTERNAL_WIRE
+      - MANAGEMENT_ADJUSTMENT
+      - MANAGEMENT_DISPUTE
+      - MANAGEMENT_FEE
+      - MANAGEMENT_REWARD
+      - MANAGEMENT_DISBURSEMENT
+      - HOLD
+      - PROGRAM_FUNDING
+    balances:
+      title: Balances
+      type: object
+      properties:
+        past_due:
+          description: Amount not paid off on previous due dates
+          $ref: '#/components/schemas/category_balances'
+        due:
+          description: Amount due for the prior billing cycle. Any amounts not fully paid off on this due date will be considered past due the next day
+          $ref: '#/components/schemas/category_balances'
+        past_statements_due:
+          description: Amount due for the past billing cycles.
+          $ref: '#/components/schemas/category_balances'
+        next_statement_due:
+          description: Amount due for the current billing cycle. Any amounts not paid off by early payments or credits will be considered due at the end of the current billing period
+          $ref: '#/components/schemas/category_balances'
+      required:
+      - past_due
+      - due
+      - past_statements_due
+      - next_statement_due
+    period_state:
+      type: string
+      enum:
+      - STANDARD
+      - PROMO
+      - PENALTY
+      title: Period State
+    financial-account-substatus:
+      title: Financial Account Substatus
+      description: Substatus for the financial account
+      type: string
+      enum:
+      - CHARGED_OFF_DELINQUENT
+      - CHARGED_OFF_FRAUD
+      - END_USER_REQUEST
+      - BANK_REQUEST
+      - DELINQUENT
+      - INTEREST_AND_FEES_PAUSED
+    tier_schedule_response:
+      title: Tier Schedule Response
+      description: Tier Schedule of the given account.  Only applicable for credit products with v2 configuration
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/tier_schedule_entry'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    statement_response:
+      title: Statement Response
+      type: object
+      properties:
+        token:
+          type: string
+          description: Globally unique identifier for a statement
+          title: Statement Token
+        financial_account_token:
+          description: Globally unique identifier for a financial account
+          type: string
+          format: uuid
+        statement_start_date:
+          description: Date when the billing period began
+          type: string
+          format: date
+        statement_end_date:
+          description: Date when the billing period ended
+          type: string
+          format: date
+        next_statement_end_date:
+          description: Date when the next billing period will end
+          type: string
+          format: date
+        payment_due_date:
+          oneOf:
+          - type: 'null'
+          - description: Date when the payment is due
+            type: string
+            format: date
+        next_payment_due_date:
+          description: Date when the next payment is due
+          type: string
+          format: date
+        days_in_billing_cycle:
+          description: Number of days in the billing cycle
+          type: integer
+        credit_limit:
+          description: This is the maximum credit balance extended by the lender in cents
+          type: integer
+        available_credit:
+          description: Amount of credit available to spend in cents
+          type: integer
+        starting_balance:
+          description: Balance at the start of the billing period
+          type: integer
+        ending_balance:
+          description: Balance at the end of the billing period. For charge cards, this should be the same at the statement amount due in cents
+          type: integer
+        period_totals:
+          $ref: '#/components/schemas/statement_totals'
+        ytd_totals:
+          $ref: '#/components/schemas/statement_totals'
+        statement_totals:
+          $ref: '#/components/schemas/statement_totals'
+        created:
+          description: Timestamp of when the statement was created
+          type: string
+          format: date-time
+        updated:
+          description: Timestamp of when the statement was updated
+          type: string
+          format: date-time
+        credit_product_token:
+          description: Globally unique identifier for a credit product
+          anyOf:
+          - type: 'null'
+          - type: string
+        account_standing:
+          $ref: '#/components/schemas/account_standing'
+        amount_due:
+          $ref: '#/components/schemas/amount_due'
+        payoff_details:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/payoff_details'
+        interest_details:
+          anyOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/interest_details'
+        statement_type:
+          $ref: '#/components/schemas/statement_type'
+      required:
+      - token
+      - financial_account_token
+      - statement_start_date
+      - statement_end_date
+      - payment_due_date
+      - days_in_billing_cycle
+      - credit_limit
+      - available_credit
+      - starting_balance
+      - ending_balance
+      - amount_due
+      - period_totals
+      - ytd_totals
+      - created
+      - updated
+      - credit_product_token
+      - account_standing
+      - statement_type
+    balance_details:
+      title: Balance Details
+      type: object
+      properties:
+        amount:
+          type: integer
+        remaining:
+          type: integer
+      required:
+      - amount
+      - remaining
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

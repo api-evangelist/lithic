@@ -1,0 +1,781 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Settlement Report API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Settlement Report
+paths:
+  /v1/reports/settlement/details/{report_date}:
+    get:
+      description: List details.
+      operationId: getSettlementDetails
+      parameters:
+      - description: Date of the settlement report to retrieve. Not available in sandbox.
+        example: '2023-09-01'
+        in: path
+        name: report_date
+        required: true
+        schema:
+          format: date
+          type: string
+      - $ref: '#/components/parameters/endingBefore'
+      - description: Number of records per page.
+        in: query
+        name: page_size
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                data:
+                - account_token: 6c25d6a4-4ff3-46f0-8f9b-f2cbb7e20e09
+                  card_program_token: 62135b36-324f-443a-a630-bab38fe86868
+                  card_token: 047298ea-5789-46e4-95fa-154aeeab6af3
+                  created: '2023-06-17T13:00:29.979106'
+                  currency: USD
+                  disputes_gross_amount: 0
+                  event_tokens:
+                  - 8fce9192-41ff-4a7a-8359-bd33b3e0a7c9
+                  institution: '00001'
+                  interchange_fee_extended_precision: -70000
+                  interchange_gross_amount: -7
+                  network: VISA
+                  other_fees_details: {}
+                  other_fees_gross_amount: 0
+                  report_date: '2023-06-16'
+                  settlement_date: '2023-06-16'
+                  token: e34a817f-119d-4976-9fb3-8b020b8bbec3
+                  transaction_token: 0e98152b-3753-4a17-bfe2-c6f575c83b85
+                  transactions_gross_amount: 1900
+                  type: CLEARING
+                  updated: '2023-06-17T13:00:29.979106'
+                has_more: false
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/SettlementDetail'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List settlement details
+      tags:
+      - Settlement Report
+  /v1/reports/settlement/summary/{report_date}:
+    get:
+      description: Get the settlement report for a specified report date. Not available in sandbox.
+      operationId: getSummary
+      parameters:
+      - description: Date of the settlement report to retrieve.
+        example: '2023-09-01'
+        in: path
+        name: report_date
+        required: true
+        schema:
+          format: date
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/settlement-report'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get settlement summary
+      tags:
+      - Settlement Report
+  /v1/reports/settlement/network_totals:
+    get:
+      description: List network total records with optional filters. Not available in sandbox.
+      operationId: listNetworkTotals
+      parameters:
+      - description: Singular report date to filter on (YYYY-MM-DD). Cannot be populated in conjunction with report_date_begin or report_date_end.
+        in: query
+        name: report_date
+        schema:
+          format: date
+          type: string
+      - description: Earliest report date to filter on, inclusive (YYYY-MM-DD).
+        in: query
+        name: report_date_begin
+        schema:
+          format: date
+          type: string
+      - description: Latest report date to filter on, inclusive (YYYY-MM-DD).
+        in: query
+        name: report_date_end
+        schema:
+          format: date
+          type: string
+      - description: Network to filter on.
+        in: query
+        name: network
+        schema:
+          type: string
+          enum:
+          - AMEX
+          - VISA
+          - MASTERCARD
+          - MAESTRO
+          - INTERLINK
+      - description: Institution ID to filter on.
+        in: query
+        name: institution_id
+        schema:
+          type: string
+      - description: Settlement institution ID to filter on.
+        in: query
+        name: settlement_institution_id
+        schema:
+          type: string
+      - description: Datetime in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+        in: query
+        name: begin
+        schema:
+          format: date-time
+          type: string
+      - description: Datetime in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+        in: query
+        name: end
+        schema:
+          format: date-time
+          type: string
+      - description: Number of records per page.
+        in: query
+        name: page_size
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        schema:
+          type: string
+          format: uuid
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/network_totals_list'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List network totals
+      tags:
+      - Settlement Report
+  /v1/reports/settlement/network_totals/{token}:
+    get:
+      description: Retrieve a specific network total record by token. Not available in sandbox.
+      operationId: getNetworkTotal
+      parameters:
+      - description: Token of the network total record to retrieve
+        in: path
+        name: token
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/network_total'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get network total
+      tags:
+      - Settlement Report
+components:
+  schemas:
+    settlement-summary-details:
+      title: settlement Summary Details
+      properties:
+        currency:
+          description: 3-character alphabetic ISO 4217 code.
+          example: USD
+          maxLength: 3
+          minLength: 3
+          type: string
+        disputes_gross_amount:
+          description: The total gross amount of disputes settlements.
+          example: 0
+          type: integer
+        institution:
+          description: The most granular ID the network settles with (e.g., ICA for Mastercard, FTSRE for Visa).
+          example: '00001'
+          type: string
+        interchange_gross_amount:
+          description: The total amount of interchange.
+          example: -7
+          type: integer
+        network:
+          description: Card network where the transaction took place
+          enum:
+          - AMEX
+          - INTERLINK
+          - MAESTRO
+          - MASTERCARD
+          - UNKNOWN
+          - VISA
+          example: MASTERCARD
+          type: string
+        other_fees_gross_amount:
+          description: Total amount of gross other fees outside of interchange.
+          example: 0
+          type: integer
+        settled_net_amount:
+          description: The total net amount of cash moved. (net value of settled_gross_amount, interchange, fees).
+          example: 1893
+          type: integer
+        transactions_gross_amount:
+          description: The total amount of settlement impacting transactions (excluding interchange, fees, and disputes).
+          example: 1900
+          type: integer
+      type: object
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    settlement-report:
+      title: Settlement Report
+      properties:
+        created:
+          description: Date and time when the transaction first occurred. UTC time zone.
+          example: '2023-06-01T00:00:00'
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code. (This field is deprecated and will be removed in a future version of the API.)
+          example: USD
+          maxLength: 3
+          minLength: 3
+          type: string
+          deprecated: true
+        details:
+          items:
+            $ref: '#/components/schemas/settlement-summary-details'
+          type: array
+        disputes_gross_amount:
+          description: The total gross amount of disputes settlements. (This field is deprecated and will be removed in a future version of the API. To compute total amounts, Lithic recommends that customers sum the relevant settlement amounts found within `details`.)
+          example: 0
+          type: integer
+          deprecated: true
+        interchange_gross_amount:
+          description: The total amount of interchange. (This field is deprecated and will be removed in a future version of the API. To compute total amounts, Lithic recommends that customers sum the relevant settlement amounts found within `details`.)
+          example: -7
+          type: integer
+          deprecated: true
+        is_complete:
+          description: Indicates that all data expected on the given report date is available.
+          type: boolean
+        other_fees_gross_amount:
+          description: Total amount of gross other fees outside of interchange. (This field is deprecated and will be removed in a future version of the API. To compute total amounts, Lithic recommends that customers sum the relevant settlement amounts found within `details`.)
+          example: 0
+          type: integer
+          deprecated: true
+        report_date:
+          description: Date of when the report was first generated.
+          example: '2023-06-01'
+          type: string
+        settled_net_amount:
+          description: The total net amount of cash moved. (net value of settled_gross_amount, interchange, fees). (This field is deprecated and will be removed in a future version of the API. To compute total amounts, Lithic recommends that customers sum the relevant settlement amounts found within `details`.)
+          example: 1893
+          type: integer
+          deprecated: true
+        transactions_gross_amount:
+          description: The total amount of settlement impacting transactions (excluding interchange, fees, and disputes). (This field is deprecated and will be removed in a future version of the API. To compute total amounts, Lithic recommends that customers sum the relevant settlement amounts found within `details`.)
+          example: 1900
+          type: integer
+          deprecated: true
+        updated:
+          description: Date and time when the transaction first occurred. UTC time zone.
+          example: '2023-06-01T00:00:00'
+          format: date-time
+          type: string
+      required:
+      - created
+      - currency
+      - details
+      - disputes_gross_amount
+      - interchange_gross_amount
+      - is_complete
+      - other_fees_gross_amount
+      - report_date
+      - settled_net_amount
+      - transactions_gross_amount
+      - updated
+      type: object
+    SettlementDetail:
+      properties:
+        account_token:
+          description: Globally unique identifier denoting the account that the associated transaction occurred on.
+          example: e34a817f-119d-4976-9fb3-8b020b8bbec3
+          format: uuid
+          type: string
+        card_program_token:
+          description: Globally unique identifier denoting the card program that the associated transaction occurred on.
+          example: e34a817f-119d-4976-9fb3-8b020b8bbec3
+          format: uuid
+          type: string
+        card_token:
+          description: Globally unique identifier denoting the card that the associated transaction occurred on.
+          example: e34a817f-119d-4976-9fb3-8b020b8bbec3
+          format: uuid
+          type: string
+        created:
+          description: Date and time when the transaction first occurred. UTC time zone.
+          example: '2023-06-01T00:00:00'
+          format: date-time
+          type: string
+        currency:
+          description: Three-character alphabetic ISO 4217 code.
+          example: USD
+          maxLength: 3
+          minLength: 3
+          type: string
+        disputes_gross_amount:
+          description: The total gross amount of disputes settlements.
+          example: 0
+          type: integer
+        event_tokens:
+          description: Array of globally unique identifiers for the financial events that comprise this settlement. Use these tokens to access detailed event-level information.
+          example:
+          - e34a817f-119d-4976-9fb3-8b020b8bbec3
+          items:
+            type: string
+          type: array
+        fee_description:
+          description: Network's description of a fee, only present on records with type `FEE`.
+          example: 'INTERCHANGE COMPLIANCE ADJUSTMENT FOR : 11/12/24'
+          type: string
+        institution:
+          description: The most granular ID the network settles with (e.g., ICA for Mastercard, FTSRE for Visa).
+          example: '00001'
+          type: string
+        interchange_fee_extended_precision:
+          description: The total amount of interchange in six-digit extended precision.
+          example: -70000
+          type: integer
+        interchange_gross_amount:
+          description: The total amount of interchange.
+          example: -7
+          type: integer
+        network:
+          description: Card network where the transaction took place.
+          enum:
+          - AMEX
+          - INTERLINK
+          - MAESTRO
+          - MASTERCARD
+          - UNKNOWN
+          - VISA
+          example: MASTERCARD
+          type: string
+        other_fees_details:
+          description: The total gross amount of other fees by type.
+          properties:
+            ISA:
+              title: ISA
+              type: integer
+          type: object
+        other_fees_gross_amount:
+          description: Total amount of gross other fees outside of interchange.
+          example: 0
+          type: integer
+        report_date:
+          description: Date of when the report was first generated.
+          example: '2023-06-01'
+          type: string
+        settlement_date:
+          description: Date of when money movement is triggered for the transaction. One exception applies - for Mastercard dual message settlement, this is the settlement advisement date, which is distinct from the date of money movement.
+          example: '2023-06-01'
+          type: string
+        token:
+          description: Globally unique identifier denoting the Settlement Detail.
+          example: e34a817f-119d-4976-9fb3-8b020b8bbec3
+          format: uuid
+          type: string
+        transaction_token:
+          description: Globally unique identifier denoting the associated transaction. For settlement records with type `CLEARING`, `FINANCIAL`, or `NON-FINANCIAL`, this references a card transaction token. For settlement records with type `CHARGEBACK`, `REPRESENTMENT`, `PREARBITRATION`, `ARBITRATION`, or `COLLABORATION`, this references the dispute transaction token. May be null for certain settlement types.
+          example: e34a817f-119d-4976-9fb3-8b020b8bbec3
+          format: uuid
+          type: string
+        transactions_gross_amount:
+          description: The total amount of settlement impacting transactions (excluding interchange, fees, and disputes).
+          example: 1900
+          type: integer
+        type:
+          description: The type of settlement record.
+          enum:
+          - ADJUSTMENT
+          - ARBITRATION
+          - CHARGEBACK
+          - CLEARING
+          - COLLABORATION
+          - FEE
+          - FINANCIAL
+          - NON-FINANCIAL
+          - PREARBITRATION
+          - REPRESENTMENT
+          example: CLEARING
+          type: string
+        updated:
+          description: Date and time when the transaction first occurred. UTC time zone.
+          example: '2023-06-01T00:00:00'
+          format: date-time
+          type: string
+      required:
+      - account_token
+      - card_program_token
+      - card_token
+      - created
+      - currency
+      - disputes_gross_amount
+      - event_tokens
+      - institution
+      - interchange_fee_extended_precision
+      - interchange_gross_amount
+      - network
+      - other_fees_details
+      - other_fees_gross_amount
+      - report_date
+      - settlement_date
+      - token
+      - transaction_token
+      - transactions_gross_amount
+      - type
+      - updated
+      type: object
+    network_totals_list:
+      title: Network Totals Response
+      type: object
+      required:
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/network_total'
+        has_more:
+          description: Indicates whether there are more network total records to be retrieved.
+          type: boolean
+      examples:
+      - data:
+        - token: 12cf7505-06a8-435e-b1c7-4c430d02f6c3
+          network: VISA
+          institution_id: '1000000000'
+          settlement_institution_id: '1000000001'
+          settlement_service: '015'
+          report_date: '2025-02-25'
+          currency: CAD
+          is_complete: true
+          amounts:
+            gross_settlement: 100
+            interchange_fees: -25
+            visa_charges: 10
+            net_settlement: 85
+          created: '2025-02-25T13:07:31.419631Z'
+          updated: '2025-02-25T13:07:31.419631Z'
+        - token: 0604c316-17f0-456d-9ac7-7d94252acb1a
+          network: INTERLINK
+          institution_id: '1000000000'
+          settlement_institution_id: '1000000001'
+          settlement_service: '001'
+          report_date: '2025-02-25'
+          currency: USD
+          is_complete: true
+          amounts:
+            gross_settlement: 200
+            interchange_fees: -50
+            visa_charges: 10
+            net_settlement: 160
+          created: '2025-02-25T13:07:31.419631Z'
+          updated: '2025-02-25T13:07:31.419631Z'
+        - token: 700a1c78-04ed-47e2-8160-b1e18914ec7b
+          network: MASTERCARD
+          institution_id: '031511'
+          settlement_institution_id: '031511'
+          settlement_service: US00000001
+          report_date: '2025-02-25'
+          currency: USD
+          cycle: 1
+          is_complete: false
+          amounts:
+            gross_settlement: 100
+            interchange_fees: -25
+            net_settlement: 75
+          created: '2025-02-25T13:07:31.419631Z'
+          updated: '2025-02-25T13:07:31.419631Z'
+        - token: e05d5448-210e-4cc3-bd0d-d54d3c6c9a9f
+          network: MASTERCARD
+          institution_id: '031511'
+          settlement_institution_id: '031511'
+          settlement_service: US00000001
+          report_date: '2025-02-25'
+          currency: USD
+          cycle: 2
+          is_complete: true
+          amounts:
+            gross_settlement: 100
+            interchange_fees: -25
+            net_settlement: 75
+          created: '2025-02-25T13:07:31.419631Z'
+          updated: '2025-02-25T13:07:31.419631Z'
+        has_more: false
+    network_total:
+      title: Network Total
+      type: object
+      required:
+      - token
+      - network
+      - institution_id
+      - settlement_institution_id
+      - settlement_service
+      - report_date
+      - currency
+      - is_complete
+      - amounts
+      - created
+      - updated
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Globally unique identifier.
+        network:
+          type: string
+          enum:
+          - AMEX
+          - VISA
+          - MASTERCARD
+          - MAESTRO
+          - INTERLINK
+          description: Card network where the transaction took place. AMEX, VISA, MASTERCARD, MAESTRO, or INTERLINK.
+        institution_id:
+          type: string
+          description: 'The institution that activity occurred on. For Mastercard: ICA (Interbank Card Association). For Maestro: institution ID. For Visa: lowest level SRE (Settlement Reporting Entity).'
+        settlement_institution_id:
+          type: string
+          description: 'The institution responsible for settlement. For Mastercard: same as `institution_id`. For Maestro: billing ICA. For Visa: Funds Transfer SRE (FTSRE).'
+        settlement_service:
+          type: string
+          description: Settlement service.
+        report_date:
+          type: string
+          format: date
+          description: Date that the network total record applies to. YYYY-MM-DD format.
+        cycle:
+          type: integer
+          description: The clearing cycle that the network total record applies to. Mastercard only.
+        currency:
+          type: string
+          description: 3-character alphabetic ISO 4217 code.
+        is_complete:
+          type: boolean
+          description: Indicates that all settlement records related to this Network Total are available in the details endpoint.
+        amounts:
+          type: object
+          required:
+          - gross_settlement
+          - interchange_fees
+          - net_settlement
+          properties:
+            gross_settlement:
+              type: integer
+              description: Total settlement amount excluding interchange, in currency's smallest unit.
+            interchange_fees:
+              type: integer
+              description: Interchange amount, in currency's smallest unit.
+            visa_charges:
+              type: integer
+              description: Charges specific to Visa/Interlink, in currency's smallest unit.
+            net_settlement:
+              type: integer
+              description: '`gross_settlement` net of `interchange_fees` and `visa_charges` (if applicable), in currency''s smallest unit.'
+        created:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp for when the record was created. UTC time zone.
+        updated:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp for when the record was last updated. UTC time zone.
+      examples:
+      - token: 12cf7505-06a8-435e-b1c7-4c430d02f6c3
+        network: VISA
+        institution_id: '1000000000'
+        settlement_institution_id: '1000000001'
+        settlement_service: '015'
+        report_date: '2025-02-25'
+        currency: CAD
+        is_complete: true
+        amounts:
+          gross_settlement: 100
+          interchange_fees: -25
+          visa_charges: 10
+          net_settlement: 85
+        created: '2025-02-25T13:07:31.419631Z'
+        updated: '2025-02-25T13:07:31.419631Z'
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

@@ -1,0 +1,902 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Account API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Account
+paths:
+  /v1/accounts:
+    get:
+      description: 'List account configurations.
+
+        '
+      operationId: getAccounts
+      parameters:
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                getAccounts:
+                  summary: List accounts
+                  value:
+                    data:
+                    - cardholder_currency: USD
+                      spend_limit:
+                        daily: 1000
+                        lifetime: 10000
+                        monthly: 4000
+                      state: ACTIVE
+                      token: b68b7424-aa69-4cbc-a946-30d90181b621
+                      created: '2024-01-11T19:50:36Z'
+                    has_more: false
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AccountConfiguration'
+                    type: array
+                  has_more:
+                    description: Whether there are more accounts to be retrieved.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List accounts
+      tags:
+      - Account
+  /v1/accounts/{account_token}:
+    get:
+      description: Get account configuration such as spend limits.
+      operationId: getAccountByToken
+      parameters:
+      - $ref: '#/components/parameters/accountToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountConfiguration'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get account
+      tags:
+      - Account
+    patch:
+      description: 'Update account configuration such as state or spend limits. Can only be run on accounts that are part of the program managed by this API key.
+
+        Accounts that are in the `PAUSED` state will not be able to transact or create new cards.
+
+        '
+      operationId: patchAccountByToken
+      parameters:
+      - $ref: '#/components/parameters/accountToken'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              setDailySpendLimit:
+                summary: Update daily spend limit
+                value:
+                  daily_spend_limit: 1000
+            schema:
+              properties:
+                daily_spend_limit:
+                  default: 125000
+                  description: 'Amount (in cents) for the account''s daily spend limit (e.g. 100000 would be a $1,000 limit).
+
+                    By default the daily spend limit is set to $1,250.
+
+                    '
+                  minimum: 0
+                  type: integer
+                lifetime_spend_limit:
+                  default: 0
+                  description: 'Amount (in cents) for the account''s lifetime spend limit (e.g. 100000 would be a $1,000 limit). Once this limit is reached, no transactions will be accepted on any card created for this account until the limit is updated.
+
+                    Note that a spend limit of 0 is effectively no limit, and should only be used to reset or remove a prior limit. Only a limit of 1 or above will result in declined transactions due to checks against the account limit. This behavior differs from the daily spend limit and the monthly spend limit.
+
+                    '
+                  minimum: 0
+                  type: integer
+                monthly_spend_limit:
+                  default: 500000
+                  description: 'Amount (in cents) for the account''s monthly spend limit (e.g. 100000 would be a $1,000 limit).
+
+                    By default the monthly spend limit is set to $5,000.
+
+                    '
+                  minimum: 0
+                  type: integer
+                state:
+                  description: Account states.
+                  enum:
+                  - ACTIVE
+                  - PAUSED
+                  - CLOSED
+                  type: string
+                substatus:
+                  description: 'Account state substatus values:
+
+                    * `FRAUD_IDENTIFIED` - The account has been recognized as being created or used with stolen or fabricated identity information, encompassing both true identity theft and synthetic identities.
+
+                    * `SUSPICIOUS_ACTIVITY` - The account has exhibited suspicious behavior, such as unauthorized access or fraudulent transactions, necessitating further investigation.
+
+                    * `RISK_VIOLATION` - The account has been involved in deliberate misuse by the legitimate account holder. Examples include disputing valid transactions without cause, falsely claiming non-receipt of goods, or engaging in intentional bust-out schemes to exploit account services.
+
+                    * `END_USER_REQUEST` - The account holder has voluntarily requested the closure of the account for personal reasons. This encompasses situations such as bankruptcy, other financial considerations, or the account holder''s death.
+
+                    * `ISSUER_REQUEST` - The issuer has initiated the closure of the account due to business strategy, risk management, inactivity, product changes, regulatory concerns, or violations of terms and conditions.
+
+                    * `NOT_ACTIVE` - The account has not had any transactions or payment activity within a specified period. This status applies to accounts that are paused or closed due to inactivity.
+
+                    * `INTERNAL_REVIEW` - The account is temporarily paused pending further internal review. In future implementations, this status may prevent clients from activating the account via APIs until the review is completed.
+
+                    * `OTHER` - The reason for the account''s current status does not fall into any of the above categories. A comment should be provided to specify the particular reason.
+
+                    '
+                  enum:
+                  - FRAUD_IDENTIFIED
+                  - SUSPICIOUS_ACTIVITY
+                  - RISK_VIOLATION
+                  - END_USER_REQUEST
+                  - ISSUER_REQUEST
+                  - NOT_ACTIVE
+                  - INTERNAL_REVIEW
+                  - OTHER
+                  type:
+                  - string
+                  - 'null'
+                comment:
+                  description: Additional context or information related to the account.
+                  type: string
+                verification_address:
+                  description: Address used during Address Verification Service (AVS) checks during transactions if enabled via Auth Rules. This field is deprecated as AVS checks are no longer supported by Auth Rules. The field will be removed from the schema in a future release.
+                  properties:
+                    address1:
+                      type: string
+                    address2:
+                      type: string
+                    city:
+                      type: string
+                    country:
+                      type: string
+                    postal_code:
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                  deprecated: true
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                exampleResponse:
+                  value:
+                    cardholder_currency: USD
+                    spend_limit:
+                      daily: 1000
+                      lifetime: 100000
+                      monthly: 40000
+                    state: ACTIVE
+                    token: ecbd1d58-0299-48b3-84da-6ed7f5bf9ec1
+                    created: '2024-01-11T19:50:36Z'
+                    verification_address:
+                      address1: 5 Broad Street
+                      address2: ''
+                      city: New York
+                      country: USA
+                      postal_code: '10001'
+                      state: NY
+              schema:
+                $ref: '#/components/schemas/AccountConfiguration'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update account
+      tags:
+      - Account
+  /v1/accounts/{account_token}/spend_limits:
+    get:
+      description: Get an Account's available spend limits, which is based on the spend limit configured on the Account and the amount already spent over the spend limit's duration. For example, if the Account has a daily spend limit of $1000 configured, and has spent $600 in the last 24 hours, the available spend limit returned would be $400.
+      operationId: getAccountSpendLimits
+      parameters:
+      - $ref: '#/components/parameters/accountToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSpendLimits'
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get account's available spend limits
+      tags:
+      - Account
+  /v1/accounts/{account_token}/signals:
+    get:
+      operationId: getAccountSignals
+      summary: Fetch account signals
+      description: 'Returns behavioral feature state derived from an account''s transaction history.
+
+
+        These signals expose the same data used by behavioral rule attributes (e.g. `AMOUNT_Z_SCORE`
+
+        with `scope: ACCOUNT`, `IS_NEW_COUNTRY` with `scope: ACCOUNT`) and custom code
+
+        `TRANSACTION_HISTORY_SIGNALS` features, allowing clients to inspect feature values before
+
+        writing rules and debug rule behavior.
+
+
+        Note: 3DS fields are not available at the account scope and will be null.
+
+        '
+      tags:
+      - Account
+      parameters:
+      - name: account_token
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The token of the account to fetch signals for.
+      responses:
+        '200':
+          description: Account Signals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/signals-response'
+        '400':
+          $ref: '#/components/responses/components-responses-BadRequest'
+        '403':
+          $ref: '#/components/responses/responses-Forbidden'
+        '404':
+          $ref: '#/components/responses/components-responses-NotFound'
+components:
+  schemas:
+    AccountConfiguration:
+      properties:
+        account_holder:
+          properties:
+            business_account_token:
+              description: Only applicable for customers using the KYC-Exempt workflow to enroll authorized users of businesses. Account_token of the enrolled business associated with an enrolled AUTHORIZED_USER individual.
+              example: e87db14a-4abf-4901-adad-5d5c9f46aff2
+              type: string
+            email:
+              description: Email address.
+              example: jack@lithic.com
+              type: string
+            phone_number:
+              description: Phone number of the individual.
+              example: '+15555555555'
+              type: string
+            token:
+              description: Globally unique identifier for the account holder.
+              example: 95e5f1b7-cfd5-4520-aa3c-2451bab8608d
+              type: string
+          required:
+          - business_account_token
+          - email
+          - phone_number
+          - token
+          type: object
+        auth_rule_tokens:
+          description: 'List of identifiers for the Auth Rule(s) that are applied on the account.
+
+            This field is deprecated and will no longer be populated in the `account_holder` object. The key will be removed from the schema in a future release. Use the `/auth_rules` endpoints to fetch Auth Rule information instead.'
+          items:
+            type: string
+          type: array
+          deprecated: true
+        cardholder_currency:
+          description: 3-character alphabetic ISO 4217 code for the currency of the cardholder.
+          example: USD
+          type: string
+        spend_limit:
+          description: 'Spend limit information for the user containing the daily, monthly, and lifetime spend limit of the account. Any charges to a card owned by this account will be declined once their transaction volume has surpassed the value in the applicable time limit (rolling). A lifetime limit of 0 indicates that the lifetime limit feature is disabled.
+
+            '
+          properties:
+            daily:
+              description: Daily spend limit (in cents).
+              example: 10000
+              minimum: 0
+              type: integer
+            lifetime:
+              description: Total spend limit over account lifetime (in cents).
+              example: 100000
+              minimum: 0
+              type: integer
+            monthly:
+              description: Monthly spend limit (in cents).
+              example: 40000
+              minimum: 0
+              type: integer
+          required:
+          - daily
+          - lifetime
+          - monthly
+          type: object
+        state:
+          description: "Account state:\n  * `ACTIVE` - Account is able to transact and create new cards.\n  * `PAUSED` - Account will not be able to transact or create new cards. It can be set back\nto `ACTIVE`.\n  * `CLOSED` - Account will not be able to transact or create new cards. `CLOSED` accounts\nare unable to be transitioned to `ACTIVE` or `PAUSED` states. Accounts can be manually set to `CLOSED`, or this can be done by Lithic due to failure to pass KYB/KYC or for risk/compliance reasons. Please contact [support@lithic.com](mailto:support@lithic.com) if you believe this was done by mistake."
+          enum:
+          - ACTIVE
+          - PAUSED
+          - CLOSED
+          type: string
+        substatus:
+          description: 'Account state substatus values:
+
+            * `FRAUD_IDENTIFIED` - The account has been recognized as being created or used with stolen or fabricated identity information, encompassing both true identity theft and synthetic identities.
+
+            * `SUSPICIOUS_ACTIVITY` - The account has exhibited suspicious behavior, such as unauthorized access or fraudulent transactions, necessitating further investigation.
+
+            * `RISK_VIOLATION` - The account has been involved in deliberate misuse by the legitimate account holder. Examples include disputing valid transactions without cause, falsely claiming non-receipt of goods, or engaging in intentional bust-out schemes to exploit account services.
+
+            * `END_USER_REQUEST` - The account holder has voluntarily requested the closure of the account for personal reasons. This encompasses situations such as bankruptcy, other financial considerations, or the account holder''s death.
+
+            * `ISSUER_REQUEST` - The issuer has initiated the closure of the account due to business strategy, risk management, inactivity, product changes, regulatory concerns, or violations of terms and conditions.
+
+            * `NOT_ACTIVE` - The account has not had any transactions or payment activity within a specified period. This status applies to accounts that are paused or closed due to inactivity.
+
+            * `INTERNAL_REVIEW` - The account is temporarily paused pending further internal review. In future implementations, this status may prevent clients from activating the account via APIs until the review is completed.
+
+            * `OTHER` - The reason for the account''s current status does not fall into any of the above categories. A comment should be provided to specify the particular reason.
+
+            '
+          enum:
+          - FRAUD_IDENTIFIED
+          - SUSPICIOUS_ACTIVITY
+          - RISK_VIOLATION
+          - END_USER_REQUEST
+          - ISSUER_REQUEST
+          - NOT_ACTIVE
+          - INTERNAL_REVIEW
+          - OTHER
+          type:
+          - string
+          - 'null'
+        comment:
+          description: Additional context or information related to the account.
+          type: string
+        token:
+          description: 'Globally unique identifier for the account. This is the same as the account_token returned by the enroll endpoint. If using this parameter, do not include pagination.
+
+            '
+          example: b68b7424-aa69-4cbc-a946-30d90181b621
+          format: uuid
+          type: string
+        verification_address:
+          properties:
+            address1:
+              description: Valid deliverable address (no PO boxes).
+              example: 124 Old Forest Way
+              type: string
+            address2:
+              description: Unit or apartment number (if applicable).
+              example: Apt 21
+              type: string
+            city:
+              description: City name.
+              example: Seattle
+              type: string
+            country:
+              description: Country name. Only USA is currently supported.
+              example: USA
+              type: string
+            postal_code:
+              description: Valid postal code. Only USA postal codes (ZIP codes) are currently supported, entered as a five-digit postal code or nine-digit postal code (ZIP+4) using the format 12345-1234.
+              example: '98109'
+              type: string
+            state:
+              description: Valid state code. Only USA state codes are currently supported, entered in uppercase ISO 3166-2 two-character format.
+              example: WA
+              type: string
+          required:
+          - address1
+          - city
+          - country
+          - postal_code
+          - state
+          type: object
+          deprecated: true
+        created:
+          description: Timestamp of when the account was created.
+          format: date-time
+          type:
+          - string
+          - 'null'
+      required:
+      - spend_limit
+      - state
+      - token
+      - created
+      type: object
+    signals-response:
+      title: Signals Response
+      description: 'Behavioral feature state for a card or account derived from its transaction history.
+
+
+        Derived statistical features (averages, standard deviations, z-scores) are computed using Welford''s online algorithm over approved transactions. Average fields are null when fewer than 5 approved transactions have been recorded. Standard deviation fields are null when fewer than 30 approved transactions have been recorded.
+
+
+        3DS fields (`three_ds_success_rate`, `three_ds_success_count`, `three_ds_total_count`) are card-scoped and will be null for account responses.
+
+
+        Raw fields (`seen_countries`, `seen_mccs`, `approved_txn_amount_m2`, etc.) are included so clients can compute their own transaction-specific derivations, such as checking whether a new transaction''s country is in `seen_countries` to determine `is_new_country`, or computing a z-score using the raw mean and M2 values.'
+      type: object
+      properties:
+        avg_transaction_amount:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the entity's lifetime, in cents. Null if fewer than 5 approved transactions have been recorded.
+        stdev_transaction_amount:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the entity's lifetime, in cents. Null if fewer than 30 approved transactions have been recorded.
+        approved_txn_count:
+          type:
+          - integer
+          - 'null'
+          description: The total number of approved transactions over the entity's lifetime.
+        avg_transaction_amount_7d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 7 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_7d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 7 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_7d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 7 days.
+        avg_transaction_amount_30d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 30 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_30d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 30 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_30d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 30 days.
+        avg_transaction_amount_90d:
+          type:
+          - number
+          - 'null'
+          description: The average approved transaction amount over the last 90 days, in cents. Null if fewer than 5 approved transactions in window.
+        stdev_transaction_amount_90d:
+          type:
+          - number
+          - 'null'
+          description: The standard deviation of approved transaction amounts over the last 90 days, in cents. Null if fewer than 30 approved transactions in window.
+        approved_txn_count_90d:
+          type:
+          - integer
+          - 'null'
+          description: The number of approved transactions in the last 90 days.
+        is_first_transaction:
+          type:
+          - boolean
+          - 'null'
+          description: Whether the entity has no prior transaction history. Returns true if no history is found. Null if transaction history exists but a first transaction timestamp is unavailable.
+        time_since_last_transaction_days:
+          type:
+          - number
+          - 'null'
+          description: The number of days since the last approved transaction on the entity.
+        three_ds_success_rate:
+          type:
+          - number
+          - 'null'
+          description: The 3DS authentication success rate for the card, as a percentage from 0.0 to 100.0. Null for account responses.
+        distinct_country_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of distinct merchant countries seen in the entity's transaction history.
+        distinct_mcc_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of distinct MCCs seen in the entity's transaction history.
+        seen_countries:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of merchant countries seen in the entity's transaction history. Clients can use this to determine whether a new transaction's country is novel (i.e. compute `is_new_country`).
+        seen_mccs:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of MCCs seen in the entity's transaction history. Clients can use this to determine whether a new transaction's MCC is novel (i.e. compute `is_new_mcc`).
+        seen_merchants:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: The set of card acceptor IDs seen in the card's approved transaction history, capped at the 1000 most recently seen. Null for account responses. Clients can use this to determine whether a new transaction's merchant is novel (i.e. compute `is_new_merchant`).
+        first_txn_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the first approved transaction for the entity, in ISO 8601 format.
+        last_txn_approved_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the most recent approved transaction for the entity, in ISO 8601 format.
+        last_cp_country:
+          type:
+          - string
+          - 'null'
+          description: The merchant country of the last card-present transaction. Clients can use this together with `last_cp_timestamp` to detect impossible travel.
+        last_cp_postal_code:
+          type:
+          - string
+          - 'null'
+          description: The merchant postal code of the last card-present transaction.
+        last_cp_timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The timestamp of the last card-present transaction, in ISO 8601 format.
+        approved_txn_amount_m2:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for lifetime approved transaction amounts. Used together with `avg_transaction_amount` and `approved_txn_count` to compute the z-score of a new transaction amount (variance = M2 / (count - 1)).
+        approved_txn_amount_m2_7d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 7 days.
+        approved_txn_amount_m2_30d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 30 days.
+        approved_txn_amount_m2_90d:
+          type:
+          - number
+          - 'null'
+          description: The Welford M2 accumulator for approved transaction amounts over the last 90 days.
+        three_ds_success_count:
+          type:
+          - integer
+          - 'null'
+          description: The number of successful 3DS authentications for the card. Null for account responses.
+        three_ds_total_count:
+          type:
+          - integer
+          - 'null'
+          description: The total number of 3DS authentication attempts for the card. Null for account responses.
+      required:
+      - avg_transaction_amount
+      - stdev_transaction_amount
+      - approved_txn_count
+      - avg_transaction_amount_7d
+      - stdev_transaction_amount_7d
+      - approved_txn_count_7d
+      - avg_transaction_amount_30d
+      - stdev_transaction_amount_30d
+      - approved_txn_count_30d
+      - avg_transaction_amount_90d
+      - stdev_transaction_amount_90d
+      - approved_txn_count_90d
+      - is_first_transaction
+      - time_since_last_transaction_days
+      - three_ds_success_rate
+      - distinct_country_count
+      - distinct_mcc_count
+      - seen_countries
+      - seen_mccs
+      - seen_merchants
+      - first_txn_at
+      - last_txn_approved_at
+      - last_cp_country
+      - last_cp_postal_code
+      - last_cp_timestamp
+      - approved_txn_amount_m2
+      - approved_txn_amount_m2_7d
+      - approved_txn_amount_m2_30d
+      - approved_txn_amount_m2_90d
+      - three_ds_success_count
+      - three_ds_total_count
+    AccountSpendLimits:
+      properties:
+        available_spend_limit:
+          properties:
+            daily:
+              description: The available spend limit (in cents) relative to the daily limit configured on the Account (e.g. 100000 would be a $1,000 limit).
+              example: 100000
+              type: integer
+            lifetime:
+              description: The available spend limit (in cents) relative to the lifetime limit configured on the Account.
+              example: 300000
+              type: integer
+            monthly:
+              description: The available spend limit (in cents) relative to the monthly limit configured on the Account.
+              example: 200000
+              type: integer
+          type: object
+        spend_limit:
+          properties:
+            daily:
+              description: The configured daily spend limit (in cents) on the Account.
+              example: 500000
+              type: integer
+            lifetime:
+              description: The configured lifetime spend limit (in cents) on the Account.
+              example: 500000
+              type: integer
+            monthly:
+              description: The configured monthly spend limit (in cents) on the Account.
+              example: 500000
+              type: integer
+          type: object
+        spend_velocity:
+          properties:
+            daily:
+              description: Current daily spend velocity (in cents) on the Account. Present if daily spend limit is set.
+              example: 40000
+              type: integer
+            lifetime:
+              description: Current lifetime spend velocity (in cents) on the Account. Present if lifetime spend limit is set.
+              example: 20000
+              type: integer
+            monthly:
+              description: Current monthly spend velocity (in cents) on the Account. Present if monthly spend limit is set.
+              example: 30000
+              type: integer
+          type: object
+      required:
+      - available_spend_limit
+      type: object
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    components-responses-BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    responses-Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    components-responses-NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client is not authorized to call the endpoint
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    accountToken:
+      description: Globally unique identifier for account.
+      examples:
+        accountTokenExample:
+          summary: A sample account token
+          value: d86a0a4d-7459-471a-83b4-431136320828
+      in: path
+      name: account_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

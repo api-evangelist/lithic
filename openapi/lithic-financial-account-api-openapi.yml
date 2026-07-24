@@ -1,0 +1,3666 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Financial Account API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Financial Account
+paths:
+  /v1/financial_accounts:
+    get:
+      description: Retrieve information on your financial accounts including routing and account number.
+      operationId: getFinancialAccounts
+      parameters:
+      - description: List financial accounts for a given account_token or business_account_token
+        in: query
+        name: account_token
+        schema:
+          format: uuid
+          type: string
+      - description: List financial accounts for a given business_account_token
+        in: query
+        name: business_account_token
+        schema:
+          format: uuid
+          type: string
+      - description: List financial accounts of a given type
+        in: query
+        name: type
+        schema:
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          - EARLY_DIRECT_DEPOSIT_FLOAT
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-accounts-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List financial accounts
+      tags:
+      - Financial Account
+    post:
+      description: Create a new financial account
+      operationId: createFinancialAccount
+      parameters:
+      - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFinancialAccountRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create financial account
+      tags:
+      - Financial Account
+  /v1/financial_accounts/{financial_account_token}:
+    get:
+      description: Get a financial account
+      operationId: getFinancialAccountByToken
+      parameters:
+      - in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get financial account
+      tags:
+      - Financial Account
+    patch:
+      description: Update a financial account
+      operationId: updateFinancialAccountByToken
+      parameters:
+      - in: path
+        name: financial_account_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFinancialAccountRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update financial account
+      tags:
+      - Financial Account
+  /v1/financial_accounts/{financial_account_token}/credit_configuration:
+    get:
+      description: Get an Account's credit configuration
+      operationId: getAccountCreditConfiguration
+      parameters:
+      - $ref: '#/components/parameters/financialAccountToken'
+      summary: Get account credit configuration
+      tags:
+      - Financial Account
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-credit-config-response'
+    patch:
+      description: Update an account's credit configuration
+      operationId: patchAccountCreditConfiguration
+      summary: Update account credit configuration
+      tags:
+      - Financial Account
+      parameters:
+      - $ref: '#/components/parameters/financialAccountToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/financial-account-credit-config-request'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-credit-config-response'
+  /v1/financial_accounts/{financial_account_token}/financial_transactions:
+    get:
+      description: List the financial transactions for a given financial account.
+      operationId: getFinancialTransactions
+      parameters:
+      - description: Financial Transaction category to be returned.
+        in: query
+        name: category
+        schema:
+          enum:
+          - ACH
+          - CARD
+          - INTERNAL
+          - TRANSFER
+          type: string
+      - description: Financial Transaction result to be returned.
+        in: query
+        name: result
+        schema:
+          enum:
+          - APPROVED
+          - DECLINED
+          type: string
+      - description: Financial Transaction status to be returned.
+        in: query
+        name: status
+        schema:
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - RETURNED
+          - SETTLED
+          - VOIDED
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/financialAccountToken'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/financial-account-transaction'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List financial transactions
+      tags:
+      - Financial Account
+  /v1/financial_accounts/{financial_account_token}/financial_transactions/{financial_transaction_token}:
+    get:
+      description: Get the financial transaction for the provided token.
+      operationId: getFinancialTransactionByToken
+      parameters:
+      - $ref: '#/components/parameters/financialAccountToken'
+      - $ref: '#/components/parameters/financialTransactionToken'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-transaction'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get financial transaction
+      tags:
+      - Financial Account
+  /v1/financial_accounts/{financial_account_token}/register_account_number:
+    post:
+      description: Register account number
+      operationId: registerAccountNumber
+      parameters:
+      - $ref: '#/components/parameters/financialAccountToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/register_account_number_request'
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Register Account Number
+      tags:
+      - Financial Account
+  /v1/financial_accounts/{financial_account_token}/update_status:
+    post:
+      description: Update financial account status
+      operationId: updateFinancialAccountStatus
+      summary: Update financial account status
+      tags:
+      - Financial Account
+      parameters:
+      - $ref: '#/components/parameters/financialAccountToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-financial-account-status-request'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/financial-account-response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/account_activity:
+    get:
+      operationId: listAccountActivity
+      summary: List Account Activity
+      description: Retrieve a list of transactions across all public accounts.
+      parameters:
+      - name: status
+        in: query
+        description: Filter by transaction status
+        schema:
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - RETURNED
+          - REVERSED
+          - SETTLED
+          - VOIDED
+      - name: result
+        in: query
+        description: Filter by transaction result
+        schema:
+          enum:
+          - APPROVED
+          - DECLINED
+      - name: financial_account_token
+        in: query
+        description: Filter by financial account token
+        schema:
+          type: string
+          format: uuid
+      - name: business_account_token
+        in: query
+        description: Filter by business account token
+        schema:
+          type: string
+          format: uuid
+      - name: account_token
+        in: query
+        description: Filter by account token
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        description: Filter by transaction category
+        schema:
+          $ref: '#/components/schemas/transaction_category'
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          description: Successful response with unified transaction data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/base-transactions-response'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags:
+      - Financial Account
+  /v1/account_activity/{transaction_token}:
+    get:
+      operationId: getAccountActivity
+      summary: Get Single Transaction from Account Activity
+      description: Retrieve a single transaction
+      parameters:
+      - name: transaction_token
+        in: path
+        required: true
+        description: The unique identifier for the transaction
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Successful response with the requested account activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/base-transaction-response'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags:
+      - Financial Account
+components:
+  schemas:
+    base_transaction:
+      title: base_transaction
+      description: Base class for all transaction types in the ledger service
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/transaction_status'
+          description: The status of the transaction
+        token:
+          type: string
+          description: Unique identifier for the transaction
+          format: uuid
+        created:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was created
+          format: date-time
+        updated:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was last updated
+          format: date-time
+      required:
+      - status
+      - token
+      - created
+      - updated
+    hold_event:
+      title: Hold Event
+      description: Event representing a lifecycle change to a hold
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/hold_event_type'
+        result:
+          $ref: '#/components/schemas/transaction_result'
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/detailed_results'
+        amount:
+          type: integer
+          description: Amount in cents
+        created:
+          type: string
+          format: date-time
+        memo:
+          type:
+          - string
+          - 'null'
+        settling_transaction_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Transaction token of the payment that settled this hold (only populated for HOLD_SETTLED events)
+      required:
+      - token
+      - type
+      - result
+      - detailed_results
+      - amount
+      - created
+      - memo
+      - settling_transaction_token
+    financial-transaction:
+      title: Financial Transaction
+      description: Financial transaction with inheritance from unified base transaction
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: INTERNAL
+            description: INTERNAL - Financial Transaction
+          category:
+            $ref: '#/components/schemas/transaction_category'
+            description: Transaction category
+          result:
+            $ref: '#/components/schemas/transaction_result'
+            description: Transaction result
+          currency:
+            type: string
+            description: Currency of the transaction, represented in ISO 4217 format
+            example: USD
+          settled_amount:
+            type: integer
+            description: Settled amount in cents
+            example: 200
+          pending_amount:
+            type: integer
+            description: Pending amount in cents
+            example: 500
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/financial_event'
+            description: List of transaction events
+          descriptor:
+            type: string
+            description: Transaction descriptor
+          financial_account_token:
+            type: string
+            format: uuid
+            description: Financial account token associated with the transaction
+            example: 0cc87075-57cf-4607-8722-f42e2cb2c0cd
+        required:
+        - category
+        - currency
+        - family
+        - result
+        - settled_amount
+        - pending_amount
+        - events
+        - descriptor
+        - financial_account_token
+    service_location:
+      title: Service Location
+      description: Where the cardholder received the service, when different from the card acceptor location. This is populated from network data elements such as Mastercard DE-122 SE1 SF9-14 and Visa F34 DS02.
+      type: object
+      properties:
+        street_address:
+          description: Street address of service location.
+          type:
+          - string
+          - 'null'
+        city:
+          description: City of service location.
+          type:
+          - string
+          - 'null'
+        state:
+          description: State/province code of service location, ISO 3166-2.
+          type:
+          - string
+          - 'null'
+        country:
+          description: Country code of service location, ISO 3166-1 alpha-3.
+          type:
+          - string
+          - 'null'
+        postal_code:
+          description: Postal code of service location.
+          type:
+          - string
+          - 'null'
+      required:
+      - street_address
+      - city
+      - state
+      - country
+      - postal_code
+    financial-account-credit-config:
+      title: Financial Account Credit Config
+      type:
+      - object
+      - 'null'
+      properties:
+        credit_limit:
+          type:
+          - integer
+          - 'null'
+        external_bank_account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        credit_product_token:
+          type:
+          - string
+          - 'null'
+          description: Globally unique identifier for the credit product
+        tier:
+          type:
+          - string
+          - 'null'
+          description: Tier assigned to the financial account
+        auto_collection_configuration:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/auto-collection-configuration-response'
+      required:
+      - credit_limit
+      - external_bank_account_token
+      - credit_product_token
+      - tier
+      - auto_collection_configuration
+    pos_entry_mode:
+      title: Point of Sale Entry Mode
+      type: object
+      properties:
+        card:
+          type: string
+          enum:
+          - NOT_PRESENT
+          - PREAUTHORIZED
+          - PRESENT
+          - UNKNOWN
+          description: Card presence indicator
+        cardholder:
+          type: string
+          enum:
+          - DEFERRED_BILLING
+          - ELECTRONIC_ORDER
+          - INSTALLMENT
+          - MAIL_ORDER
+          - NOT_PRESENT
+          - PREAUTHORIZED
+          - PRESENT
+          - REOCCURRING
+          - TELEPHONE_ORDER
+          - UNKNOWN
+          description: Cardholder presence indicator
+        pan:
+          type: string
+          enum:
+          - AUTO_ENTRY
+          - BAR_CODE
+          - CONTACTLESS
+          - CREDENTIAL_ON_FILE
+          - ECOMMERCE
+          - ERROR_KEYED
+          - ERROR_MAGNETIC_STRIPE
+          - ICC
+          - KEY_ENTERED
+          - MAGNETIC_STRIPE
+          - MANUAL
+          - OCR
+          - SECURE_CARDLESS
+          - UNKNOWN
+          - UNSPECIFIED
+          description: Method of entry for the PAN
+        pin_entered:
+          type: boolean
+          description: Indicates whether the cardholder entered the PIN. True if the PIN was entered.
+      required:
+      - card
+      - cardholder
+      - pan
+      - pin_entered
+    book_transfer_type:
+      type: string
+      enum:
+      - ATM_BALANCE_INQUIRY
+      - ATM_WITHDRAWAL
+      - ATM_DECLINE
+      - INTERNATIONAL_ATM_WITHDRAWAL
+      - INACTIVITY
+      - STATEMENT
+      - MONTHLY
+      - QUARTERLY
+      - ANNUAL
+      - CUSTOMER_SERVICE
+      - ACCOUNT_MAINTENANCE
+      - ACCOUNT_ACTIVATION
+      - ACCOUNT_CLOSURE
+      - CARD_REPLACEMENT
+      - CARD_DELIVERY
+      - CARD_CREATE
+      - CURRENCY_CONVERSION
+      - INTEREST
+      - LATE_PAYMENT
+      - BILL_PAYMENT
+      - CASH_BACK
+      - ACCOUNT_TO_ACCOUNT
+      - CARD_TO_CARD
+      - DISBURSE
+      - BILLING_ERROR
+      - LOSS_WRITE_OFF
+      - EXPIRED_CARD
+      - EARLY_DERECOGNITION
+      - ESCHEATMENT
+      - INACTIVITY_FEE_DOWN
+      - PROVISIONAL_CREDIT
+      - DISPUTE_WON
+      - SERVICE
+      - TRANSFER
+      - COLLECTION
+      description: Type of the book transfer
+      title: Book Transfer Type
+    external_resource:
+      title: ExternalResource
+      type: object
+      required:
+      - external_resource_type
+      - external_resource_token
+      properties:
+        external_resource_type:
+          $ref: '#/components/schemas/external_resource_type'
+        external_resource_token:
+          type: string
+          description: Token identifying the external resource
+        external_resource_sub_token:
+          type: string
+          description: Token identifying the external resource sub-resource
+      description: External resource associated with the management operation
+      additionalProperties: false
+    external_payment_event:
+      title: External Payment Event
+      type: object
+      properties:
+        amount:
+          type: integer
+        type:
+          $ref: '#/components/schemas/external_payment_event_type'
+        result:
+          $ref: '#/components/schemas/transaction_result'
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/detailed_results'
+        created:
+          type: string
+          format: date-time
+        token:
+          type: string
+          format: uuid
+        memo:
+          type: string
+        effective_date:
+          type: string
+          format: date
+      required:
+      - amount
+      - type
+      - result
+      - detailed_results
+      - created
+      - token
+      - memo
+      - effective_date
+    payment_event:
+      title: Payment Event
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). Wire-related fields below are a preview. To learn more, contact your customer success manager.
+
+
+        Payment Event'
+      type: object
+      properties:
+        amount:
+          description: Amount of the financial event that has been settled in the currency's smallest unit (e.g., cents).
+          type: integer
+        created:
+          description: Date and time when the financial event occurred. UTC time zone.
+          type: string
+          format: date-time
+        detailed_results:
+          description: More detailed reasons for the event
+          type: array
+          items:
+            type: string
+            enum:
+            - APPROVED
+            - DECLINED
+            - FUNDS_INSUFFICIENT
+            - ACCOUNT_INVALID
+            - PROGRAM_TRANSACTION_LIMIT_EXCEEDED
+            - PROGRAM_DAILY_LIMIT_EXCEEDED
+            - PROGRAM_MONTHLY_LIMIT_EXCEEDED
+        result:
+          description: APPROVED financial events were successful while DECLINED financial events were declined by user, Lithic, or the network.
+          type: string
+          enum:
+          - APPROVED
+          - DECLINED
+        token:
+          description: Globally unique identifier.
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/payment_event_type'
+        external_id:
+          description: 'Payment event external ID. For ACH transactions, this is the ACH trace number.
+
+            For inbound wire transfers, this is the IMAD (Input Message Accountability Data).
+
+            '
+          type:
+          - string
+          - 'null'
+      required:
+      - amount
+      - created
+      - result
+      - token
+      - type
+    pos:
+      title: Point of Sale
+      type: object
+      properties:
+        entry_mode:
+          $ref: '#/components/schemas/pos_entry_mode'
+        terminal:
+          $ref: '#/components/schemas/pos_terminal'
+      required:
+      - entry_mode
+      - terminal
+    AchMethodAttributes:
+      type: object
+      properties:
+        sec_code:
+          type: string
+          enum:
+          - CCD
+          - PPD
+          - WEB
+          - TEL
+          - CIE
+          - CTX
+          description: SEC code for ACH transaction
+        return_reason_code:
+          type:
+          - string
+          - 'null'
+          description: Return reason code if the transaction was returned
+        ach_hold_period:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Number of days the ACH transaction is on hold
+        retries:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Number of retries attempted
+        company_id:
+          type:
+          - string
+          - 'null'
+          description: Company ID for the ACH transaction
+        receipt_routing_number:
+          type:
+          - string
+          - 'null'
+          description: Receipt routing number
+        trace_numbers:
+          type: array
+          items:
+            type: string
+          default: []
+          description: Trace numbers for the ACH transaction
+        addenda:
+          type:
+          - string
+          - 'null'
+          description: Addenda information
+        override_company_name:
+          type:
+          - string
+          - 'null'
+          maxLength: 512
+          description: Value to override the configured company name with. Can only be used if allowed to override
+      required:
+      - sec_code
+    tags:
+      title: Tags
+      description: Key-value pairs for tagging resources. Tags allow you to associate arbitrary metadata with a resource for your own purposes.
+      type: object
+      additionalProperties:
+        type: string
+      example:
+        risk-level: high
+    external_payment_category:
+      title: External Payment Category
+      type: string
+      enum:
+      - EXTERNAL_WIRE
+      - EXTERNAL_ACH
+      - EXTERNAL_CHECK
+      - EXTERNAL_FEDNOW
+      - EXTERNAL_RTP
+      - EXTERNAL_TRANSFER
+    CreateFinancialAccountRequest:
+      properties:
+        account_token:
+          format: uuid
+          title: Account token to create the new account under
+          type: string
+        nickname:
+          maxLength: 256
+          title: Nickname of the financial account
+          type: string
+        type:
+          enum:
+          - OPERATING
+          title: Account Type
+          type: string
+        is_for_benefit_of:
+          title: Is For Benefit Of
+          type: boolean
+      required:
+      - nickname
+      - type
+      title: CreateFinancialAccountRequest
+      type: object
+    external_payment_response:
+      title: External Payment Response
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: EXTERNAL_PAYMENT
+            description: EXTERNAL_PAYMENT - External Payment Response
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          category:
+            $ref: '#/components/schemas/external_payment_category'
+          settled_amount:
+            type: integer
+          pending_amount:
+            type: integer
+          currency:
+            type: string
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/external_payment_event'
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+          financial_account_token:
+            type: string
+            format: uuid
+          payment_type:
+            $ref: '#/components/schemas/external_payment_direction'
+      required:
+      - result
+      - category
+      - family
+      - settled_amount
+      - pending_amount
+      - currency
+      - events
+      - financial_account_token
+      - payment_type
+    network_specific_data:
+      title: Network Specific Data
+      type: object
+      properties:
+        mastercard:
+          $ref: '#/components/schemas/mastercard_network_specific_data'
+        visa:
+          $ref: '#/components/schemas/visa_network_specific_data'
+      required:
+      - mastercard
+      - visa
+    hold_status:
+      title: Hold Status
+      description: Status of a hold transaction
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - EXPIRED
+      - VOIDED
+    transaction_category:
+      title: Transaction Category
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). The WIRE category is a preview. To learn more, contact your customer success manager.'
+      type: string
+      enum:
+      - ACH
+      - WIRE
+      - BALANCE_OR_FUNDING
+      - FEE
+      - REWARD
+      - ADJUSTMENT
+      - DERECOGNITION
+      - DISPUTE
+      - CARD
+      - EXTERNAL_ACH
+      - EXTERNAL_CHECK
+      - EXTERNAL_FEDNOW
+      - EXTERNAL_RTP
+      - EXTERNAL_TRANSFER
+      - EXTERNAL_WIRE
+      - MANAGEMENT_ADJUSTMENT
+      - MANAGEMENT_DISPUTE
+      - MANAGEMENT_FEE
+      - MANAGEMENT_REWARD
+      - MANAGEMENT_DISBURSEMENT
+      - HOLD
+      - PROGRAM_FUNDING
+    financial-account-substatus:
+      title: Financial Account Substatus
+      description: Substatus for the financial account
+      type: string
+      enum:
+      - CHARGED_OFF_DELINQUENT
+      - CHARGED_OFF_FRAUD
+      - END_USER_REQUEST
+      - BANK_REQUEST
+      - DELINQUENT
+      - INTEREST_AND_FEES_PAUSED
+    currency:
+      description: 3-character alphabetic ISO 4217 currency
+      example: USD
+      title: Currency
+      type: string
+    update-financial-account-status-request:
+      title: Update financial account status request
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/financial-account-status'
+        substatus:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/update-financial-account-substatus'
+        user_defined_status:
+          type: string
+          description: User-defined status for the financial account
+          pattern: ^[A-Z0-9_ ]*$
+          maxLength: 100
+      required:
+      - status
+      - substatus
+      examples:
+      - status: CLOSED
+        substatus: END_USER_REQUEST
+    management_operation_event:
+      title: Management Operation Event
+      type: object
+      properties:
+        amount:
+          type: integer
+        type:
+          $ref: '#/components/schemas/management_operation_event_type'
+        subtype:
+          type:
+          - string
+          - 'null'
+        result:
+          $ref: '#/components/schemas/transaction_result'
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/detailed_results'
+        created:
+          type: string
+          format: date-time
+        token:
+          type: string
+          format: uuid
+        memo:
+          type: string
+        effective_date:
+          type: string
+          format: date
+      required:
+      - amount
+      - type
+      - result
+      - detailed_results
+      - created
+      - token
+      - memo
+      - effective_date
+    network_risk_score:
+      title: Network Risk Score
+      type:
+      - integer
+      - 'null'
+      description: Network-provided score assessing risk level associated with a given authorization. Scores are on a range of 0-999, with 0 representing the lowest risk and 999 representing the highest risk. For Visa transactions, where the raw score has a range of 0-99, Lithic will normalize the score by multiplying the raw score by 10x.
+    book-transfer-transaction:
+      title: Book Transfer Transaction
+      description: Book transfer transaction
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: TRANSFER
+            description: TRANSFER - Book Transfer Transaction
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          category:
+            $ref: '#/components/schemas/book_transfer_category'
+          currency:
+            type: string
+            description: 3-character alphabetic ISO 4217 code for the settling currency of the transaction
+            example: USD
+          settled_amount:
+            type: integer
+            description: Amount of the transaction that has been settled in the currency's smallest unit (e.g., cents)
+            example: 500
+          pending_amount:
+            type: integer
+            description: 'Pending amount of the transaction in the currency''s smallest unit (e.g., cents), including any acquirer fees.
+
+
+              The value of this field will go to zero over time once the financial transaction is settled.
+
+              '
+            example: 1000
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/book_transfer_event'
+            description: A list of all financial events that have modified this transfer
+          from_financial_account_token:
+            type: string
+            format: uuid
+            description: Globally unique identifier for the financial account or card that will send the funds. Accepted type dependent on the program's use case
+          to_financial_account_token:
+            type: string
+            format: uuid
+            description: Globally unique identifier for the financial account or card that will receive the funds. Accepted type dependent on the program's use case
+          external_id:
+            description: External ID defined by the customer
+            oneOf:
+            - type: string
+            - type: 'null'
+          transaction_series:
+            description: A series of transactions that are grouped together
+            oneOf:
+            - $ref: '#/components/schemas/transaction_series'
+            - type: 'null'
+          external_resource:
+            description: An external resource associated with the transfer
+            oneOf:
+            - $ref: '#/components/schemas/external_resource'
+            - type: 'null'
+        required:
+        - family
+        - result
+        - category
+        - currency
+        - settled_amount
+        - pending_amount
+        - events
+        - from_financial_account_token
+        - to_financial_account_token
+    wire_party_details:
+      title: Wire Party Details
+      type: object
+      properties:
+        name:
+          type:
+          - string
+          - 'null'
+          description: Name of the person or company
+        account_number:
+          type:
+          - string
+          - 'null'
+          description: Account number
+        agent_name:
+          type:
+          - string
+          - 'null'
+          description: Name of the financial institution
+        agent_id:
+          type:
+          - string
+          - 'null'
+          description: Routing number or BIC of the financial institution
+      required: []
+    WireMethodAttributes:
+      type: object
+      properties:
+        wire_network:
+          type: string
+          enum:
+          - FEDWIRE
+          - SWIFT
+          description: Type of wire transfer
+        wire_message_type:
+          type:
+          - string
+          - 'null'
+          description: Type of wire message
+        debtor:
+          $ref: '#/components/schemas/wire_party_details'
+        creditor:
+          $ref: '#/components/schemas/wire_party_details'
+        message_id:
+          type:
+          - string
+          - 'null'
+          description: Point to point reference identifier, as assigned by the instructing party, used for tracking the message through the Fedwire system
+        remittance_information:
+          type:
+          - string
+          - 'null'
+          description: Payment details or invoice reference
+      required:
+      - wire_network
+      - wire_message_type
+    card-transaction:
+      title: Card Transaction
+      description: Card transaction with ledger base properties
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - $ref: '#/components/schemas/card_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: CARD
+            description: CARD - Card Transaction
+        required:
+        - family
+    external_resource_type:
+      title: ExternalResourceType
+      type: string
+      enum:
+      - STATEMENT
+      - COLLECTION
+      - DISPUTE
+      - UNKNOWN
+      description: Type of external resource associated with the management operation
+    external_payment_event_type:
+      title: External Payment Event Type
+      type: string
+      enum:
+      - EXTERNAL_WIRE_INITIATED
+      - EXTERNAL_WIRE_CANCELED
+      - EXTERNAL_WIRE_SETTLED
+      - EXTERNAL_WIRE_REVERSED
+      - EXTERNAL_WIRE_RELEASED
+      - EXTERNAL_ACH_INITIATED
+      - EXTERNAL_ACH_CANCELED
+      - EXTERNAL_ACH_SETTLED
+      - EXTERNAL_ACH_REVERSED
+      - EXTERNAL_ACH_RELEASED
+      - EXTERNAL_TRANSFER_INITIATED
+      - EXTERNAL_TRANSFER_CANCELED
+      - EXTERNAL_TRANSFER_SETTLED
+      - EXTERNAL_TRANSFER_REVERSED
+      - EXTERNAL_TRANSFER_RELEASED
+      - EXTERNAL_CHECK_INITIATED
+      - EXTERNAL_CHECK_CANCELED
+      - EXTERNAL_CHECK_SETTLED
+      - EXTERNAL_CHECK_REVERSED
+      - EXTERNAL_CHECK_RELEASED
+      - EXTERNAL_FEDNOW_INITIATED
+      - EXTERNAL_FEDNOW_CANCELED
+      - EXTERNAL_FEDNOW_SETTLED
+      - EXTERNAL_FEDNOW_REVERSED
+      - EXTERNAL_FEDNOW_RELEASED
+      - EXTERNAL_RTP_INITIATED
+      - EXTERNAL_RTP_CANCELED
+      - EXTERNAL_RTP_SETTLED
+      - EXTERNAL_RTP_REVERSED
+      - EXTERNAL_RTP_RELEASED
+    financial_event_type:
+      title: Financial Event Type
+      type: string
+      enum:
+      - ACH_ORIGINATION_CANCELLED
+      - ACH_ORIGINATION_INITIATED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_REJECTED
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_PROCESSED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_SETTLED
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_REJECTED
+      - ACH_RETURN_SETTLED
+      - AUTHORIZATION
+      - AUTHORIZATION_ADVICE
+      - AUTHORIZATION_EXPIRY
+      - AUTHORIZATION_REVERSAL
+      - BALANCE_INQUIRY
+      - BILLING_ERROR
+      - BILLING_ERROR_REVERSAL
+      - CARD_TO_CARD
+      - CASH_BACK
+      - CASH_BACK_REVERSAL
+      - CLEARING
+      - COLLECTION
+      - CORRECTION_CREDIT
+      - CORRECTION_DEBIT
+      - CREDIT_AUTHORIZATION
+      - CREDIT_AUTHORIZATION_ADVICE
+      - CURRENCY_CONVERSION
+      - CURRENCY_CONVERSION_REVERSAL
+      - DISPUTE_WON
+      - EXTERNAL_ACH_CANCELED
+      - EXTERNAL_ACH_INITIATED
+      - EXTERNAL_ACH_RELEASED
+      - EXTERNAL_ACH_REVERSED
+      - EXTERNAL_ACH_SETTLED
+      - EXTERNAL_CHECK_CANCELED
+      - EXTERNAL_CHECK_INITIATED
+      - EXTERNAL_CHECK_RELEASED
+      - EXTERNAL_CHECK_REVERSED
+      - EXTERNAL_CHECK_SETTLED
+      - EXTERNAL_FEDNOW_CANCELED
+      - EXTERNAL_FEDNOW_INITIATED
+      - EXTERNAL_FEDNOW_RELEASED
+      - EXTERNAL_FEDNOW_REVERSED
+      - EXTERNAL_FEDNOW_SETTLED
+      - EXTERNAL_RTP_CANCELED
+      - EXTERNAL_RTP_INITIATED
+      - EXTERNAL_RTP_RELEASED
+      - EXTERNAL_RTP_REVERSED
+      - EXTERNAL_RTP_SETTLED
+      - EXTERNAL_TRANSFER_CANCELED
+      - EXTERNAL_TRANSFER_INITIATED
+      - EXTERNAL_TRANSFER_RELEASED
+      - EXTERNAL_TRANSFER_REVERSED
+      - EXTERNAL_TRANSFER_SETTLED
+      - EXTERNAL_WIRE_CANCELED
+      - EXTERNAL_WIRE_INITIATED
+      - EXTERNAL_WIRE_RELEASED
+      - EXTERNAL_WIRE_REVERSED
+      - EXTERNAL_WIRE_SETTLED
+      - FINANCIAL_AUTHORIZATION
+      - FINANCIAL_CREDIT_AUTHORIZATION
+      - INTEREST
+      - INTEREST_REVERSAL
+      - INTERNAL_ADJUSTMENT
+      - LATE_PAYMENT
+      - LATE_PAYMENT_REVERSAL
+      - LOSS_WRITE_OFF
+      - PROVISIONAL_CREDIT
+      - PROVISIONAL_CREDIT_REVERSAL
+      - SERVICE
+      - RETURN
+      - RETURN_REVERSAL
+      - TRANSFER
+      - TRANSFER_INSUFFICIENT_FUNDS
+      - RETURNED_PAYMENT
+      - RETURNED_PAYMENT_REVERSAL
+      - LITHIC_NETWORK_PAYMENT
+      - ANNUAL
+      - ANNUAL_REVERSAL
+      - QUARTERLY
+      - QUARTERLY_REVERSAL
+      - MONTHLY
+      - MONTHLY_REVERSAL
+    base-transaction-response:
+      title: Transaction Response
+      description: 'Response containing multiple transaction types. The `family` field determines which transaction type is returned: INTERNAL returns FinancialTransaction, TRANSFER returns BookTransferTransaction, CARD returns CardTransaction, PAYMENT returns PaymentTransaction, EXTERNAL_PAYMENT returns ExternalPaymentResponse, MANAGEMENT_OPERATION returns ManagementOperationTransaction, and HOLD returns HoldTransaction'
+      discriminator:
+        propertyName: family
+        mapping:
+          INTERNAL: '#/components/schemas/financial-transaction'
+          TRANSFER: '#/components/schemas/book-transfer-transaction'
+          CARD: '#/components/schemas/card-transaction'
+          PAYMENT: '#/components/schemas/payment-transaction'
+          EXTERNAL_PAYMENT: '#/components/schemas/external_payment_response'
+          MANAGEMENT_OPERATION: '#/components/schemas/management_operation_transaction'
+          HOLD: '#/components/schemas/hold_transaction'
+      oneOf:
+      - $ref: '#/components/schemas/financial-transaction'
+      - $ref: '#/components/schemas/book-transfer-transaction'
+      - $ref: '#/components/schemas/card-transaction'
+      - $ref: '#/components/schemas/payment-transaction'
+      - $ref: '#/components/schemas/external_payment_response'
+      - $ref: '#/components/schemas/management_operation_transaction'
+      - $ref: '#/components/schemas/hold_transaction'
+    detailed_results:
+      title: Detailed Results
+      type: string
+      enum:
+      - APPROVED
+      - INSUFFICIENT_FUNDS
+    financial_event:
+      title: Financial Event
+      description: Financial Event
+      type: object
+      properties:
+        amount:
+          description: Amount of the financial event that has been settled in the currency's smallest unit (e.g., cents).
+          type: integer
+        created:
+          description: Date and time when the financial event occurred. UTC time zone.
+          type: string
+          format: date-time
+        result:
+          description: APPROVED financial events were successful while DECLINED financial events were declined by user, Lithic, or the network.
+          type: string
+          enum:
+          - APPROVED
+          - DECLINED
+        token:
+          description: Globally unique identifier.
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/financial_event_type'
+    pos_terminal:
+      title: Point of Sale Terminal
+      type: object
+      properties:
+        attended:
+          description: True if a clerk is present at the sale.
+          type: boolean
+        card_retention_capable:
+          description: True if the terminal is capable of retaining the card.
+          type: boolean
+        on_premise:
+          description: True if the sale was made at the place of business (vs. mobile).
+          type: boolean
+        operator:
+          description: The person that is designated to swipe the card
+          enum:
+          - ADMINISTRATIVE
+          - CARDHOLDER
+          - CARD_ACCEPTOR
+          - UNKNOWN
+          type: string
+        partial_approval_capable:
+          type: boolean
+          description: 'True if the terminal is capable of partial approval. Partial approval is when part of a transaction is approved and another payment must be used for the remainder. Example scenario: A $40 transaction is attempted on a prepaid card with a $25 balance. If partial approval is enabled, $25 can be authorized, at which point the POS will prompt the user for an additional payment of $15.'
+        pin_capability:
+          description: Status of whether the POS is able to accept PINs
+          enum:
+          - CAPABLE
+          - INOPERATIVE
+          - NOT_CAPABLE
+          - UNSPECIFIED
+          type: string
+        acceptor_terminal_id:
+          description: Uniquely identifies a terminal at the card acceptor location of acquiring institutions or merchant POS Systems
+          type:
+          - string
+          - 'null'
+        type:
+          description: POS Type
+          enum:
+          - ADMINISTRATIVE
+          - ATM
+          - AUTHORIZATION
+          - COUPON_MACHINE
+          - DIAL_TERMINAL
+          - ECOMMERCE
+          - ECR
+          - FUEL_MACHINE
+          - HOME_TERMINAL
+          - MICR
+          - OFF_PREMISE
+          - PAYMENT
+          - PDA
+          - PHONE
+          - POINT
+          - POS_TERMINAL
+          - PUBLIC_UTILITY
+          - SELF_SERVICE
+          - TELEVISION
+          - TELLER
+          - TRAVELERS_CHECK_MACHINE
+          - VENDING
+          - VOICE
+          - UNKNOWN
+          type: string
+      required:
+      - attended
+      - card_retention_capable
+      - on_premise
+      - operator
+      - partial_approval_capable
+      - pin_capability
+      - type
+    transaction_amounts:
+      title: Transaction Amounts
+      type: object
+      properties:
+        cardholder:
+          properties:
+            amount:
+              description: The estimated settled amount of the transaction in the cardholder billing currency.
+              type: integer
+              example: -1000
+            conversion_rate:
+              description: The exchange rate used to convert the merchant amount to the cardholder billing amount.
+              type: string
+              example: '1.000000'
+            currency:
+              $ref: '#/components/schemas/currency'
+          type: object
+          required:
+          - amount
+          - conversion_rate
+          - currency
+        hold:
+          properties:
+            amount:
+              description: The pending amount of the transaction in the anticipated settlement currency.
+              type: integer
+              example: 0
+            currency:
+              $ref: '#/components/schemas/currency'
+          type: object
+          required:
+          - amount
+          - currency
+        merchant:
+          properties:
+            amount:
+              description: The settled amount of the transaction in the merchant currency.
+              type: integer
+              example: -1000
+            currency:
+              $ref: '#/components/schemas/currency'
+          type: object
+          required:
+          - amount
+          - currency
+        settlement:
+          properties:
+            amount:
+              description: The settled amount of the transaction in the settlement currency.
+              type: integer
+              example: -1000
+            currency:
+              $ref: '#/components/schemas/currency'
+          type: object
+          required:
+          - amount
+          - currency
+      required:
+      - cardholder
+      - hold
+      - merchant
+      - settlement
+    visa_network_specific_data:
+      title: Visa Network Specific Data
+      type: object
+      properties:
+        business_application_identifier:
+          oneOf:
+          - type: 'null'
+            description: Business application identifier not available.
+          - type: string
+            description: Identifies the purpose or category of a transaction, used to classify and process transactions according to Visa’s rules.
+            minLength: 2
+            maxLength: 2
+      required:
+      - business_application_identifier
+    account-financial-account-type:
+      title: Account Financial Account Type
+      description: Type of account financial account
+      type: string
+      enum:
+      - ISSUING
+      - OPERATING
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    book_transfer_event:
+      title: Book Transfer Event
+      description: Book transfer Event
+      type: object
+      properties:
+        amount:
+          description: Amount of the financial event that has been settled in the currency's smallest unit (e.g., cents).
+          type: integer
+        type:
+          $ref: '#/components/schemas/book_transfer_type'
+        result:
+          description: APPROVED financial events were successful while DECLINED financial events were declined by user, Lithic, or the network.
+          type: string
+          enum:
+          - APPROVED
+          - DECLINED
+        created:
+          description: Date and time when the financial event occurred. UTC time zone.
+          type: string
+          format: date-time
+        token:
+          description: Globally unique identifier.
+          type: string
+          format: uuid
+        subtype:
+          description: The program specific subtype code for the specified category/type.
+          type: string
+        memo:
+          description: Memo for the transfer.
+          type: string
+        detailed_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/book_transfer_detailed_results'
+      required:
+      - amount
+      - type
+      - result
+      - created
+      - token
+      - subtype
+      - memo
+      - detailed_results
+    payment-transaction:
+      title: Payment Transaction
+      description: Payment transaction
+      definitions:
+        AchMethodAttributes:
+          type: object
+          properties:
+            sec_code:
+              type: string
+              enum:
+              - CCD
+              - PPD
+              - WEB
+              - TEL
+              - CIE
+              - CTX
+              description: SEC code for ACH transaction
+            return_reason_code:
+              type:
+              - string
+              - 'null'
+              description: Return reason code if the transaction was returned
+            ach_hold_period:
+              type:
+              - integer
+              - 'null'
+              minimum: 0
+              description: Number of days the ACH transaction is on hold
+            retries:
+              type:
+              - integer
+              - 'null'
+              minimum: 0
+              description: Number of retries attempted
+            company_id:
+              type:
+              - string
+              - 'null'
+              description: Company ID for the ACH transaction
+            receipt_routing_number:
+              type:
+              - string
+              - 'null'
+              description: Receipt routing number
+            trace_numbers:
+              type: array
+              items:
+                type: string
+              default: []
+              description: Trace numbers for the ACH transaction
+            addenda:
+              type:
+              - string
+              - 'null'
+              description: Addenda information
+            override_company_name:
+              type:
+              - string
+              - 'null'
+              maxLength: 512
+              description: Value to override the configured company name with. Can only be used if allowed to override
+          required:
+          - sec_code
+        WireMethodAttributes:
+          type: object
+          properties:
+            wire_network:
+              type: string
+              enum:
+              - FEDWIRE
+              - SWIFT
+              description: Type of wire transfer
+            wire_message_type:
+              type:
+              - string
+              - 'null'
+              description: Type of wire message
+            debtor:
+              $ref: '#/components/schemas/wire_party_details'
+            creditor:
+              $ref: '#/components/schemas/wire_party_details'
+            message_id:
+              type:
+              - string
+              - 'null'
+              description: Point to point reference identifier, as assigned by the instructing party, used for tracking the message through the Fedwire system
+            remittance_information:
+              type:
+              - string
+              - 'null'
+              description: Payment details or invoice reference
+          required:
+          - wire_network
+          - wire_message_type
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: PAYMENT
+            description: PAYMENT - Payment Transaction
+          category:
+            $ref: '#/components/schemas/transaction_category'
+            description: Transaction category
+          currency:
+            type: string
+            description: Currency of the transaction in ISO 4217 format
+            example: USD
+          result:
+            $ref: '#/components/schemas/transaction_result'
+            description: Transaction result
+          method_attributes:
+            oneOf:
+            - $ref: '#/components/schemas/AchMethodAttributes'
+            - $ref: '#/components/schemas/WireMethodAttributes'
+            description: Method-specific attributes
+          financial_account_token:
+            type: string
+            format: uuid
+            description: Financial account token
+          external_bank_account_token:
+            type:
+            - string
+            - 'null'
+            format: uuid
+            description: External bank account token
+          direction:
+            type: string
+            enum:
+            - CREDIT
+            - DEBIT
+            description: Transfer direction
+          source:
+            type: string
+            enum:
+            - LITHIC
+            - EXTERNAL
+            - CUSTOMER
+            description: Transaction source
+          method:
+            type: string
+            enum:
+            - ACH_NEXT_DAY
+            - ACH_SAME_DAY
+            - WIRE
+            description: Transfer method
+          settled_amount:
+            type: integer
+            description: Settled amount in cents
+            example: 500
+          pending_amount:
+            type: integer
+            description: Pending amount in cents
+            example: 200
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/payment_event'
+            description: List of transaction events
+          descriptor:
+            type: string
+            description: Transaction descriptor
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+            description: User-defined identifier
+          expected_release_date:
+            type:
+            - string
+            - 'null'
+            format: date
+            description: Expected release date for the transaction
+          related_account_tokens:
+            oneOf:
+            - $ref: '#/components/schemas/related_account_tokens'
+            - type: 'null'
+            description: Related account tokens for the transaction
+          type:
+            $ref: '#/components/schemas/transfer_type'
+        required:
+        - category
+        - result
+        - method_attributes
+        - family
+        - financial_account_token
+        - direction
+        - source
+        - method
+        - settled_amount
+        - pending_amount
+        - events
+        - descriptor
+        - related_account_tokens
+      examples:
+      - family: PAYMENT
+        status: PENDING
+        token: bd4efddb-771b-49e3-9af9-49b077ab5eb8
+        created: '2025-10-27T20:12:22Z'
+        updated: '2025-10-27T20:12:25Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 1
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: null
+          trace_numbers: []
+          addenda: null
+        financial_account_token: 35b0c466-a3e3-519a-9549-ead6a6a2277d
+        external_bank_account_token: feb4fee1-2414-4c38-a5f6-9deac293c8f4
+        direction: CREDIT
+        source: LITHIC
+        method: ACH_NEXT_DAY
+        settled_amount: 0
+        pending_amount: -1588
+        currency: USD
+        events:
+        - amount: -1588
+          type: ACH_ORIGINATION_INITIATED
+          result: APPROVED
+          created: '2025-10-27T20:12:22Z'
+          token: 327dccc3-fe42-54d2-962c-7f8135805464
+          detailed_results:
+          - APPROVED
+        - amount: -1588
+          type: ACH_ORIGINATION_REVIEWED
+          result: APPROVED
+          created: '2025-10-27T20:12:25Z'
+          token: f9165477-7cfc-53c6-98f1-84e9ec856a60
+          detailed_results:
+          - APPROVED
+        descriptor: ach_origination_credit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens: null
+        type: ORIGINATION_CREDIT
+      - family: PAYMENT
+        status: PENDING
+        token: cb35759d-8c18-4b7f-bb91-7c37936662c2
+        created: '2025-10-27T20:12:15Z'
+        updated: '2025-10-27T20:12:18Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 2
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: null
+          trace_numbers: []
+          addenda: null
+        financial_account_token: f012262b-d18f-5c26-ad63-a09a11e633a6
+        external_bank_account_token: feb4fee1-2414-4c38-a5f6-9deac293c8f4
+        direction: DEBIT
+        source: LITHIC
+        method: ACH_NEXT_DAY
+        settled_amount: 0
+        pending_amount: 1588
+        currency: USD
+        events:
+        - amount: 1588
+          type: ACH_ORIGINATION_INITIATED
+          result: APPROVED
+          created: '2025-10-27T20:12:15Z'
+          token: 38dc6bc5-d18f-594e-9ab9-ef1cfdcfbf82
+          detailed_results:
+          - APPROVED
+        - amount: 1588
+          type: ACH_ORIGINATION_REVIEWED
+          result: APPROVED
+          created: '2025-10-27T20:12:18Z'
+          token: e466f34a-d648-5a8f-8bc7-1d4d1e703db3
+          detailed_results:
+          - APPROVED
+        descriptor: ach_origination_debit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens:
+          business_account_token: null
+          account_token: d11bca22-39e2-475c-bbb3-6ba21e38b0d3
+        type: ORIGINATION_DEBIT
+      - family: PAYMENT
+        status: SETTLED
+        token: dd72f435-9633-46f3-b871-47d4af684654
+        created: '2024-10-08T21:39:27Z'
+        updated: '2024-10-08T21:39:28Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 2
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: '1234567890'
+          trace_numbers:
+          - '316779406684861'
+          addenda: null
+        financial_account_token: 0d6b1b9f-b90f-5f03-9c45-8930d5a6aac0
+        external_bank_account_token: null
+        direction: DEBIT
+        source: LITHIC
+        method: ACH_SAME_DAY
+        settled_amount: 1000
+        pending_amount: 0
+        currency: USD
+        events:
+        - amount: 1000
+          type: ACH_RECEIPT_PROCESSED
+          result: APPROVED
+          created: '2024-10-08T21:39:27Z'
+          token: 99ff8ea0-2355-57fc-aa9d-0e953f64ba4f
+          detailed_results:
+          - APPROVED
+        - amount: 1000
+          type: ACH_RECEIPT_SETTLED
+          result: APPROVED
+          created: '2024-10-08T21:39:28Z'
+          token: 33d0ae98-310c-5b50-a012-1bcd8edb9254
+          detailed_results:
+          - APPROVED
+        descriptor: ach_receipt_credit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens: null
+        type: RECEIPT_CREDIT
+    payment_event_type:
+      title: Payment Event Type
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). Wire-related event types below are a preview. To learn more, contact your customer success manager.
+
+
+        Event types:
+
+
+        ACH events:
+
+        * `ACH_ORIGINATION_INITIATED` - ACH origination received and pending approval/release from an ACH hold.
+
+        * `ACH_ORIGINATION_REVIEWED` - ACH origination has completed the review process.
+
+        * `ACH_ORIGINATION_CANCELLED` - ACH origination has been cancelled.
+
+        * `ACH_ORIGINATION_PROCESSED` - ACH origination has been processed and sent to the Federal Reserve.
+
+        * `ACH_ORIGINATION_SETTLED` - ACH origination has settled.
+
+        * `ACH_ORIGINATION_RELEASED` - ACH origination released from pending to available balance.
+
+        * `ACH_ORIGINATION_REJECTED` - ACH origination was rejected and not sent to the Federal Reserve.
+
+        * `ACH_RECEIPT_PROCESSED` - ACH receipt pending release from an ACH holder.
+
+        * `ACH_RECEIPT_SETTLED` - ACH receipt funds have settled.
+
+        * `ACH_RECEIPT_RELEASED` - ACH receipt released from pending to available balance.
+
+        * `ACH_RECEIPT_RELEASED_EARLY` - ACH receipt released early from pending to available balance.
+
+        * `ACH_RETURN_INITIATED` - ACH initiated return for an ACH receipt.
+
+        * `ACH_RETURN_PROCESSED` - ACH receipt returned by the Receiving Depository Financial Institution.
+
+        * `ACH_RETURN_SETTLED` - ACH return settled by the Receiving Depository Financial Institution.
+
+        * `ACH_RETURN_REJECTED` - ACH return was rejected by the Receiving Depository Financial Institution.
+
+
+        Wire transfer events:
+
+        * `WIRE_TRANSFER_INBOUND_RECEIVED` - Inbound wire transfer received from the Federal Reserve and pending release to available balance.
+
+        * `WIRE_TRANSFER_INBOUND_SETTLED` - Inbound wire transfer funds released from pending to available balance.
+
+        * `WIRE_TRANSFER_INBOUND_BLOCKED` - Inbound wire transfer blocked and funds frozen for regulatory review.
+
+
+        Wire return events:
+
+        * `WIRE_RETURN_OUTBOUND_INITIATED` - Outbound wire return initiated to return funds from an inbound wire transfer.
+
+        * `WIRE_RETURN_OUTBOUND_SENT` - Outbound wire return sent to the Federal Reserve and pending acceptance.
+
+        * `WIRE_RETURN_OUTBOUND_SETTLED` - Outbound wire return accepted by the Federal Reserve and funds returned to sender.
+
+        * `WIRE_RETURN_OUTBOUND_REJECTED` - Outbound wire return rejected by the Federal Reserve.'
+      type: string
+      enum:
+      - ACH_ORIGINATION_CANCELLED
+      - ACH_ORIGINATION_INITIATED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_REJECTED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_PROCESSED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_RELEASED_EARLY
+      - ACH_RECEIPT_SETTLED
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_REJECTED
+      - ACH_RETURN_SETTLED
+      - WIRE_TRANSFER_INBOUND_RECEIVED
+      - WIRE_TRANSFER_INBOUND_SETTLED
+      - WIRE_TRANSFER_INBOUND_BLOCKED
+      - WIRE_RETURN_OUTBOUND_INITIATED
+      - WIRE_RETURN_OUTBOUND_SENT
+      - WIRE_RETURN_OUTBOUND_SETTLED
+      - WIRE_RETURN_OUTBOUND_REJECTED
+    decline_result:
+      example: APPROVED
+      title: Result of the transaction
+      type: string
+      enum:
+      - ACCOUNT_PAUSED
+      - ACCOUNT_STATE_TRANSACTION_FAIL
+      - APPROVED
+      - BANK_CONNECTION_ERROR
+      - BANK_NOT_VERIFIED
+      - CARD_CLOSED
+      - CARD_PAUSED
+      - DECLINED
+      - FRAUD_ADVICE
+      - IGNORED_TTL_EXPIRY
+      - SUSPECTED_FRAUD
+      - INACTIVE_ACCOUNT
+      - INCORRECT_PIN
+      - INVALID_CARD_DETAILS
+      - INSUFFICIENT_FUNDS
+      - INSUFFICIENT_FUNDS_PRELOAD
+      - INVALID_TRANSACTION
+      - MERCHANT_BLACKLIST
+      - ORIGINAL_NOT_FOUND
+      - PREVIOUSLY_COMPLETED
+      - SINGLE_USE_RECHARGED
+      - SWITCH_INOPERATIVE_ADVICE
+      - UNAUTHORIZED_MERCHANT
+      - UNKNOWN_HOST_TIMEOUT
+      - USER_TRANSACTION_LIMIT
+    merchant:
+      title: Merchant
+      type: object
+      properties:
+        acceptor_id:
+          description: Unique alphanumeric identifier for the payment card acceptor (merchant).
+          example: '333301802529120'
+          type: string
+        acquiring_institution_id:
+          description: Unique numeric identifier of the acquiring institution.
+          example: '191231'
+          type: string
+        city:
+          description: City of card acceptor. Note that in many cases, particularly in card-not-present transactions, merchants may send through a phone number or URL in this field.
+          example: NEW YORK
+          type: string
+        country:
+          description: 'Country or entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.'
+          example: USA
+          type: string
+        descriptor:
+          description: Short description of card acceptor.
+          example: COFFEE SHOP
+          type: string
+        mcc:
+          description: Merchant category code (MCC). A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+          example: '5812'
+          type: string
+        state:
+          description: Geographic state of card acceptor.
+          example: NY
+          type: string
+      required:
+      - acceptor_id
+      - acquiring_institution_id
+      - city
+      - country
+      - descriptor
+      - mcc
+      - state
+    transaction_event:
+      title: Transaction Event
+      type: object
+      properties:
+        account_type:
+          $ref: '#/components/schemas/account_type'
+        amount:
+          description: Amount of the event in the settlement currency.
+          example: 1000
+          type: integer
+          deprecated: true
+        amounts:
+          $ref: '#/components/schemas/transaction_event_amounts'
+        created:
+          description: RFC 3339 date and time this event entered the system. UTC time zone.
+          example: '2023-09-26T21:14:28.637Z'
+          format: date-time
+          type: string
+        network_info:
+          $ref: '#/components/schemas/network_info'
+        network_specific_data:
+          $ref: '#/components/schemas/network_specific_data'
+        detailed_results:
+          items:
+            $ref: '#/components/schemas/detailed_result'
+          type: array
+        rule_results:
+          items:
+            $ref: '#/components/schemas/rule_result'
+          type: array
+        effective_polarity:
+          description: Indicates whether the transaction event is a credit or debit to the account.
+          example: DEBIT
+          enum:
+          - CREDIT
+          - DEBIT
+          type: string
+        result:
+          $ref: '#/components/schemas/decline_result'
+        token:
+          description: Transaction event identifier.
+          example: 0c2adae9-f535-4505-8c35-421dad9bd0b6
+          format: uuid
+          type: string
+        type:
+          description: Type of transaction event
+          example: CLEARING
+          enum:
+          - AUTHORIZATION
+          - AUTHORIZATION_ADVICE
+          - AUTHORIZATION_EXPIRY
+          - AUTHORIZATION_REVERSAL
+          - BALANCE_INQUIRY
+          - CLEARING
+          - CORRECTION_CREDIT
+          - CORRECTION_DEBIT
+          - CREDIT_AUTHORIZATION
+          - CREDIT_AUTHORIZATION_ADVICE
+          - FINANCIAL_AUTHORIZATION
+          - FINANCIAL_CREDIT_AUTHORIZATION
+          - RETURN
+          - RETURN_REVERSAL
+          type: string
+      required:
+      - amount
+      - amounts
+      - created
+      - detailed_results
+      - effective_polarity
+      - result
+      - token
+      - type
+      - rule_results
+      - network_info
+    register_account_number_request:
+      title: Register Account Number Request
+      type: object
+      properties:
+        account_number:
+          type: string
+      required:
+      - account_number
+    hold_event_type:
+      title: Hold Event Type
+      description: Type of hold lifecycle event
+      type: string
+      enum:
+      - HOLD_INITIATED
+      - HOLD_VOIDED
+      - HOLD_EXPIRED
+      - HOLD_SETTLED
+    financial-account-status:
+      title: Financial Account Status
+      description: Status of the financial account
+      type: string
+      enum:
+      - OPEN
+      - CLOSED
+      - SUSPENDED
+      - PENDING
+    card_transaction:
+      title: Card Transaction
+      type: object
+      properties:
+        acquirer_fee:
+          description: Fee assessed by the merchant and paid for by the cardholder in the smallest unit of the currency. Will be zero if no fee is assessed. Rebates may be transmitted as a negative value to indicate credited fees.
+          example: 0
+          type:
+          - integer
+          - 'null'
+        acquirer_reference_number:
+          description: Unique identifier assigned to a transaction by the acquirer that can be used in dispute and chargeback filing. This field has been deprecated in favor of the `acquirer_reference_number` that resides in the event-level `network_info`.
+          example: '12345678987654321234567'
+          maxLength: 23
+          minLength: 23
+          type:
+          - string
+          - 'null'
+          deprecated: true
+        account_token:
+          description: The token for the account associated with this transaction.
+          example: bd5e5649-1be8-4117-9bc5-3268258d1417
+          format: uuid
+          type: string
+        amount:
+          description: When the transaction is pending, this represents the authorization amount of the transaction in the anticipated settlement currency. Once the transaction has settled, this field represents the settled amount in the settlement currency.
+          example: 1000
+          type: integer
+          deprecated: true
+        amounts:
+          $ref: '#/components/schemas/transaction_amounts'
+        authorization_amount:
+          description: The authorization amount of the transaction in the anticipated settlement currency.
+          example: 1000
+          type:
+          - integer
+          - 'null'
+          deprecated: true
+        authorization_code:
+          description: A fixed-width 6-digit numeric identifier that can be used to identify a transaction with networks.
+          example: '123456'
+          maxLength: 6
+          minLength: 6
+          type:
+          - string
+          - 'null'
+        avs:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/avs'
+        card_token:
+          description: Token for the card used in this transaction.
+          example: 19c22c47-7a75-43ee-9891-595419830f7e
+          format: uuid
+          type: string
+        cardholder_authentication:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/cardholder_authentication'
+        created:
+          description: Date and time when the transaction first occurred. UTC time zone.
+          example: '2023-09-26T21:14:28.637Z'
+          format: date-time
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/transaction_event'
+          type: array
+        financial_account_token:
+          oneOf:
+          - type: 'null'
+          - format: uuid
+            type: string
+        merchant:
+          $ref: '#/components/schemas/transaction_merchant'
+        service_location:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/service_location'
+        merchant_amount:
+          description: Analogous to the 'amount', but in the merchant currency.
+          example: 1000
+          type:
+          - integer
+          - 'null'
+          deprecated: true
+        merchant_authorization_amount:
+          description: Analogous to the 'authorization_amount', but in the merchant currency.
+          example: 1000
+          type:
+          - integer
+          - 'null'
+          deprecated: true
+        merchant_currency:
+          deprecated: true
+          $ref: '#/components/schemas/merchant_currency'
+        network:
+          description: Card network of the authorization. Value is `UNKNOWN` when Lithic cannot determine the network code from the upstream provider.
+          enum:
+          - AMEX
+          - INTERLINK
+          - MAESTRO
+          - MASTERCARD
+          - UNKNOWN
+          - VISA
+          example: MASTERCARD
+          type:
+          - string
+          - 'null'
+        network_risk_score:
+          $ref: '#/components/schemas/network_risk_score'
+        result:
+          $ref: '#/components/schemas/decline_result'
+        pos:
+          $ref: '#/components/schemas/pos'
+        settled_amount:
+          title: Settled Amount
+          description: The settled amount of the transaction in the settlement currency.
+          type: integer
+          example: 1000
+          deprecated: true
+        status:
+          description: Status of the transaction.
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - SETTLED
+          - VOIDED
+          example: SETTLED
+          type: string
+        token:
+          description: Globally unique identifier.
+          format: uuid
+          type: string
+        token_info:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/token_info'
+        tags:
+          $ref: '#/components/schemas/tags'
+        updated:
+          description: Date and time when the transaction last updated. UTC time zone.
+          example: '2023-09-26T21:14:28.637Z'
+          format: date-time
+          type: string
+      required:
+      - acquirer_fee
+      - acquirer_reference_number
+      - account_token
+      - amount
+      - amounts
+      - authorization_amount
+      - authorization_code
+      - avs
+      - card_token
+      - cardholder_authentication
+      - created
+      - financial_account_token
+      - merchant_amount
+      - merchant_authorization_amount
+      - merchant_currency
+      - merchant
+      - service_location
+      - network
+      - network_risk_score
+      - result
+      - pos
+      - settled_amount
+      - status
+      - tags
+      - token
+      - token_info
+      - updated
+      examples:
+      - account_token: db3942f0-0627-4887-a190-1ea83b46d091
+        acquirer_fee: 0
+        acquirer_reference_number: null
+        amount: 1800
+        amounts:
+          cardholder:
+            amount: 0
+            conversion_rate: '1.000000'
+            currency: USD
+          hold:
+            amount: -1800
+            currency: USD
+          merchant:
+            amount: 0
+            currency: USD
+          settlement:
+            amount: 0
+            currency: USD
+        authorization_amount: 1800
+        authorization_code: '071471'
+        avs:
+          zipcode: '95006'
+          address: 123 Evergreen Terrace
+        card_token: aac502f9-aecc-458a-954e-4bcf6edb6123
+        cardholder_authentication:
+          liability_shift: 3DS_AUTHENTICATED
+          authentication_result: SUCCESS
+          authentication_method: FRICTIONLESS
+          three_ds_authentication_token: fc60d37d-95f7-419c-b628-dd9fbf9d80d0
+          decision_made_by: NETWORK
+        created: '2023-08-03T18:42:30Z'
+        events:
+        - amount: 1800
+          amounts:
+            cardholder:
+              amount: 1800
+              conversion_rate: '1.000000'
+              currency: USD
+            merchant:
+              amount: 1800
+              currency: USD
+            settlement: null
+          created: '2023-08-03T18:42:30Z'
+          detailed_results:
+          - APPROVED
+          effective_polarity: DEBIT
+          network_info:
+            acquirer:
+              acquirer_reference_number: null
+              retrieval_reference_number: 064386558597
+            amex: null
+            mastercard:
+              banknet_reference_number: U1HSCJ
+              switch_serial_number: null
+              original_banknet_reference_number: null
+              original_switch_serial_number: null
+            visa: null
+          result: APPROVED
+          rule_results: []
+          token: bbbf1e86-322d-11ee-9779-00505685a123
+          type: AUTHORIZATION
+        financial_account_token: a3b113e8-01fe-42d3-b900-b9adf3f15496
+        merchant:
+          acceptor_id: '452322000053360'
+          acquiring_institution_id: '333301802529120'
+          city: gosq.com
+          country: USA
+          descriptor: SQ *SOMA EATS
+          mcc: '5812'
+          state: CA
+          postal_code: '94107'
+          street_address: null
+          phone_number: null
+        service_location: null
+        merchant_amount: 1800
+        merchant_authorization_amount: 1800
+        merchant_currency: USD
+        network: MASTERCARD
+        network_risk_score: 5
+        pos:
+          entry_mode:
+            card: NOT_PRESENT
+            cardholder: NOT_PRESENT
+            pan: ECOMMERCE
+            pin_entered: false
+          terminal:
+            attended: false
+            card_retention_capable: false
+            on_premise: false
+            operator: UNKNOWN
+            partial_approval_capable: false
+            pin_capability: NOT_CAPABLE
+            type: UNKNOWN
+        result: APPROVED
+        settled_amount: 0
+        status: PENDING
+        tags:
+          risk-level: high
+        token: c30c2182-1e69-4e0d-b40f-eec0d2a19123
+        token_info:
+          wallet_type: APPLE_PAY
+        updated: '2023-08-03T18:42:30Z'
+    management_operation_event_type:
+      title: Management Operation Event Type
+      type: string
+      enum:
+      - LOSS_WRITE_OFF
+      - CASH_BACK
+      - CASH_BACK_REVERSAL
+      - CURRENCY_CONVERSION
+      - CURRENCY_CONVERSION_REVERSAL
+      - INTEREST
+      - INTEREST_REVERSAL
+      - LATE_PAYMENT
+      - LATE_PAYMENT_REVERSAL
+      - BILLING_ERROR
+      - BILLING_ERROR_REVERSAL
+      - PROVISIONAL_CREDIT
+      - PROVISIONAL_CREDIT_REVERSAL
+      - RETURNED_PAYMENT
+      - RETURNED_PAYMENT_REVERSAL
+      - DISPUTE_WON
+      - DISPUTE_WON_REVERSAL
+      - DISBURSE
+      - DISBURSE_REVERSAL
+      - ANNUAL
+      - ANNUAL_REVERSAL
+      - QUARTERLY
+      - QUARTERLY_REVERSAL
+      - MONTHLY
+      - MONTHLY_REVERSAL
+    related_account_tokens:
+      title: Related Account Tokens
+      description: Account tokens related to a payment transaction
+      type: object
+      properties:
+        business_account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          title: Business Account Token
+          description: Globally unique identifier for the business account
+        account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          title: Account Token
+          description: Globally unique identifier for the account
+      required:
+      - business_account_token
+      - account_token
+    token_info:
+      title: Token Info
+      type:
+      - object
+      - 'null'
+      properties:
+        wallet_type:
+          description: The wallet_type field will indicate the source of the token. Possible token sources include digital wallets (Apple, Google, or Samsung Pay), merchant tokenization, and “other” sources like in-flight commerce. Masterpass is not currently supported and is included for future use.
+          enum:
+          - APPLE_PAY
+          - GOOGLE_PAY
+          - MASTERPASS
+          - MERCHANT
+          - OTHER
+          - SAMSUNG_PAY
+          type: string
+      required:
+      - wallet_type
+    financial-account-credit-config-response:
+      title: Financial Account Credit Configuration Response
+      type: object
+      properties:
+        account_token:
+          type: string
+          description: Globally unique identifier for the account
+          example: b68b7424-aa69-4cbc-a946-30d90181b621
+          format: uuid
+        credit_limit:
+          type:
+          - integer
+          - 'null'
+        external_bank_account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        credit_product_token:
+          type:
+          - string
+          - 'null'
+          description: Globally unique identifier for the credit product
+        tier:
+          type:
+          - string
+          - 'null'
+          description: Tier assigned to the financial account
+        auto_collection_configuration:
+          $ref: '#/components/schemas/auto-collection-configuration-response'
+      required:
+      - account_token
+      - credit_limit
+      - external_bank_account_token
+      - credit_product_token
+      - tier
+      - auto_collection_configuration
+    transaction_event_amounts:
+      title: Transaction Event Amounts
+      type: object
+      properties:
+        cardholder:
+          type: object
+          properties:
+            amount:
+              description: Amount of the event in the cardholder billing currency.
+              type: integer
+              example: 1000
+            conversion_rate:
+              description: Exchange rate used to convert the merchant amount to the cardholder billing amount.
+              type: string
+              example: '1.000000'
+            currency:
+              $ref: '#/components/schemas/currency'
+          required:
+          - amount
+          - conversion_rate
+          - currency
+        merchant:
+          type: object
+          properties:
+            amount:
+              description: Amount of the event in the merchant currency.
+              type: integer
+              example: 1000
+            currency:
+              $ref: '#/components/schemas/currency'
+          required:
+          - amount
+          - currency
+        settlement:
+          type:
+          - object
+          - 'null'
+          properties:
+            amount:
+              description: Amount of the event, if it is financial, in the settlement currency. Non-financial events do not contain this amount because they do not move funds.
+              type: integer
+              example: 1000
+            conversion_rate:
+              description: Exchange rate used to convert the merchant amount to the settlement amount.
+              type: string
+              example: '1.000000'
+            currency:
+              $ref: '#/components/schemas/currency'
+          required:
+          - amount
+          - conversion_rate
+          - currency
+      required:
+      - cardholder
+      - merchant
+      - settlement
+    financial-account-response:
+      title: Financial Account Response
+      type: object
+      properties:
+        token:
+          type: string
+          description: Globally unique identifier for the account
+          example: b68b7424-aa69-4cbc-a946-30d90181b621
+          format: uuid
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        type:
+          anyOf:
+          - $ref: '#/components/schemas/instance-financial-account-type'
+          - $ref: '#/components/schemas/account-financial-account-type'
+        routing_number:
+          type:
+          - string
+          - 'null'
+        account_number:
+          type:
+          - string
+          - 'null'
+        nickname:
+          type:
+          - string
+          - 'null'
+        account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        status:
+          $ref: '#/components/schemas/financial-account-status'
+        substatus:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/financial-account-substatus'
+        user_defined_status:
+          type:
+          - string
+          - 'null'
+          description: User-defined status for the financial account
+        is_for_benefit_of:
+          type: boolean
+          description: Whether financial account is for the benefit of another entity
+        credit_configuration:
+          $ref: '#/components/schemas/financial-account-credit-config'
+      required:
+      - token
+      - created
+      - updated
+      - type
+      - nickname
+      - is_for_benefit_of
+      - account_token
+      - credit_configuration
+      - status
+      - substatus
+      - user_defined_status
+    transaction_result:
+      title: Transaction Result
+      type: string
+      enum:
+      - APPROVED
+      - DECLINED
+    transaction_series:
+      title: Transaction Series
+      type: object
+      properties:
+        type:
+          type: string
+          example: FEE
+        related_transaction_token:
+          oneOf:
+          - type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          - type: 'null'
+        related_transaction_event_token:
+          oneOf:
+          - type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          - type: 'null'
+      required:
+      - type
+      - related_transaction_token
+      - related_transaction_event_token
+    UpdateFinancialAccountRequest:
+      properties:
+        nickname:
+          maxLength: 256
+          title: Nickname
+          type: string
+      title: UpdateFinancialAccountRequest
+      type: object
+    base-transactions-response:
+      title: Activity Response
+      description: A response containing a list of transactions
+      type: object
+      properties:
+        has_more:
+          type: boolean
+          description: Indicates if there are more transactions available for pagination
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/base-transaction-response'
+      required:
+      - has_more
+      - data
+    cardholder_authentication:
+      title: Cardholder Authentication
+      type: object
+      properties:
+        authentication_result:
+          description: Indicates the outcome of the 3DS authentication process.
+          enum:
+          - ATTEMPTS
+          - DECLINE
+          - NONE
+          - SUCCESS
+          example: SUCCESS
+          type: string
+        authentication_method:
+          description: Indicates the method used to authenticate the cardholder.
+          enum:
+          - FRICTIONLESS
+          - CHALLENGE
+          - NONE
+          example: FRICTIONLESS
+          type: string
+        decision_made_by:
+          description: Indicates which party made the 3DS authentication decision.
+          enum:
+          - CUSTOMER_RULES
+          - CUSTOMER_ENDPOINT
+          - LITHIC_DEFAULT
+          - LITHIC_RULES
+          - NETWORK
+          - UNKNOWN
+          example: LITHIC_RULES
+          type: string
+        liability_shift:
+          description: "Indicates whether chargeback liability shift applies to the transaction. Possible enum values:\n  * `3DS_AUTHENTICATED`: The transaction was fully authenticated through a 3-D Secure flow, chargeback liability shift applies.\n  * `NONE`: Chargeback liability shift has not shifted to the issuer, i.e. the merchant is liable.\n  * `TOKEN_AUTHENTICATED`: The transaction was a tokenized payment with validated cryptography, possibly recurring. Chargeback liability shift to the issuer applies.\n"
+          example: 3DS_AUTHENTICATED
+          enum:
+          - 3DS_AUTHENTICATED
+          - TOKEN_AUTHENTICATED
+          - NONE
+          type: string
+        three_ds_authentication_token:
+          oneOf:
+          - type: 'null'
+            description: 3DS authentication token not available.
+          - type: string
+            example: a6e372d0-b40a-43eb-b0d1-4e1aebef5875
+            format: uuid
+            description: Unique identifier you can use to match a given 3DS authentication (available via the three_ds_authentication.created event webhook) and the transaction. Note that in cases where liability shift does not occur, this token is matched to the transaction on a best-effort basis.
+      required:
+      - authentication_result
+      - authentication_method
+      - decision_made_by
+      - liability_shift
+      - three_ds_authentication_token
+    merchant_currency:
+      title: Merchant Currency
+      description: 3-character alphabetic ISO 4217 code for the local currency of the transaction.
+      example: USD
+      type: string
+    hold_transaction:
+      title: Hold Transaction
+      description: A hold transaction representing reserved funds on a financial account. Holds move funds from available to pending balance in anticipation of future payments. They can be resolved via settlement (linked to payment), manual release, or expiration.
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: HOLD
+            description: HOLD - Hold Transaction
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          status:
+            $ref: '#/components/schemas/hold_status'
+          financial_account_token:
+            type: string
+            format: uuid
+          pending_amount:
+            type: integer
+            description: Current pending amount (0 when resolved)
+          currency:
+            type: string
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/hold_event'
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+          expiration_datetime:
+            type:
+            - string
+            - 'null'
+            format: date-time
+            description: When the hold will auto-expire if not resolved
+      required:
+      - family
+      - result
+      - status
+      - financial_account_token
+      - pending_amount
+      - currency
+      - events
+      - user_defined_id
+      - expiration_datetime
+    financial-account-transaction:
+      properties:
+        category:
+          description: 'Status types:
+
+
+            * `CARD` - Issuing card transaction.
+
+            * `ACH` - Transaction over ACH.
+
+            * `INTERNAL` - Transaction for internal adjustment.
+
+            * `TRANSFER` - Internal transfer of funds between financial accounts in your program.
+
+            '
+          enum:
+          - ACH
+          - CARD
+          - INTERNAL
+          - TRANSFER
+          type: string
+        created:
+          description: Date and time when the financial transaction first occurred. UTC time zone.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the settling currency of the transaction.
+          type: string
+        descriptor:
+          description: A string that provides a description of the financial transaction; may be useful to display to users.
+          type: string
+        events:
+          description: A list of all financial events that have modified this financial transaction.
+          items:
+            $ref: '#/components/schemas/financial_event'
+          type: array
+        pending_amount:
+          description: 'Pending amount of the transaction in the currency''s smallest unit (e.g., cents), including any acquirer fees.
+
+
+            The value of this field will go to zero over time once the financial transaction is settled.
+
+            '
+          type: integer
+        result:
+          description: APPROVED transactions were successful while DECLINED transactions were declined by user, Lithic, or the network.
+          enum:
+          - APPROVED
+          - DECLINED
+          type: string
+        settled_amount:
+          description: Amount of the transaction that has been settled in the currency's smallest unit (e.g., cents), including any acquirer fees. This may change over time.
+          type: integer
+        status:
+          description: 'Status types:
+
+
+            * `DECLINED` - The transaction was declined.
+
+            * `EXPIRED` - The authorization as it has passed its expiration time. Card transaction only.
+
+            * `PENDING` - The transaction is expected to settle.
+
+            * `RETURNED` - The transaction has been returned.
+
+            * `SETTLED` - The transaction is completed.
+
+            * `VOIDED` - The transaction was voided. Card transaction only.
+
+            '
+          enum:
+          - DECLINED
+          - EXPIRED
+          - PENDING
+          - RETURNED
+          - SETTLED
+          - VOIDED
+          type: string
+        token:
+          description: Globally unique identifier.
+          format: uuid
+          type: string
+        updated:
+          description: Date and time when the financial transaction was last updated. UTC time zone.
+          format: date-time
+          type: string
+      required:
+      - category
+      - created
+      - currency
+      - descriptor
+      - events
+      - pending_amount
+      - result
+      - settled_amount
+      - status
+      - token
+      - updated
+      type: object
+    management_operation_transaction:
+      title: Management Operation Transaction
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: MANAGEMENT_OPERATION
+            description: MANAGEMENT_OPERATION - Management Operation Transaction
+          result:
+            $ref: '#/components/schemas/transaction_result'
+          category:
+            $ref: '#/components/schemas/management_operation_category'
+          settled_amount:
+            type: integer
+          pending_amount:
+            type: integer
+          currency:
+            type: string
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/management_operation_event'
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+          financial_account_token:
+            type: string
+            format: uuid
+          direction:
+            $ref: '#/components/schemas/management_operation_direction'
+          transaction_series:
+            oneOf:
+            - $ref: '#/components/schemas/transaction_series'
+            - type: 'null'
+          external_resource:
+            oneOf:
+            - $ref: '#/components/schemas/external_resource'
+            - type: 'null'
+      required:
+      - result
+      - category
+      - family
+      - settled_amount
+      - pending_amount
+      - currency
+      - events
+      - financial_account_token
+      - direction
+      - transaction_series
+    transfer_type:
+      type: string
+      enum:
+      - ORIGINATION_CREDIT
+      - ORIGINATION_DEBIT
+      - RECEIPT_CREDIT
+      - RECEIPT_DEBIT
+      - WIRE_INBOUND_PAYMENT
+      - WIRE_INBOUND_ADMIN
+      - WIRE_OUTBOUND_PAYMENT
+      - WIRE_OUTBOUND_ADMIN
+      - WIRE_INBOUND_DRAWDOWN_REQUEST
+      title: Transfer Type
+    management_operation_category:
+      title: Management Operation Category
+      type: string
+      enum:
+      - MANAGEMENT_FEE
+      - MANAGEMENT_DISPUTE
+      - MANAGEMENT_REWARD
+      - MANAGEMENT_ADJUSTMENT
+      - MANAGEMENT_DISBURSEMENT
+    rule_result:
+      title: Detailed Rule Result
+      type: object
+      properties:
+        auth_rule_token:
+          description: The Auth Rule Token associated with the rule from which the decline originated. If this is set to null, then the decline was not associated with a customer-configured Auth Rule. This may happen in cases where a transaction is declined due to a Lithic-configured security or compliance rule, for example.
+          oneOf:
+          - type: 'null'
+          - type: string
+            format: uuid
+        result:
+          description: The detailed_result associated with this rule's decline.
+          $ref: '#/components/schemas/detailed_result'
+        name:
+          description: The name for the rule, if any was configured.
+          oneOf:
+          - type: 'null'
+          - type: string
+        explanation:
+          description: A human-readable explanation outlining the motivation for the rule's decline.
+          oneOf:
+          - type: 'null'
+          - type: string
+      required:
+      - auth_rule_token
+      - explanation
+      - name
+      - result
+    instance-financial-account-type:
+      title: Instance Financial Account Type
+      description: Type of instance financial account
+      type: string
+      enum:
+      - ISSUING
+      - RESERVE
+      - OPERATING
+      - CHARGED_OFF_FEES
+      - CHARGED_OFF_INTEREST
+      - CHARGED_OFF_PRINCIPAL
+      - SECURITY
+      - PROGRAM_RECEIVABLES
+      - COLLECTION
+      - PROGRAM_BANK_ACCOUNTS_PAYABLE
+      - EARLY_DIRECT_DEPOSIT_FLOAT
+      - PROVISIONAL_CREDIT_ACCOUNT
+    external_payment_direction:
+      title: External Payment Direction
+      type: string
+      enum:
+      - DEPOSIT
+      - WITHDRAWAL
+    transaction_merchant:
+      title: Transaction Merchant
+      description: Merchant information including full location details.
+      allOf:
+      - $ref: '#/components/schemas/merchant'
+      - type: object
+        properties:
+          postal_code:
+            description: Postal code of card acceptor.
+            example: '10001'
+            type:
+            - string
+            - 'null'
+          street_address:
+            description: Street address of card acceptor.
+            example: 123 MAIN ST
+            type:
+            - string
+            - 'null'
+          phone_number:
+            description: Phone number of card acceptor.
+            example: '5551234567'
+            type:
+            - string
+            - 'null'
+        required:
+        - postal_code
+        - street_address
+        - phone_number
+    transaction_status:
+      title: Transaction Status
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - DECLINED
+      - REVERSED
+      - CANCELED
+      - RETURNED
+    account_type:
+      type: string
+      enum:
+      - CHECKING
+      - SAVINGS
+      title: Searchable Account Type
+      x-stainless-naming:
+        java:
+          type_name: AccountType
+    network_info:
+      title: Network Information
+      oneOf:
+      - type: 'null'
+      - type: object
+      description: Information provided by the card network in each event. This includes common identifiers shared between you, Lithic, the card network and in some cases the acquirer. These identifiers often link together events within the same transaction lifecycle and can be used to locate a particular transaction, such as during processing of disputes. Not all fields are available in all events, and the presence of these fields is dependent on the card network and the event type. If the field is populated by the network, we will pass it through as is unless otherwise specified. Please consult the official network documentation for more details about these fields and how to use them.
+      properties:
+        acquirer:
+          properties:
+            acquirer_reference_number:
+              description: Identifier assigned by the acquirer, applicable to dual-message transactions only. The acquirer reference number (ARN) is only populated once a transaction has been cleared, and it is not available in all transactions (such as automated fuel dispenser transactions). A single transaction can contain multiple ARNs if the merchant sends multiple clearings.
+              oneOf:
+              - type: 'null'
+              - type: string
+            retrieval_reference_number:
+              description: Identifier assigned by the acquirer.
+              oneOf:
+              - type: 'null'
+              - type: string
+          oneOf:
+          - type: 'null'
+          - type: object
+          required:
+          - acquirer_reference_number
+          - retrieval_reference_number
+        amex:
+          properties:
+            transaction_id:
+              description: Identifier assigned by American Express to link original messages to subsequent messages. Guaranteed by American Express to be unique for each original authorization and financial authorization.
+              oneOf:
+              - type: 'null'
+              - type: string
+            original_transaction_id:
+              description: Identifier assigned by American Express. Matches the `transaction_id` of a prior related event. May be populated in incremental authorizations (authorization requests that augment a previously authorized amount), authorization advices, financial authorizations, and clearings.
+              oneOf:
+              - type: 'null'
+              - type: string
+          oneOf:
+          - type: 'null'
+          - type: object
+          required:
+          - transaction_id
+          - original_transaction_id
+        mastercard:
+          properties:
+            banknet_reference_number:
+              description: Identifier assigned by Mastercard. Guaranteed by Mastercard to be unique for any transaction within a specific financial network on any processing day.
+              oneOf:
+              - type: 'null'
+              - type: string
+            switch_serial_number:
+              description: Identifier assigned by Mastercard, applicable to single-message transactions only.
+              oneOf:
+              - type: 'null'
+              - type: string
+            original_banknet_reference_number:
+              description: Identifier assigned by Mastercard. Matches the `banknet_reference_number` of a prior related event. May be populated in authorization reversals, incremental authorizations (authorization requests that augment a previously authorized amount), automated fuel dispenser authorization advices and clearings, and financial authorizations. If the original banknet reference number contains all zeroes, then no actual reference number could be found by the network or acquirer. If Mastercard converts a transaction from dual-message to single-message, such as for certain ATM transactions, it will populate the original banknet reference number in the resulting financial authorization with the banknet reference number of the initial authorization, which Lithic does not receive.
+              oneOf:
+              - type: 'null'
+              - type: string
+            original_switch_serial_number:
+              description: Identifier assigned by Mastercard. Matches the `switch_serial_number` of a prior related event. May be populated in returns and return reversals. Applicable to single-message transactions only.
+              oneOf:
+              - type: 'null'
+              - type: string
+          oneOf:
+          - type: 'null'
+          - type: object
+          required:
+          - banknet_reference_number
+          - switch_serial_number
+          - original_banknet_reference_number
+          - original_switch_serial_number
+        visa:
+          properties:
+            transaction_id:
+              description: Identifier assigned by Visa to link original messages to subsequent messages. Guaranteed by Visa to be unique for each original authorization and financial authorization.
+              oneOf:
+              - type: 'null'
+              - type: string
+            original_transaction_id:
+              description: Identifier assigned by Visa. Matches the `transaction_id` of a prior related event. May be populated in incremental authorizations (authorization requests that augment a previously authorized amount), authorization advices, financial authorizations, and clearings.
+              oneOf:
+              - type: 'null'
+              - type: string
+          oneOf:
+          - type: 'null'
+          - type: object
+          required:
+          - transaction_id
+          - original_transaction_id
+      required:
+      - acquirer
+      - amex
+      - mastercard
+      - visa
+    mastercard_network_specific_data:
+      title: Mastercard Network Specific Data
+      type: object
+      properties:
+        transaction_type_identifier:
+          oneOf:
+          - type: 'null'
+            description: Transaction type identifier not available.
+          - type: string
+            description: Indicates the type of additional transaction purpose.
+            minLength: 3
+            maxLength: 3
+        ecommerce_security_level_indicator:
+          oneOf:
+          - type: 'null'
+            description: Electronic commerce security level indicator not available.
+          - type: string
+            description: Indicates the electronic commerce security level and UCAF collection.
+            minLength: 3
+            maxLength: 3
+        on_behalf_service_result:
+          oneOf:
+          - type: 'null'
+            description: On-behalf service result not available.
+          - type: array
+            items:
+              type: object
+              properties:
+                service:
+                  type: string
+                  description: Indicates the service performed on the transaction.
+                  minLength: 2
+                  maxLength: 2
+                result_1:
+                  type: string
+                  description: Indicates the results of the service processing.
+                  minLength: 1
+                  maxLength: 1
+                result_2:
+                  type: string
+                  description: Identifies the results of the service processing.
+                  minLength: 1
+                  maxLength: 1
+              required:
+              - service
+              - result_1
+              - result_2
+            description: The On-behalf Service performed on the transaction and the results. Contains all applicable, on-behalf service results that were performed on a given transaction.
+            maxItems: 10
+      required:
+      - transaction_type_identifier
+      - ecommerce_security_level_indicator
+      - on_behalf_service_result
+    management_operation_direction:
+      title: Management Operation Direction
+      type: string
+      enum:
+      - CREDIT
+      - DEBIT
+    avs:
+      title: Address Verification Service
+      type: object
+      properties:
+        address:
+          description: Cardholder address
+          type: string
+        zipcode:
+          description: Cardholder ZIP code
+          type: string
+      required:
+      - address
+      - zipcode
+    auto-collection-configuration-response:
+      title: Auto Collection Configuration Response
+      type: object
+      properties:
+        auto_collection_enabled:
+          type: boolean
+          description: If auto collection is enabled for this account
+      required:
+      - auto_collection_enabled
+    update-financial-account-substatus:
+      title: Update Financial Account Substatus
+      description: Substatus for the financial account
+      type: string
+      enum:
+      - CHARGED_OFF_FRAUD
+      - END_USER_REQUEST
+      - BANK_REQUEST
+      - CHARGED_OFF_DELINQUENT
+      - INTEREST_AND_FEES_PAUSED
+      - DELINQUENT
+    auto-collection-configuration-request:
+      title: Auto Collection Configuration Request
+      type: object
+      properties:
+        auto_collection_enabled:
+          type: boolean
+          description: If auto collection is enabled for this account
+      required: []
+    financial-account-credit-config-request:
+      title: Financial Account Credit Configuration Request
+      type: object
+      properties:
+        credit_limit:
+          type: integer
+          minimum: 0
+        external_bank_account_token:
+          type: string
+          format: uuid
+        credit_product_token:
+          type: string
+          description: Globally unique identifier for the credit product
+        tier:
+          type: string
+          description: Tier to assign to a financial account
+          minLength: 1
+        auto_collection_configuration:
+          $ref: '#/components/schemas/auto-collection-configuration-request'
+      required: []
+    book_transfer_detailed_results:
+      title: Book Transfer Detailed Results
+      type: string
+      enum:
+      - APPROVED
+      - FUNDS_INSUFFICIENT
+    financial-accounts-response:
+      title: Financial Accounts Response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/financial-account-response'
+        has_more:
+          type: boolean
+      required:
+      - data
+      - has_more
+    book_transfer_category:
+      title: Book Transfer Category
+      type: string
+      enum:
+      - ADJUSTMENT
+      - BALANCE_OR_FUNDING
+      - DERECOGNITION
+      - DISPUTE
+      - FEE
+      - INTERNAL
+      - REWARD
+      - PROGRAM_FUNDING
+      - TRANSFER
+    detailed_result:
+      example: APPROVED
+      title: Detailed Result
+      type: string
+      enum:
+      - ACCOUNT_DAILY_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_DELINQUENT
+      - ACCOUNT_INACTIVE
+      - ACCOUNT_LIFETIME_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_MONTHLY_SPEND_LIMIT_EXCEEDED
+      - ACCOUNT_PAUSED
+      - ACCOUNT_UNDER_REVIEW
+      - ADDRESS_INCORRECT
+      - APPROVED
+      - AUTH_RULE_ALLOWED_COUNTRY
+      - AUTH_RULE_ALLOWED_MCC
+      - AUTH_RULE_BLOCKED_COUNTRY
+      - AUTH_RULE_BLOCKED_MCC
+      - AUTH_RULE
+      - CARD_CLOSED
+      - CARD_CRYPTOGRAM_VALIDATION_FAILURE
+      - CARD_EXPIRED
+      - CARD_EXPIRY_DATE_INCORRECT
+      - CARD_INVALID
+      - CARD_NOT_ACTIVATED
+      - CARD_PAUSED
+      - CARD_PIN_INCORRECT
+      - CARD_RESTRICTED
+      - CARD_SECURITY_CODE_INCORRECT
+      - CARD_SPEND_LIMIT_EXCEEDED
+      - CONTACT_CARD_ISSUER
+      - CUSTOMER_ASA_TIMEOUT
+      - CUSTOM_ASA_RESULT
+      - DECLINED
+      - DO_NOT_HONOR
+      - DRIVER_NUMBER_INVALID
+      - FORMAT_ERROR
+      - INSUFFICIENT_FUNDING_SOURCE_BALANCE
+      - INSUFFICIENT_FUNDS
+      - LITHIC_SYSTEM_ERROR
+      - LITHIC_SYSTEM_RATE_LIMIT
+      - MALFORMED_ASA_RESPONSE
+      - MERCHANT_INVALID
+      - MERCHANT_LOCKED_CARD_ATTEMPTED_ELSEWHERE
+      - MERCHANT_NOT_PERMITTED
+      - OVER_REVERSAL_ATTEMPTED
+      - PIN_BLOCKED
+      - PROGRAM_CARD_SPEND_LIMIT_EXCEEDED
+      - PROGRAM_SUSPENDED
+      - PROGRAM_USAGE_RESTRICTION
+      - REVERSAL_UNMATCHED
+      - SECURITY_VIOLATION
+      - SINGLE_USE_CARD_REATTEMPTED
+      - SUSPECTED_FRAUD
+      - TRANSACTION_INVALID
+      - TRANSACTION_NOT_PERMITTED_TO_ACQUIRER_OR_TERMINAL
+      - TRANSACTION_NOT_PERMITTED_TO_ISSUER_OR_CARDHOLDER
+      - TRANSACTION_PREVIOUSLY_COMPLETED
+      - UNAUTHORIZED_MERCHANT
+      - VEHICLE_NUMBER_INVALID
+      - CARDHOLDER_CHALLENGED
+      - CARDHOLDER_CHALLENGE_FAILED
+  responses:
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    financialTransactionToken:
+      description: Globally unique identifier for financial transaction token.
+      examples:
+        financialTransactionTokenExample:
+          summary: A sample financial transaction token
+          value: 18394f8e-711b-4b3e-ae21-d35a9eafe7d1
+      in: path
+      name: financial_transaction_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    idempotencyKey:
+      description: Idempotency key for the request
+      in: header
+      name: Idempotency-Key
+      schema:
+        type: string
+        format: uuid
+      example: 65a9dad4-1b60-4686-83fd-65b25078a4b4
+    financialAccountToken:
+      description: Globally unique identifier for financial account.
+      examples:
+        financialAccountTokenExample:
+          summary: A sample financial account token
+          value: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      in: path
+      name: financial_account_token
+      required: true
+      schema:
+        format: uuid
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

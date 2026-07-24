@@ -1,0 +1,372 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Card Bulk Orders API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Card Bulk Orders
+paths:
+  /v1/card_bulk_orders:
+    get:
+      description: List bulk orders for physical card shipments
+      operationId: getCardBulkOrders
+      parameters:
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/bulk-order-response'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List bulk orders
+      tags:
+      - Card Bulk Orders
+    post:
+      description: Create a new bulk order for physical card shipments. Cards can be added to the order via the POST /v1/cards endpoint by specifying the bulk_order_token. Lock the order via PATCH /v1/card_bulk_orders/{bulk_order_token} to prepare for shipment. Please work with your Customer Success Manager and card personalization bureau to ensure bulk shipping is supported for your program.
+      operationId: postCardBulkOrder
+      requestBody:
+        content:
+          application/json:
+            example:
+              shipping_address:
+                address1: 123 Main Street
+                city: NEW YORK
+                country: USA
+                first_name: Johnny
+                last_name: Appleseed
+                postal_code: '10001'
+                state: NY
+              shipping_method: BULK_EXPEDITED
+              customer_product_id: custom-card-design-123
+            schema:
+              $ref: '#/components/schemas/create-bulk-order-request'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulk-order-response'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create bulk order
+      tags:
+      - Card Bulk Orders
+  /v1/card_bulk_orders/{bulk_order_token}:
+    get:
+      description: Retrieve a specific bulk order by token
+      operationId: getCardBulkOrder
+      parameters:
+      - description: Globally unique identifier for the bulk order
+        in: path
+        name: bulk_order_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulk-order-response'
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get bulk order
+      tags:
+      - Card Bulk Orders
+    patch:
+      description: Update a bulk order. Primarily used to lock the order, preventing additional cards from being added
+      operationId: patchCardBulkOrder
+      parameters:
+      - description: Globally unique identifier for the bulk order
+        in: path
+        name: bulk_order_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            example:
+              status: LOCKED
+            schema:
+              $ref: '#/components/schemas/update-bulk-order-request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulk-order-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Update bulk order
+      tags:
+      - Card Bulk Orders
+components:
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+  schemas:
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    create-bulk-order-request:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      title: Create Bulk Order Request
+      description: Request to create a new bulk order for physical card shipments. Please work with your Customer Success Manager and card personalization bureau to ensure bulk shipping is supported for your program.
+      type: object
+      properties:
+        shipping_address:
+          description: Shipping address for all cards in this bulk order
+          type: object
+        shipping_method:
+          description: Shipping method for all cards in this bulk order. BULK_PRIORITY, BULK_2_DAY, and BULK_EXPRESS are only available with Perfect Plastic Printing
+          enum:
+          - BULK_EXPEDITED
+          - BULK_PRIORITY
+          - BULK_2_DAY
+          - BULK_EXPRESS
+          type: string
+        customer_product_id:
+          description: Customer-specified product configuration for physical card manufacturing. This must be configured with Lithic before use
+          example: custom-card-design-123
+          type: string
+      required:
+      - shipping_address
+      - shipping_method
+      - customer_product_id
+    bulk-order-response:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      title: Bulk Order Response
+      description: Represents a bulk order for physical card shipments
+      type: object
+      properties:
+        token:
+          description: Globally unique identifier for the bulk order
+          example: 7ef7d65c-9023-4da3-b113-3b8583fd7951
+          format: uuid
+          type: string
+        status:
+          description: Status of the bulk order. OPEN indicates the order is accepting cards. LOCKED indicates the order is finalized and no more cards can be added
+          enum:
+          - OPEN
+          - LOCKED
+          type: string
+        shipping_address:
+          description: Shipping address for all cards in this bulk order
+          type: object
+        shipping_method:
+          description: Shipping method for all cards in this bulk order. BULK_PRIORITY, BULK_2_DAY, and BULK_EXPRESS are only available with Perfect Plastic Printing
+          enum:
+          - BULK_EXPEDITED
+          - BULK_PRIORITY
+          - BULK_2_DAY
+          - BULK_EXPRESS
+          type: string
+        customer_product_id:
+          description: Customer-specified product configuration for physical card manufacturing. This must be configured with Lithic before use
+          example: custom-card-design-123
+          type:
+          - string
+          - 'null'
+        card_tokens:
+          description: List of card tokens associated with this bulk order
+          type: array
+          items:
+            type: string
+            format: uuid
+        created:
+          description: An RFC 3339 timestamp for when the bulk order was created. UTC time zone
+          example: '2021-06-28T22:53:15Z'
+          format: date-time
+          type: string
+        updated:
+          description: An RFC 3339 timestamp for when the bulk order was last updated. UTC time zone
+          example: '2021-06-28T22:53:15Z'
+          format: date-time
+          type: string
+      required:
+      - token
+      - status
+      - shipping_address
+      - shipping_method
+      - customer_product_id
+      - card_tokens
+      - created
+      - updated
+    update-bulk-order-request:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      title: Update Bulk Order Request
+      description: Request to update a bulk order, primarily to lock it
+      type: object
+      properties:
+        status:
+          description: Status to update the bulk order to. Use LOCKED to finalize the order
+          enum:
+          - LOCKED
+          type: string
+      required:
+      - status
+  responses:
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

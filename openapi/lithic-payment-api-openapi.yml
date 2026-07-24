@@ -1,0 +1,1521 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Payment API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Payment
+paths:
+  /v1/payments:
+    get:
+      description: List all the payments for the provided search criteria.
+      operationId: searchPayments
+      parameters:
+      - in: query
+        name: financial_account_token
+        required: false
+        schema:
+          format: uuid
+          title: Financial Account Token
+          type: string
+      - in: query
+        name: business_account_token
+        required: false
+        schema:
+          format: uuid
+          title: Business Account Token
+          type: string
+      - in: query
+        name: account_token
+        required: false
+        schema:
+          format: uuid
+          title: Account Token
+          type: string
+      - in: query
+        name: result
+        required: false
+        schema:
+          enum:
+          - APPROVED
+          - DECLINED
+          title: Result
+          type: string
+      - in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - DECLINED
+          - PENDING
+          - RETURNED
+          - SETTLED
+          title: Status
+          type: string
+      - in: query
+        name: category
+        required: false
+        schema:
+          enum:
+          - ACH
+          title: Category
+          type: string
+      - $ref: '#/components/parameters/beginTime'
+      - $ref: '#/components/parameters/endTime'
+      - $ref: '#/components/parameters/endingBefore'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/startingAfter'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/payment-transaction'
+                    type: array
+                  has_more:
+                    description: More data exists.
+                    type: boolean
+                required:
+                - data
+                - has_more
+                type: object
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List payments
+      tags:
+      - Payment
+    post:
+      description: Initiates a payment between a financial account and an external bank account.
+      operationId: createPayment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPaymentResponse'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Create payment
+      tags:
+      - Payment
+  /v1/payments/{payment_token}:
+    get:
+      description: Get the payment by token.
+      operationId: getPaymentByToken
+      parameters:
+      - in: path
+        name: payment_token
+        required: true
+        schema:
+          format: uuid
+          title: Payment Token
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/payment-transaction'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Get payment by token
+      tags:
+      - Payment
+  /v1/payments/{payment_token}/retry:
+    post:
+      description: Retry an origination which has been returned.
+      operationId: retryPayment
+      parameters:
+      - in: path
+        name: payment_token
+        required: true
+        schema:
+          format: uuid
+          title: Payment Token
+          type: string
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPaymentResponse'
+          description: Accepted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Retry payment
+      tags:
+      - Payment
+  /v1/payments/{payment_token}/return:
+    post:
+      description: "Return an ACH payment with a specified return reason code. Returns must be initiated\nwithin the time window specified by NACHA rules for each return code (typically 2 banking\ndays for most codes, 60 calendar days for unauthorized debits). For a complete list of\nreturn codes and their meanings, see the [ACH Return Reasons documentation](https://docs.lithic.com/docs/ach-overview#ach-return-reasons).\n\nNote:\n  * This endpoint does not modify the state of the financial account associated with the payment. If you would like to change the account state, use the [Update financial account status](https://docs.lithic.com/reference/updatefinancialaccountstatus) endpoint.\n  * By default this endpoint is not enabled for your account. Please contact your implementations manager to enable this feature.\n"
+      operationId: returnPayment
+      parameters:
+      - in: path
+        name: payment_token
+        required: true
+        schema:
+          format: uuid
+          title: Payment Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/payment_return_request'
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/payment-transaction'
+          description: Accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: '| Message | Description |
+
+                      |---|---|
+
+                      | Invalid account | The financial account token provided does not exist or is invalid |
+
+                      | Invalid return reason code: {code} | The return reason code provided is not a valid NACHA return code |
+
+                      | Return code RXX cannot be used for X accounts (SEC code: XYZ) | The return code is not valid for the account type (consumer vs non-consumer) |
+
+                      | Return window expired. RXX must be initiated within {time_window}. Transaction posted {days} days ago. | The return is being initiated outside the allowed time window for the return code |
+
+                      | date_of_death is required for return reason code RXX | The return code (R14 or R15) requires a date_of_death parameter |
+
+                      | date_of_death must be in YYYY-MM-DD format, got: {date} | The date_of_death parameter is not in the correct format |
+
+                      '
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: '| Message | Description |
+
+                      |---|---|
+
+                      | Transaction not found for this instance | The payment token does not correspond to a transaction for this account |
+
+                      '
+        '412':
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: '| Message | Description |
+
+                      |---|---|
+
+                      | Could only return ACH receipt | The transaction is not an ACH receipt (credit or debit) |
+
+                      | Cannot return an ACH receipt that has already been returned | A return has already been initiated for this payment |
+
+                      | Cannot return an ACH receipt that has not yet settled | The payment must be settled before it can be returned |
+
+                      '
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Return payment
+      tags:
+      - Payment
+  /v1/simulate/payments/receipt:
+    post:
+      description: Simulates a receipt of a Payment.
+      operationId: simulatePaymentsReceipt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/simulate_receipt_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/simulate_payment_response'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Simulate receipt
+      tags:
+      - Payment
+  /v1/simulate/payments/release:
+    post:
+      description: Simulates a release of a Payment.
+      operationId: simulatePaymentsRelease
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/simulate_origination_release_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/simulate_payment_response'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Simulate release payment
+      tags:
+      - Payment
+  /v1/simulate/payments/return:
+    post:
+      description: Simulates a return of a Payment.
+      operationId: simulatePaymentsReturn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/simulate_origination_return_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/simulate_payment_response'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Simulate return payment
+      tags:
+      - Payment
+  /v1/simulate/payments/{payment_token}/action:
+    post:
+      description: Simulate payment lifecycle event
+      operationId: simulatePaymentAction
+      parameters:
+      - in: path
+        name: payment_token
+        required: true
+        schema:
+          format: uuid
+          title: Payment Token
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/simulate_action_request'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/simulate_payment_response'
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Simulate payment lifecycle event
+      tags:
+      - Payment
+components:
+  schemas:
+    base_transaction:
+      title: base_transaction
+      description: Base class for all transaction types in the ledger service
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/transaction_status'
+          description: The status of the transaction
+        token:
+          type: string
+          description: Unique identifier for the transaction
+          format: uuid
+        created:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was created
+          format: date-time
+        updated:
+          type: string
+          description: ISO 8601 timestamp of when the transaction was last updated
+          format: date-time
+      required:
+      - status
+      - token
+      - created
+      - updated
+    PaymentMethodRequestAttributes:
+      properties:
+        sec_code:
+          enum:
+          - CCD
+          - PPD
+          - WEB
+          title: SEC Code
+          type: string
+        ach_hold_period:
+          description: Number of days to hold the ACH payment
+          example: 0
+          minimum: 0
+          title: ACH Hold Period
+          type: integer
+        addenda:
+          title: Addenda
+          type:
+          - string
+          - 'null'
+        override_company_name:
+          description: Value to override the configured company name with. Can only be used if allowed to override
+          maxLength: 512
+          title: Override Company Name
+          type:
+          - string
+          - 'null'
+      required:
+      - sec_code
+      title: PaymentMethodRequestAttributes
+      type: object
+    simulate_origination_return_request:
+      title: Simulate Origination Return Request
+      type: object
+      properties:
+        payment_token:
+          description: Payment Token
+          type: string
+          format: uuid
+        return_reason_code:
+          description: Return Reason Code
+          type: string
+          default: R01
+          pattern: ^R[0-9][0-9]$
+          example: R12
+      required:
+      - payment_token
+    transfer_type:
+      type: string
+      enum:
+      - ORIGINATION_CREDIT
+      - ORIGINATION_DEBIT
+      - RECEIPT_CREDIT
+      - RECEIPT_DEBIT
+      - WIRE_INBOUND_PAYMENT
+      - WIRE_INBOUND_ADMIN
+      - WIRE_OUTBOUND_PAYMENT
+      - WIRE_OUTBOUND_ADMIN
+      - WIRE_INBOUND_DRAWDOWN_REQUEST
+      title: Transfer Type
+    simulate_origination_release_request:
+      title: Simulate Origination Release Request
+      type: object
+      properties:
+        payment_token:
+          description: Payment Token
+          type: string
+          format: uuid
+      required:
+      - payment_token
+    supported_simulation_decline_reasons:
+      type: string
+      enum:
+      - PROGRAM_TRANSACTION_LIMIT_EXCEEDED
+      - PROGRAM_DAILY_LIMIT_EXCEEDED
+      - PROGRAM_MONTHLY_LIMIT_EXCEEDED
+      title: Supported Simulation Decline Reasons
+    simulate_receipt_request:
+      title: Simulate Receipt Request
+      type: object
+      properties:
+        financial_account_token:
+          description: Financial Account Token
+          type: string
+          format: uuid
+        token:
+          description: Customer-generated payment token used to uniquely identify the simulated payment
+          type: string
+          format: uuid
+        receipt_type:
+          description: Receipt Type
+          type: string
+          enum:
+          - RECEIPT_CREDIT
+          - RECEIPT_DEBIT
+        amount:
+          description: Amount
+          type: integer
+          minimum: 0
+        memo:
+          description: Memo
+          type: string
+      required:
+      - financial_account_token
+      - token
+      - receipt_type
+      - amount
+    wire_party_details:
+      title: Wire Party Details
+      type: object
+      properties:
+        name:
+          type:
+          - string
+          - 'null'
+          description: Name of the person or company
+        account_number:
+          type:
+          - string
+          - 'null'
+          description: Account number
+        agent_name:
+          type:
+          - string
+          - 'null'
+          description: Name of the financial institution
+        agent_id:
+          type:
+          - string
+          - 'null'
+          description: Routing number or BIC of the financial institution
+      required: []
+    WireMethodAttributes:
+      type: object
+      properties:
+        wire_network:
+          type: string
+          enum:
+          - FEDWIRE
+          - SWIFT
+          description: Type of wire transfer
+        wire_message_type:
+          type:
+          - string
+          - 'null'
+          description: Type of wire message
+        debtor:
+          $ref: '#/components/schemas/wire_party_details'
+        creditor:
+          $ref: '#/components/schemas/wire_party_details'
+        message_id:
+          type:
+          - string
+          - 'null'
+          description: Point to point reference identifier, as assigned by the instructing party, used for tracking the message through the Fedwire system
+        remittance_information:
+          type:
+          - string
+          - 'null'
+          description: Payment details or invoice reference
+      required:
+      - wire_network
+      - wire_message_type
+    PostPaymentResponse:
+      allOf:
+      - $ref: '#/components/schemas/payment-transaction'
+      - properties:
+          balance:
+            $ref: '#/components/schemas/balance'
+        type: object
+      title: PostPaymentResponse
+    simulate_action_request:
+      title: Simulate Action Request
+      type: object
+      properties:
+        event_type:
+          description: Event Type
+          $ref: '#/components/schemas/supported_simulation_types'
+        return_reason_code:
+          description: Return Reason Code
+          type: string
+        decline_reason:
+          description: Decline reason
+          $ref: '#/components/schemas/supported_simulation_decline_reasons'
+        return_addenda:
+          description: Return Addenda
+          type: string
+        date_of_death:
+          description: Date of Death for ACH Return
+          type: string
+          format: date
+      required:
+      - event_type
+    related_account_tokens:
+      title: Related Account Tokens
+      description: Account tokens related to a payment transaction
+      type: object
+      properties:
+        business_account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          title: Business Account Token
+          description: Globally unique identifier for the business account
+        account_token:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          title: Account Token
+          description: Globally unique identifier for the account
+      required:
+      - business_account_token
+      - account_token
+    result:
+      type: string
+      enum:
+      - APPROVED
+      - DECLINED
+      title: Result
+    transaction_status:
+      title: Transaction Status
+      type: string
+      enum:
+      - PENDING
+      - SETTLED
+      - DECLINED
+      - REVERSED
+      - CANCELED
+      - RETURNED
+    payment_event:
+      title: Payment Event
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). Wire-related fields below are a preview. To learn more, contact your customer success manager.
+
+
+        Payment Event'
+      type: object
+      properties:
+        amount:
+          description: Amount of the financial event that has been settled in the currency's smallest unit (e.g., cents).
+          type: integer
+        created:
+          description: Date and time when the financial event occurred. UTC time zone.
+          type: string
+          format: date-time
+        detailed_results:
+          description: More detailed reasons for the event
+          type: array
+          items:
+            type: string
+            enum:
+            - APPROVED
+            - DECLINED
+            - FUNDS_INSUFFICIENT
+            - ACCOUNT_INVALID
+            - PROGRAM_TRANSACTION_LIMIT_EXCEEDED
+            - PROGRAM_DAILY_LIMIT_EXCEEDED
+            - PROGRAM_MONTHLY_LIMIT_EXCEEDED
+        result:
+          description: APPROVED financial events were successful while DECLINED financial events were declined by user, Lithic, or the network.
+          type: string
+          enum:
+          - APPROVED
+          - DECLINED
+        token:
+          description: Globally unique identifier.
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/payment_event_type'
+        external_id:
+          description: 'Payment event external ID. For ACH transactions, this is the ACH trace number.
+
+            For inbound wire transfers, this is the IMAD (Input Message Accountability Data).
+
+            '
+          type:
+          - string
+          - 'null'
+      required:
+      - amount
+      - created
+      - result
+      - token
+      - type
+    supported_simulation_types:
+      type: string
+      enum:
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_SETTLED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_RELEASED_EARLY
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_SETTLED
+      title: Supported Simulation Types
+    AchMethodAttributes:
+      type: object
+      properties:
+        sec_code:
+          type: string
+          enum:
+          - CCD
+          - PPD
+          - WEB
+          - TEL
+          - CIE
+          - CTX
+          description: SEC code for ACH transaction
+        return_reason_code:
+          type:
+          - string
+          - 'null'
+          description: Return reason code if the transaction was returned
+        ach_hold_period:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Number of days the ACH transaction is on hold
+        retries:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Number of retries attempted
+        company_id:
+          type:
+          - string
+          - 'null'
+          description: Company ID for the ACH transaction
+        receipt_routing_number:
+          type:
+          - string
+          - 'null'
+          description: Receipt routing number
+        trace_numbers:
+          type: array
+          items:
+            type: string
+          default: []
+          description: Trace numbers for the ACH transaction
+        addenda:
+          type:
+          - string
+          - 'null'
+          description: Addenda information
+        override_company_name:
+          type:
+          - string
+          - 'null'
+          maxLength: 512
+          description: Value to override the configured company name with. Can only be used if allowed to override
+      required:
+      - sec_code
+    transaction_result:
+      title: Transaction Result
+      type: string
+      enum:
+      - APPROVED
+      - DECLINED
+    CreatePaymentRequest:
+      properties:
+        amount:
+          minimum: 1
+          title: Amount
+          type: integer
+        external_bank_account_token:
+          format: uuid
+          title: External Bank Account Token
+          type: string
+        financial_account_token:
+          format: uuid
+          title: Financial Account Token
+          type: string
+        memo:
+          maxLength: 512
+          pattern: ^[0-9A-Za-z \x20-\x7e\x40-\xff]*$
+          title: Memo
+          type: string
+        method:
+          enum:
+          - ACH_NEXT_DAY
+          - ACH_SAME_DAY
+          title: Payment Method
+          type: string
+        method_attributes:
+          $ref: '#/components/schemas/PaymentMethodRequestAttributes'
+        token:
+          description: Customer-provided token that will serve as an idempotency token. This token will become the transaction token.
+          format: uuid
+          title: Token
+          type: string
+        type:
+          enum:
+          - COLLECTION
+          - PAYMENT
+          title: Payment Type
+          type: string
+        user_defined_id:
+          maxLength: 512
+          title: User Defined Id
+          type: string
+        hold:
+          description: Optional hold to settle when this payment is initiated.
+          type: object
+          properties:
+            token:
+              description: Token of the hold to settle when this payment is initiated.
+              format: uuid
+              type: string
+          required:
+          - token
+      required:
+      - amount
+      - external_bank_account_token
+      - financial_account_token
+      - method
+      - method_attributes
+      - type
+      title: CreatePaymentRequest
+      type: object
+    simulate_payment_response:
+      title: Simulate Payment Response
+      type: object
+      properties:
+        result:
+          description: Request Result
+          $ref: '#/components/schemas/result'
+        transaction_event_token:
+          description: Transaction Event Token
+          type: string
+          format: uuid
+        debugging_request_id:
+          description: Debugging Request Id
+          type: string
+          format: uuid
+      required:
+      - result
+      - transaction_event_token
+      - debugging_request_id
+    payment_return_request:
+      title: Payment Return Request
+      description: Request to return an ACH payment
+      type: object
+      properties:
+        financial_account_token:
+          type: string
+          format: uuid
+          description: Globally unique identifier for the financial account
+        return_reason_code:
+          type: string
+          pattern: ^R(0[1-9]|[1-4][0-9]|5[0-3]|8[0-5])$
+          description: ACH return reason code indicating the reason for returning the payment. Supported codes include R01-R53 and R80-R85. For a complete list of return codes and their meanings, see [ACH Return Reasons](https://docs.lithic.com/docs/ach-overview#ach-return-reasons)
+          example: R01
+        memo:
+          type:
+          - string
+          - 'null'
+          maxLength: 10
+          description: Optional memo for the return. Limited to 10 characters
+        addenda:
+          type:
+          - string
+          - 'null'
+          maxLength: 44
+          description: Optional additional information about the return. Limited to 44 characters
+        date_of_death:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Date of death in YYYY-MM-DD format. Required when using return codes **R14** (representative payee deceased) or **R15** (beneficiary or account holder deceased)
+          example: '2025-01-15'
+      required:
+      - financial_account_token
+      - return_reason_code
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    balance:
+      description: Balance
+      properties:
+        available_amount:
+          description: Funds available for spend in the currency's smallest unit (e.g., cents for USD)
+          type: integer
+        created:
+          description: Date and time for when the balance was first created.
+          format: date-time
+          type: string
+        currency:
+          description: 3-character alphabetic ISO 4217 code for the local currency of the balance.
+          type: string
+        financial_account_token:
+          description: Globally unique identifier for the financial account that holds this balance.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          format: uuid
+          type: string
+        financial_account_type:
+          description: Type of financial account.
+          enum:
+          - ISSUING
+          - OPERATING
+          - RESERVE
+          - SECURITY
+          type: string
+        last_transaction_event_token:
+          description: Globally unique identifier for the last financial transaction event that impacted this balance.
+          format: uuid
+          type: string
+        last_transaction_token:
+          description: Globally unique identifier for the last financial transaction that impacted this balance.
+          format: uuid
+          type: string
+        pending_amount:
+          description: Funds not available for spend due to card authorizations or pending ACH release. Shown in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        total_amount:
+          description: The sum of available and pending balance in the currency's smallest unit (e.g., cents for USD).
+          type: integer
+        updated:
+          description: Date and time for when the balance was last updated.
+          format: date-time
+          type: string
+      required:
+      - available_amount
+      - created
+      - currency
+      - financial_account_token
+      - financial_account_type
+      - last_transaction_event_token
+      - last_transaction_token
+      - pending_amount
+      - total_amount
+      - updated
+      type: object
+    payment-transaction:
+      title: Payment Transaction
+      description: Payment transaction
+      definitions:
+        AchMethodAttributes:
+          type: object
+          properties:
+            sec_code:
+              type: string
+              enum:
+              - CCD
+              - PPD
+              - WEB
+              - TEL
+              - CIE
+              - CTX
+              description: SEC code for ACH transaction
+            return_reason_code:
+              type:
+              - string
+              - 'null'
+              description: Return reason code if the transaction was returned
+            ach_hold_period:
+              type:
+              - integer
+              - 'null'
+              minimum: 0
+              description: Number of days the ACH transaction is on hold
+            retries:
+              type:
+              - integer
+              - 'null'
+              minimum: 0
+              description: Number of retries attempted
+            company_id:
+              type:
+              - string
+              - 'null'
+              description: Company ID for the ACH transaction
+            receipt_routing_number:
+              type:
+              - string
+              - 'null'
+              description: Receipt routing number
+            trace_numbers:
+              type: array
+              items:
+                type: string
+              default: []
+              description: Trace numbers for the ACH transaction
+            addenda:
+              type:
+              - string
+              - 'null'
+              description: Addenda information
+            override_company_name:
+              type:
+              - string
+              - 'null'
+              maxLength: 512
+              description: Value to override the configured company name with. Can only be used if allowed to override
+          required:
+          - sec_code
+        WireMethodAttributes:
+          type: object
+          properties:
+            wire_network:
+              type: string
+              enum:
+              - FEDWIRE
+              - SWIFT
+              description: Type of wire transfer
+            wire_message_type:
+              type:
+              - string
+              - 'null'
+              description: Type of wire message
+            debtor:
+              $ref: '#/components/schemas/wire_party_details'
+            creditor:
+              $ref: '#/components/schemas/wire_party_details'
+            message_id:
+              type:
+              - string
+              - 'null'
+              description: Point to point reference identifier, as assigned by the instructing party, used for tracking the message through the Fedwire system
+            remittance_information:
+              type:
+              - string
+              - 'null'
+              description: Payment details or invoice reference
+          required:
+          - wire_network
+          - wire_message_type
+      allOf:
+      - $ref: '#/components/schemas/base_transaction'
+      - type: object
+        properties:
+          family:
+            type: string
+            const: PAYMENT
+            description: PAYMENT - Payment Transaction
+          category:
+            $ref: '#/components/schemas/transaction_category'
+            description: Transaction category
+          currency:
+            type: string
+            description: Currency of the transaction in ISO 4217 format
+            example: USD
+          result:
+            $ref: '#/components/schemas/transaction_result'
+            description: Transaction result
+          method_attributes:
+            oneOf:
+            - $ref: '#/components/schemas/AchMethodAttributes'
+            - $ref: '#/components/schemas/WireMethodAttributes'
+            description: Method-specific attributes
+          financial_account_token:
+            type: string
+            format: uuid
+            description: Financial account token
+          external_bank_account_token:
+            type:
+            - string
+            - 'null'
+            format: uuid
+            description: External bank account token
+          direction:
+            type: string
+            enum:
+            - CREDIT
+            - DEBIT
+            description: Transfer direction
+          source:
+            type: string
+            enum:
+            - LITHIC
+            - EXTERNAL
+            - CUSTOMER
+            description: Transaction source
+          method:
+            type: string
+            enum:
+            - ACH_NEXT_DAY
+            - ACH_SAME_DAY
+            - WIRE
+            description: Transfer method
+          settled_amount:
+            type: integer
+            description: Settled amount in cents
+            example: 500
+          pending_amount:
+            type: integer
+            description: Pending amount in cents
+            example: 200
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/payment_event'
+            description: List of transaction events
+          descriptor:
+            type: string
+            description: Transaction descriptor
+          user_defined_id:
+            type:
+            - string
+            - 'null'
+            description: User-defined identifier
+          expected_release_date:
+            type:
+            - string
+            - 'null'
+            format: date
+            description: Expected release date for the transaction
+          related_account_tokens:
+            oneOf:
+            - $ref: '#/components/schemas/related_account_tokens'
+            - type: 'null'
+            description: Related account tokens for the transaction
+          type:
+            $ref: '#/components/schemas/transfer_type'
+        required:
+        - category
+        - result
+        - method_attributes
+        - family
+        - financial_account_token
+        - direction
+        - source
+        - method
+        - settled_amount
+        - pending_amount
+        - events
+        - descriptor
+        - related_account_tokens
+      examples:
+      - family: PAYMENT
+        status: PENDING
+        token: bd4efddb-771b-49e3-9af9-49b077ab5eb8
+        created: '2025-10-27T20:12:22Z'
+        updated: '2025-10-27T20:12:25Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 1
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: null
+          trace_numbers: []
+          addenda: null
+        financial_account_token: 35b0c466-a3e3-519a-9549-ead6a6a2277d
+        external_bank_account_token: feb4fee1-2414-4c38-a5f6-9deac293c8f4
+        direction: CREDIT
+        source: LITHIC
+        method: ACH_NEXT_DAY
+        settled_amount: 0
+        pending_amount: -1588
+        currency: USD
+        events:
+        - amount: -1588
+          type: ACH_ORIGINATION_INITIATED
+          result: APPROVED
+          created: '2025-10-27T20:12:22Z'
+          token: 327dccc3-fe42-54d2-962c-7f8135805464
+          detailed_results:
+          - APPROVED
+        - amount: -1588
+          type: ACH_ORIGINATION_REVIEWED
+          result: APPROVED
+          created: '2025-10-27T20:12:25Z'
+          token: f9165477-7cfc-53c6-98f1-84e9ec856a60
+          detailed_results:
+          - APPROVED
+        descriptor: ach_origination_credit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens: null
+        type: ORIGINATION_CREDIT
+      - family: PAYMENT
+        status: PENDING
+        token: cb35759d-8c18-4b7f-bb91-7c37936662c2
+        created: '2025-10-27T20:12:15Z'
+        updated: '2025-10-27T20:12:18Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 2
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: null
+          trace_numbers: []
+          addenda: null
+        financial_account_token: f012262b-d18f-5c26-ad63-a09a11e633a6
+        external_bank_account_token: feb4fee1-2414-4c38-a5f6-9deac293c8f4
+        direction: DEBIT
+        source: LITHIC
+        method: ACH_NEXT_DAY
+        settled_amount: 0
+        pending_amount: 1588
+        currency: USD
+        events:
+        - amount: 1588
+          type: ACH_ORIGINATION_INITIATED
+          result: APPROVED
+          created: '2025-10-27T20:12:15Z'
+          token: 38dc6bc5-d18f-594e-9ab9-ef1cfdcfbf82
+          detailed_results:
+          - APPROVED
+        - amount: 1588
+          type: ACH_ORIGINATION_REVIEWED
+          result: APPROVED
+          created: '2025-10-27T20:12:18Z'
+          token: e466f34a-d648-5a8f-8bc7-1d4d1e703db3
+          detailed_results:
+          - APPROVED
+        descriptor: ach_origination_debit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens:
+          business_account_token: null
+          account_token: d11bca22-39e2-475c-bbb3-6ba21e38b0d3
+        type: ORIGINATION_DEBIT
+      - family: PAYMENT
+        status: SETTLED
+        token: dd72f435-9633-46f3-b871-47d4af684654
+        created: '2024-10-08T21:39:27Z'
+        updated: '2024-10-08T21:39:28Z'
+        category: ACH
+        result: APPROVED
+        method_attributes:
+          sec_code: CCD
+          return_reason_code: null
+          ach_hold_period: 2
+          retries: 0
+          company_id: '1111111111'
+          receipt_routing_number: '1234567890'
+          trace_numbers:
+          - '316779406684861'
+          addenda: null
+        financial_account_token: 0d6b1b9f-b90f-5f03-9c45-8930d5a6aac0
+        external_bank_account_token: null
+        direction: DEBIT
+        source: LITHIC
+        method: ACH_SAME_DAY
+        settled_amount: 1000
+        pending_amount: 0
+        currency: USD
+        events:
+        - amount: 1000
+          type: ACH_RECEIPT_PROCESSED
+          result: APPROVED
+          created: '2024-10-08T21:39:27Z'
+          token: 99ff8ea0-2355-57fc-aa9d-0e953f64ba4f
+          detailed_results:
+          - APPROVED
+        - amount: 1000
+          type: ACH_RECEIPT_SETTLED
+          result: APPROVED
+          created: '2024-10-08T21:39:28Z'
+          token: 33d0ae98-310c-5b50-a012-1bcd8edb9254
+          detailed_results:
+          - APPROVED
+        descriptor: ach_receipt_credit
+        user_defined_id: null
+        expected_release_date: null
+        related_account_tokens: null
+        type: RECEIPT_CREDIT
+    payment_event_type:
+      title: Payment Event Type
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). Wire-related event types below are a preview. To learn more, contact your customer success manager.
+
+
+        Event types:
+
+
+        ACH events:
+
+        * `ACH_ORIGINATION_INITIATED` - ACH origination received and pending approval/release from an ACH hold.
+
+        * `ACH_ORIGINATION_REVIEWED` - ACH origination has completed the review process.
+
+        * `ACH_ORIGINATION_CANCELLED` - ACH origination has been cancelled.
+
+        * `ACH_ORIGINATION_PROCESSED` - ACH origination has been processed and sent to the Federal Reserve.
+
+        * `ACH_ORIGINATION_SETTLED` - ACH origination has settled.
+
+        * `ACH_ORIGINATION_RELEASED` - ACH origination released from pending to available balance.
+
+        * `ACH_ORIGINATION_REJECTED` - ACH origination was rejected and not sent to the Federal Reserve.
+
+        * `ACH_RECEIPT_PROCESSED` - ACH receipt pending release from an ACH holder.
+
+        * `ACH_RECEIPT_SETTLED` - ACH receipt funds have settled.
+
+        * `ACH_RECEIPT_RELEASED` - ACH receipt released from pending to available balance.
+
+        * `ACH_RECEIPT_RELEASED_EARLY` - ACH receipt released early from pending to available balance.
+
+        * `ACH_RETURN_INITIATED` - ACH initiated return for an ACH receipt.
+
+        * `ACH_RETURN_PROCESSED` - ACH receipt returned by the Receiving Depository Financial Institution.
+
+        * `ACH_RETURN_SETTLED` - ACH return settled by the Receiving Depository Financial Institution.
+
+        * `ACH_RETURN_REJECTED` - ACH return was rejected by the Receiving Depository Financial Institution.
+
+
+        Wire transfer events:
+
+        * `WIRE_TRANSFER_INBOUND_RECEIVED` - Inbound wire transfer received from the Federal Reserve and pending release to available balance.
+
+        * `WIRE_TRANSFER_INBOUND_SETTLED` - Inbound wire transfer funds released from pending to available balance.
+
+        * `WIRE_TRANSFER_INBOUND_BLOCKED` - Inbound wire transfer blocked and funds frozen for regulatory review.
+
+
+        Wire return events:
+
+        * `WIRE_RETURN_OUTBOUND_INITIATED` - Outbound wire return initiated to return funds from an inbound wire transfer.
+
+        * `WIRE_RETURN_OUTBOUND_SENT` - Outbound wire return sent to the Federal Reserve and pending acceptance.
+
+        * `WIRE_RETURN_OUTBOUND_SETTLED` - Outbound wire return accepted by the Federal Reserve and funds returned to sender.
+
+        * `WIRE_RETURN_OUTBOUND_REJECTED` - Outbound wire return rejected by the Federal Reserve.'
+      type: string
+      enum:
+      - ACH_ORIGINATION_CANCELLED
+      - ACH_ORIGINATION_INITIATED
+      - ACH_ORIGINATION_PROCESSED
+      - ACH_ORIGINATION_REJECTED
+      - ACH_ORIGINATION_RELEASED
+      - ACH_ORIGINATION_REVIEWED
+      - ACH_ORIGINATION_SETTLED
+      - ACH_RECEIPT_PROCESSED
+      - ACH_RECEIPT_RELEASED
+      - ACH_RECEIPT_RELEASED_EARLY
+      - ACH_RECEIPT_SETTLED
+      - ACH_RETURN_INITIATED
+      - ACH_RETURN_PROCESSED
+      - ACH_RETURN_REJECTED
+      - ACH_RETURN_SETTLED
+      - WIRE_TRANSFER_INBOUND_RECEIVED
+      - WIRE_TRANSFER_INBOUND_SETTLED
+      - WIRE_TRANSFER_INBOUND_BLOCKED
+      - WIRE_RETURN_OUTBOUND_INITIATED
+      - WIRE_RETURN_OUTBOUND_SENT
+      - WIRE_RETURN_OUTBOUND_SETTLED
+      - WIRE_RETURN_OUTBOUND_REJECTED
+    transaction_category:
+      title: Transaction Category
+      description: 'Note: Inbound wire transfers are coming soon (availability varies by partner bank). The WIRE category is a preview. To learn more, contact your customer success manager.'
+      type: string
+      enum:
+      - ACH
+      - WIRE
+      - BALANCE_OR_FUNDING
+      - FEE
+      - REWARD
+      - ADJUSTMENT
+      - DERECOGNITION
+      - DISPUTE
+      - CARD
+      - EXTERNAL_ACH
+      - EXTERNAL_CHECK
+      - EXTERNAL_FEDNOW
+      - EXTERNAL_RTP
+      - EXTERNAL_TRANSFER
+      - EXTERNAL_WIRE
+      - MANAGEMENT_ADJUSTMENT
+      - MANAGEMENT_DISPUTE
+      - MANAGEMENT_FEE
+      - MANAGEMENT_REWARD
+      - MANAGEMENT_DISBURSEMENT
+      - HOLD
+      - PROGRAM_FUNDING
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+  parameters:
+    startingAfter:
+      description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+    endTime:
+      description: Date string in RFC 3339 format. Only entries created before the specified time will be included. UTC time zone.
+      in: query
+      name: end
+      schema:
+        format: date-time
+        type: string
+    beginTime:
+      description: Date string in RFC 3339 format. Only entries created after the specified time will be included. UTC time zone.
+      in: query
+      name: begin
+      schema:
+        format: date-time
+        type: string
+    endingBefore:
+      description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+    pageSize:
+      description: Page size (for pagination).
+      in: query
+      name: page_size
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

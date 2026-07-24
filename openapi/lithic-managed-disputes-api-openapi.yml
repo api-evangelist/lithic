@@ -1,0 +1,554 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@lithic.com
+  description: 'The Lithic Developer API is designed to provide a predictable programmatic interface for accessing your Lithic account through an API and transaction webhooks.
+
+    Note that your API key is a secret and should be treated as such. Don''t share it with anyone, including us. We will never ask you for it.
+
+    '
+  termsOfService: https://lithic.com/legal/terms
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  title: Lithic Developer 3DS Managed Disputes API
+  version: 1.0.0
+servers:
+- description: Sandbox environment that provides key functionality mirroring production
+  url: https://sandbox.lithic.com
+security:
+- ApiKeyAuth: []
+tags:
+- name: Managed Disputes
+paths:
+  /v2/disputes:
+    get:
+      description: Returns a paginated list of disputes.
+      operationId: getDisputesV2
+      parameters:
+      - description: RFC 3339 timestamp for filtering by created date, inclusive.
+        in: query
+        name: begin
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - description: RFC 3339 timestamp for filtering by created date, inclusive.
+        in: query
+        name: end
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - description: Number of items to return.
+        in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          type: integer
+      - description: A cursor representing an item's token after which a page of results should begin. Used to retrieve the next page of results after this item.
+        in: query
+        name: starting_after
+        required: false
+        schema:
+          type: string
+      - description: A cursor representing an item's token before which a page of results should end. Used to retrieve the previous page of results before this item.
+        in: query
+        name: ending_before
+        required: false
+        schema:
+          type: string
+      - description: Filter by the token of the transaction being disputed. Corresponds with transaction_series.related_transaction_token in the Dispute.
+        in: query
+        name: disputed_transaction_token
+        required: false
+        schema:
+          format: uuid
+          type: string
+      - description: Filter by card token.
+        in: query
+        name: card_token
+        required: false
+        schema:
+          format: uuid
+          type: string
+      - description: Filter by account token.
+        in: query
+        name: account_token
+        required: false
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/disputes-response'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: List disputes
+      tags:
+      - Managed Disputes
+  /v2/disputes/{dispute_token}:
+    get:
+      description: Retrieves a specific dispute by its token.
+      operationId: getDisputeByTokenV2
+      parameters:
+      - description: Token of the dispute to retrieve.
+        in: path
+        name: dispute_token
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dispute'
+          description: OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Retrieve a dispute
+      tags:
+      - Managed Disputes
+components:
+  schemas:
+    merchant:
+      title: Merchant
+      type: object
+      properties:
+        acceptor_id:
+          description: Unique alphanumeric identifier for the payment card acceptor (merchant).
+          example: '333301802529120'
+          type: string
+        acquiring_institution_id:
+          description: Unique numeric identifier of the acquiring institution.
+          example: '191231'
+          type: string
+        city:
+          description: City of card acceptor. Note that in many cases, particularly in card-not-present transactions, merchants may send through a phone number or URL in this field.
+          example: NEW YORK
+          type: string
+        country:
+          description: 'Country or entity of card acceptor. Possible values are: (1) all ISO 3166-1 alpha-3 country codes, (2) QZZ for Kosovo, and (3) ANT for Netherlands Antilles.'
+          example: USA
+          type: string
+        descriptor:
+          description: Short description of card acceptor.
+          example: COFFEE SHOP
+          type: string
+        mcc:
+          description: Merchant category code (MCC). A four-digit number listed in ISO 18245. An MCC is used to classify a business by the types of goods or services it provides.
+          example: '5812'
+          type: string
+        state:
+          description: Geographic state of card acceptor.
+          example: NY
+          type: string
+      required:
+      - acceptor_id
+      - acquiring_institution_id
+      - city
+      - country
+      - descriptor
+      - mcc
+      - state
+    error:
+      type: object
+      properties:
+        debugging_request_id:
+          type: string
+          format: uuid
+          description: Identifier to help debug an error.
+        message:
+          type: string
+          description: Explanation of error response.
+      required:
+      - debugging_request_id
+      - message
+    transaction-series:
+      title: Transaction Series
+      description: Contains identifiers for the transaction and specific event within being disputed; null if no transaction can be identified
+      type: object
+      properties:
+        type:
+          description: The type of transaction series associating the dispute and the original transaction. Always set to DISPUTE
+          type: string
+          enum:
+          - DISPUTE
+        related_transaction_token:
+          description: Token of the original transaction being disputed, in UUID format
+          type: string
+          format: uuid
+        related_transaction_event_token:
+          description: Token of the specific event in the original transaction being disputed, in UUID format; null if no event can be identified
+          oneOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+      required:
+      - type
+      - related_transaction_token
+      - related_transaction_event_token
+    dispute:
+      title: Dispute
+      description: The Dispute object tracks the progression of a dispute throughout its lifecycle.
+      type: object
+      properties:
+        case_id:
+          description: Identifier assigned by the network for this dispute.
+          type:
+          - string
+          - 'null'
+        token:
+          description: Token assigned by Lithic for the dispute, in UUID format.
+          type: string
+          format: uuid
+        card_token:
+          description: Token for the card used in the dispute, in UUID format.
+          type: string
+          format: uuid
+        account_token:
+          description: Token for the account associated with the dispute, in UUID format.
+          type: string
+          format: uuid
+        network:
+          description: Card network handling the dispute.
+          type: string
+          enum:
+          - VISA
+          - MASTERCARD
+        currency:
+          description: Three-letter ISO 4217 currency code.
+          type: string
+          pattern: ^[A-Z]{3}$
+          example: USD
+        created:
+          description: When the dispute was created.
+          type: string
+          format: date-time
+        updated:
+          description: When the dispute was last updated.
+          type: string
+          format: date-time
+        merchant:
+          $ref: '#/components/schemas/merchant'
+        transaction_series:
+          oneOf:
+          - $ref: '#/components/schemas/transaction-series'
+          - type: 'null'
+        liability_allocation:
+          $ref: '#/components/schemas/liability-allocation'
+        status:
+          description: Current status of the dispute.
+          type:
+          - string
+          - 'null'
+          enum:
+          - OPEN
+          - CLOSED
+          - null
+        disposition:
+          description: Dispute resolution outcome
+          type:
+          - string
+          - 'null'
+          enum:
+          - WON
+          - LOST
+          - PARTIALLY_WON
+          - WITHDRAWN
+          - DENIED
+          - null
+        events:
+          description: Chronological list of events that have occurred in the dispute lifecycle
+          type: array
+          items:
+            $ref: '#/components/schemas/event'
+      required:
+      - case_id
+      - token
+      - card_token
+      - account_token
+      - network
+      - currency
+      - created
+      - updated
+      - merchant
+      - transaction_series
+      - liability_allocation
+      - status
+      - disposition
+      - events
+    disputes-response:
+      title: Disputes Response
+      description: Response for listing disputes
+      type: object
+      properties:
+        data:
+          description: Array of dispute objects
+          type: array
+          items:
+            $ref: '#/components/schemas/dispute'
+        has_more:
+          description: Whether there are more results available
+          type: boolean
+      required:
+      - data
+      - has_more
+    workflow-event-data:
+      title: Workflow Event Data
+      description: Details specific to workflow events
+      type: object
+      properties:
+        type:
+          description: Event type discriminator
+          type: string
+          const: WORKFLOW
+        stage:
+          description: Current stage of the dispute workflow
+          type: string
+          enum:
+          - CLAIM
+        action:
+          description: Action taken in this stage
+          type: string
+          enum:
+          - OPENED
+          - CLOSED
+          - REOPENED
+        reason:
+          description: Reason for the action
+          type:
+          - string
+          - 'null'
+        amount:
+          description: Amount in minor units
+          type:
+          - integer
+          - 'null'
+        disposition:
+          description: Dispute resolution outcome
+          type:
+          - string
+          - 'null'
+          enum:
+          - WON
+          - LOST
+          - PARTIALLY_WON
+          - WITHDRAWN
+          - DENIED
+          - null
+      required:
+      - type
+      - stage
+      - action
+      - reason
+      - amount
+      - disposition
+    liability-allocation:
+      title: Liability Allocation
+      description: Current breakdown of how liability is allocated for the disputed amount
+      type: object
+      properties:
+        original_amount:
+          description: The initial amount disputed
+          type: integer
+        recovered_amount:
+          description: The amount that has been recovered from the merchant through the dispute process
+          type: integer
+        written_off_amount:
+          description: The amount the issuer has chosen to write off
+          type: integer
+        denied_amount:
+          description: The amount that has been denied to the cardholder
+          type: integer
+        remaining_amount:
+          description: Any disputed amount that is still outstanding, i.e. has not been recovered, written off, or denied
+          type: integer
+      required:
+      - original_amount
+      - recovered_amount
+      - written_off_amount
+      - denied_amount
+      - remaining_amount
+    event:
+      title: Event
+      description: Event that occurred in the dispute lifecycle
+      type: object
+      properties:
+        token:
+          description: Unique identifier for the event, in UUID format
+          type: string
+          format: uuid
+        type:
+          description: Type of event
+          type: string
+          enum:
+          - WORKFLOW
+          - FINANCIAL
+          - CARDHOLDER_LIABILITY
+        created:
+          description: When the event occurred
+          type: string
+          format: date-time
+        data:
+          description: Details specific to the event type
+          oneOf:
+          - $ref: '#/components/schemas/workflow-event-data'
+          - $ref: '#/components/schemas/financial-event-data'
+          - $ref: '#/components/schemas/cardholder-liability-event-data'
+          discriminator:
+            propertyName: type
+      required:
+      - token
+      - type
+      - created
+      - data
+    financial-event-data:
+      title: Financial Event Data
+      description: Details specific to financial events
+      type: object
+      properties:
+        type:
+          description: Event type discriminator
+          type: string
+          const: FINANCIAL
+        stage:
+          description: Stage at which the financial event occurred
+          type: string
+          enum:
+          - CHARGEBACK
+          - REPRESENTMENT
+          - PREARBITRATION
+          - ARBITRATION
+          - COLLABORATION
+        amount:
+          description: Amount in minor units
+          type: integer
+        polarity:
+          description: Direction of funds flow
+          type: string
+          enum:
+          - CREDIT
+          - DEBIT
+      required:
+      - type
+      - stage
+      - amount
+      - polarity
+    cardholder-liability-event-data:
+      title: Cardholder Liability Event Data
+      description: Details specific to cardholder liability events
+      type: object
+      properties:
+        type:
+          description: Event type discriminator
+          type: string
+          const: CARDHOLDER_LIABILITY
+        action:
+          description: Action taken regarding cardholder liability
+          type: string
+          enum:
+          - PROVISIONAL_CREDIT_GRANTED
+          - PROVISIONAL_CREDIT_REVERSED
+          - WRITTEN_OFF
+        amount:
+          description: Amount in minor units
+          type: integer
+        reason:
+          description: Reason for the action
+          type: string
+      required:
+      - type
+      - action
+      - amount
+      - reason
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: '|   |   |
+
+        |---|---|
+
+        | User has not been authenticated | Invalid or missing API key |
+
+        | API key is not active | The API key used is no longer active |
+
+        | Could not find API key | The API key provided is not associated with any user |
+
+        | Please provide API key in Authorization header | The Authorization header is not in the request |
+
+        | Please provide API key in the form Authorization: [api-key] | The Authorization header is not formatted properly |
+
+        | Insufficient privileges. Issuing API key required | Write access requires an Issuing API key. Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        | Insufficient privileges to create virtual cards. | Creating virtual cards requires an additional privilege | Reach out at [lithic.com/contact](https://lithic.com/contact) |
+
+        '
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: A parameter in the query given in the request does not match the valid queries for the endpoint.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: The specified resource was not found.
+    TooManyRequests:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: 'Client has exceeded the number of allowed requests in a given time period.
+
+
+        |   |   |
+
+        |---|---|
+
+        | Rate limited, too many requests per second | User has exceeded their per second rate limit |
+
+        | Rate limited, reached daily limit | User has exceeded their daily rate limit |
+
+        | Rate limited, too many keys tried | One IP has queried too many different API keys |
+
+        '
+    UnprocessableEntity:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+      description: Unprocessable entity.
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey
