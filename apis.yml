@@ -7,7 +7,20 @@ description: Lithic is a modern card-issuing and program-management platform off
   external bank accounts, account-holder KYC/KYB, 3-D Secure, tokenization, disputes,
   and webhooks. OpenAPI spec is published via Stainless and powers official SDKs in
   Node, Python, Go, Java, Kotlin.
-image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+accessModel:
+  pricing: freemium
+  onboarding: self-serve
+  trial: false
+  try_now: true
+  public: false
+  label: Freemium · Self-serve signup
+  confidence: high
+  source:
+  - plans
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/lithic.png
 tags:
 - FinTech
 - BaaS
@@ -18,30 +31,11 @@ created: '2026-05-08'
 modified: '2026-05-08'
 specificationVersion: '0.19'
 apis:
-- aid: lithic:rest-api
-  name: Lithic REST API
-  description: REST API covering cards, accounts, account holders (KYC/KYB), authorization
-    rules and 3DS, transactions, financial accounts, external bank accounts, ACH and
-    wire payments, book transfers, statements, payments, disputes, tokenization, and
-    webhooks across 191 endpoints.
-  humanURL: https://docs.lithic.com/reference
-  baseURL: https://api.lithic.com/v1
-  tags:
-  - REST
-  - Card Issuing
-  - Payments
-  - ACH
-  properties:
-  - type: Documentation
-    url: https://docs.lithic.com/reference
-  - type: OpenAPI
-    url: openapi/lithic-openapi.yml
-  - url: graphql/lithic-graphql.md
-    type: GraphQL
 - aid: lithic:auth-stream
   name: Lithic Auth Stream Access (ASA)
-  description: Real-time HTTP endpoint customers expose for Lithic to call synchronously
-    during authorization for custom approve/decline logic.
+  description: >-
+    Real-time HTTP endpoint customers expose for Lithic to call synchronously during authorization for
+    custom approve/decline logic.
   humanURL: https://docs.lithic.com/docs/auth-stream-access-asa
   baseURL: customer-hosted
   tags:
@@ -52,8 +46,8 @@ apis:
     url: https://docs.lithic.com/docs/auth-stream-access-asa
 - aid: lithic:webhooks
   name: Lithic Webhooks
-  description: Outbound HTTP webhook delivery for transaction, card, account-holder,
-    dispute, and payment events.
+  description: >-
+    Outbound HTTP webhook delivery for transaction, card, account-holder, dispute, and payment events.
   humanURL: https://docs.lithic.com/docs/event-webhooks
   baseURL: https://api.lithic.com/v1/events
   tags:
@@ -61,6 +55,413 @@ apis:
   properties:
   - type: Documentation
     url: https://docs.lithic.com/docs/event-webhooks
+- aid: lithic:lithic-3ds-api
+  name: Lithic 3DS API
+  description: The 3DS API from Lithic — 6 operation(s) for 3ds.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - 3DS
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-3ds-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-account-api
+  name: Lithic Account API
+  description: The Account API from Lithic — 4 operation(s) for account.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Account
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-account-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-account-holder-api
+  name: Lithic Account Holder API
+  description: The Account Holder API from Lithic — 8 operation(s) for account holder.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Account Holder
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-account-holder-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-auth-rules-api
+  name: Lithic Auth Rules API
+  description: The Auth Rules API from Lithic — 10 operation(s) for auth rules.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Auth Rules
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-auth-rules-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-auth-stream-access-asa-api
+  name: Lithic Auth Stream Access (ASA) API
+  description: >-
+    The Auth Stream Access (ASA) API from Lithic — 2 operation(s) for auth stream access (asa).
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Auth Stream Access (ASA)
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-auth-stream-access-asa-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-balance-api
+  name: Lithic Balance API
+  description: The Balance API from Lithic — 2 operation(s) for balance.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Balance
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-balance-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-book-transfer-api
+  name: Lithic Book Transfer API
+  description: The Book Transfer API from Lithic — 5 operation(s) for book transfer.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Book Transfer
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-book-transfer-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-card-api
+  name: Lithic Card API
+  description: The Card API from Lithic — 16 operation(s) for card.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Card
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-card-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-card-bulk-orders-api
+  name: Lithic Card Bulk Orders API
+  description: The Card Bulk Orders API from Lithic — 2 operation(s) for card bulk orders.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Card Bulk Orders
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-card-bulk-orders-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-chargeback-api
+  name: Lithic Chargeback API
+  description: The Chargeback API from Lithic — 4 operation(s) for chargeback.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Chargeback
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-chargeback-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-credit-product-api
+  name: Lithic Credit Product API
+  description: The Credit Product API from Lithic — 2 operation(s) for credit product.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Credit Product
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-credit-product-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-event-api
+  name: Lithic Event API
+  description: The Event API from Lithic — 12 operation(s) for event.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Event
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-event-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-external-bank-account-api
+  name: Lithic External Bank Account API
+  description: The External Bank Account API from Lithic — 7 operation(s) for external bank account.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - External Bank Account
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-external-bank-account-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-external-payments-api
+  name: Lithic External Payments API
+  description: The External Payments API from Lithic — 6 operation(s) for external payments.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - External Payments
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-external-payments-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-financial-account-api
+  name: Lithic Financial Account API
+  description: The Financial Account API from Lithic — 9 operation(s) for financial account.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Financial Account
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-financial-account-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-fraud-report-api
+  name: Lithic Fraud Report API
+  description: The Fraud Report API from Lithic — 1 operation(s) for fraud report.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Fraud Report
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-fraud-report-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-funding-events-api
+  name: Lithic Funding Events API
+  description: The Funding Events API from Lithic — 3 operation(s) for funding events.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Funding Events
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-funding-events-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-hold-api
+  name: Lithic Hold API
+  description: The Hold API from Lithic — 3 operation(s) for hold.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Hold
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-hold-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-managed-disputes-api
+  name: Lithic Managed Disputes API
+  description: The Managed Disputes API from Lithic — 2 operation(s) for managed disputes.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Managed Disputes
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-managed-disputes-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-management-operations-api
+  name: Lithic Management Operations API
+  description: The Management Operations API from Lithic — 3 operation(s) for management operations.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Management Operations
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-management-operations-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-network-program-api
+  name: Lithic Network Program API
+  description: The Network Program API from Lithic — 2 operation(s) for network program.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Network Program
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-network-program-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-payment-api
+  name: Lithic Payment API
+  description: The Payment API from Lithic — 8 operation(s) for payment.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Payment
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-payment-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-responder-endpoints-api
+  name: Lithic Responder Endpoints API
+  description: The Responder Endpoints API from Lithic — 1 operation(s) for responder endpoints.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Responder Endpoints
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-responder-endpoints-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-settlement-report-api
+  name: Lithic Settlement Report API
+  description: The Settlement Report API from Lithic — 4 operation(s) for settlement report.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Settlement Report
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-settlement-report-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-statements-api
+  name: Lithic Statements API
+  description: The Statements API from Lithic — 8 operation(s) for statements.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Statements
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-statements-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-status-api
+  name: Lithic Status API
+  description: The Status API from Lithic — 1 operation(s) for status.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Status
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-status-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-tokenization-api
+  name: Lithic Tokenization API
+  description: The Tokenization API from Lithic — 13 operation(s) for tokenization.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Tokenization
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-tokenization-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-transaction-api
+  name: Lithic Transaction API
+  description: The Transaction API from Lithic — 12 operation(s) for transaction.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Transaction
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-transaction-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
+- aid: lithic:lithic-transfer-limits-api
+  name: Lithic Transfer Limits API
+  description: The Transfer Limits API from Lithic — 1 operation(s) for transfer limits.
+  humanURL: https://docs.lithic.com/reference
+  baseURL: https://api.lithic.com/v1
+  tags:
+  - Transfer Limits
+  properties:
+  - type: OpenAPI
+    url: openapi/lithic-transfer-limits-api-openapi.yml
+  - type: Documentation
+    url: https://docs.lithic.com/reference
+  - type: GraphQL
+    url: graphql/lithic-graphql.md
 common:
 - type: AgenticAccess
   url: agentic-access/lithic-agentic-access.yml
